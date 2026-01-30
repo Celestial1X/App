@@ -347,12 +347,14 @@ const updateExpiryStatus = () => {
   }
   if (!expiryInput.value) {
     setStatus(expiryStatus, "");
+    expiryInput.classList.remove("is-expired");
     return;
   }
   const selectedDate = new Date(expiryInput.value);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const statusType = selectedDate < today ? "error" : "ok";
+  expiryInput.classList.toggle("is-expired", selectedDate < today);
   setStatus(
     expiryStatus,
     selectedDate < today ? translations[currentLanguage].expiryExpired : translations[currentLanguage].expiryValid,

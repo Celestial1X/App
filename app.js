@@ -424,7 +424,7 @@ const collectFormData = () => {
     employerId: employerId.value.trim(),
     permitType: permitType.value,
     permitNo: permitNo.value.trim(),
-    expiry: expiry.value,
+    expiry: expiryInput.value,
     verification: verification.value,
     paymentStatus: paymentStatus.value,
     paymentDate: paymentDate.value,
@@ -441,6 +441,9 @@ const collectFormData = () => {
 };
 
 const renderRecords = () => {
+  if (!recordsList || !recordsStatus || !recordSearch || !recordFilter) {
+    return;
+  }
   const records = loadRecords();
   const query = recordSearch.value.trim().toLowerCase();
   const filter = recordFilter.value;

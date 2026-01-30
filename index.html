@@ -80,8 +80,45 @@
         </div>
       </section>
 
+      <section class="panel">
+        <h2 data-i18n="recordsTitle">ค้นหา/บันทึกข้อมูลในระบบ</h2>
+        <p class="subtitle" data-i18n="recordsSubtitle">
+          บันทึกข้อมูลจากแบบฟอร์มและค้นหาด้วยเลขฟอร์มหรือหัวข้อ
+        </p>
+        <div class="grid-2">
+          <div class="form-row">
+            <label for="recordSearch" data-i18n="recordsSearchLabel">ค้นหาด้วยเลขฟอร์ม/หัวข้อ</label>
+            <input
+              id="recordSearch"
+              type="text"
+              placeholder="เช่น FORM-2024-0001 หรือ ข้อมูลส่วนตัวแรงงาน"
+              data-i18n-placeholder="recordsSearchPlaceholder"
+            />
+          </div>
+          <div class="form-row">
+            <label for="recordFilter" data-i18n="recordsFilterLabel">กรองตามหัวข้อ</label>
+            <select id="recordFilter">
+              <option value="all" data-i18n="recordsFilterAll">ทุกหัวข้อ</option>
+              <option value="personal" data-i18n="formTypePersonal">ข้อมูลส่วนตัวแรงงาน</option>
+              <option value="employment" data-i18n="formTypeEmployment">ข้อมูลนายจ้าง/การจ้างงาน</option>
+              <option value="documents" data-i18n="formTypeDocuments">ข้อมูลเอกสารและใบอนุญาต</option>
+              <option value="report" data-i18n="formTypeReport">รายงานตรวจสอบภาคสนาม</option>
+            </select>
+          </div>
+        </div>
+        <div class="records-toolbar">
+          <span class="status-text" id="recordsStatus" data-i18n="recordsStatus"
+            >ยังไม่มีข้อมูลที่บันทึก</span
+          >
+          <button type="button" class="secondary" id="clearRecords" data-i18n="clearButton">
+            ลบข้อมูลทั้งหมด
+          </button>
+        </div>
+        <div id="recordsList" class="records-list"></div>
+      </section>
+
       <section class="panel" id="formPanel">
-        <form class="form-grid">
+        <form class="form-grid" id="workerForm">
           <div class="form-section" data-section="personal">
             <h3 data-i18n="personalTitle">ข้อมูลส่วนตัวแรงงาน</h3>
             <div class="grid-2">
@@ -263,6 +300,7 @@
           </div>
 
           <div class="form-actions">
+            <span class="status-text" id="formSaveStatus"></span>
             <button type="button" class="secondary" data-i18n="draftButton">บันทึกฉบับร่าง</button>
             <button type="submit" class="primary" data-i18n="submitButton">ยืนยันตรวจสอบ</button>
           </div>

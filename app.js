@@ -4,6 +4,21 @@ const passportInput = document.getElementById("passport");
 const passportCheckInput = document.getElementById("passportCheck");
 const passportStatus = document.getElementById("passportStatus");
 const passportInlineStatus = document.getElementById("passportInlineStatus");
+const fullName = document.getElementById("fullName");
+const nationality = document.getElementById("nationality");
+const dob = document.getElementById("dob");
+const gender = document.getElementById("gender");
+const company = document.getElementById("company");
+const position = document.getElementById("position");
+const workSite = document.getElementById("workSite");
+const startDate = document.getElementById("startDate");
+const employerId = document.getElementById("employerId");
+const permitType = document.getElementById("permitType");
+const permitNo = document.getElementById("permitNo");
+const verification = document.getElementById("verification");
+const inspector = document.getElementById("inspector");
+const inspectionDate = document.getElementById("inspectionDate");
+const notes = document.getElementById("notes");
 const employerCheckInput = document.getElementById("employerCheck");
 const employerStatus = document.getElementById("employerStatus");
 const expiryInput = document.getElementById("expiry");
@@ -11,6 +26,13 @@ const expiryStatus = document.getElementById("expiryStatus");
 const uploadInputs = document.querySelectorAll("#facePhoto, #idCard, #houseDoc");
 const uploadList = document.getElementById("uploadList");
 const languageButtons = document.querySelectorAll(".lang-btn");
+const workerForm = document.getElementById("workerForm");
+const formSaveStatus = document.getElementById("formSaveStatus");
+const recordSearch = document.getElementById("recordSearch");
+const recordFilter = document.getElementById("recordFilter");
+const recordsStatus = document.getElementById("recordsStatus");
+const recordsList = document.getElementById("recordsList");
+const clearRecordsButton = document.getElementById("clearRecords");
 
 const updateSections = () => {
   const selected = formType.value;
@@ -101,6 +123,21 @@ const translations = {
     expiryExpired: "ใบอนุญาตหมดอายุแล้ว",
     expiryValid: "ใบอนุญาตยังไม่หมดอายุ",
     uploadEmpty: "ยังไม่มีไฟล์ที่อัปโหลด",
+    recordsTitle: "ค้นหา/บันทึกข้อมูลในระบบ",
+    recordsSubtitle: "บันทึกข้อมูลจากแบบฟอร์มและค้นหาด้วยเลขฟอร์มหรือหัวข้อ",
+    recordsSearchLabel: "ค้นหาด้วยเลขฟอร์ม/หัวข้อ",
+    recordsSearchPlaceholder: "เช่น FORM-2024-0001 หรือ ข้อมูลส่วนตัวแรงงาน",
+    recordsFilterLabel: "กรองตามหัวข้อ",
+    recordsFilterAll: "ทุกหัวข้อ",
+    recordsStatus: "ยังไม่มีข้อมูลที่บันทึก",
+    clearButton: "ลบข้อมูลทั้งหมด",
+    saveDraftSuccess: "บันทึกข้อมูลเรียบร้อยแล้ว",
+    saveDraftEmpty: "กรุณากรอกข้อมูลก่อนบันทึก",
+    recordFormId: "เลขฟอร์ม",
+    recordFormType: "หัวข้อ",
+    recordUpdated: "อัปเดตล่าสุด",
+    recordSearchEmpty: "ไม่พบข้อมูลที่ตรงกับคำค้นหา",
+    recordsCount: "รายการที่พบ",
   },
   en: {
     tag: "Web prototype for desktop & mobile",
@@ -183,6 +220,21 @@ const translations = {
     expiryExpired: "Permit has expired.",
     expiryValid: "Permit is still valid.",
     uploadEmpty: "No files uploaded yet.",
+    recordsTitle: "Search and save records",
+    recordsSubtitle: "Save form data and search by form ID or section.",
+    recordsSearchLabel: "Search by form ID/section",
+    recordsSearchPlaceholder: "e.g. FORM-2024-0001 or Personal details",
+    recordsFilterLabel: "Filter by section",
+    recordsFilterAll: "All sections",
+    recordsStatus: "No saved records yet.",
+    clearButton: "Clear all records",
+    saveDraftSuccess: "Record saved successfully.",
+    saveDraftEmpty: "Please fill in the form before saving.",
+    recordFormId: "Form ID",
+    recordFormType: "Section",
+    recordUpdated: "Last updated",
+    recordSearchEmpty: "No matching records found.",
+    recordsCount: "records found",
   },
 };
 
@@ -252,6 +304,138 @@ const updateUploadList = () => {
   });
 };
 
+const loadRecords = () => {
+  const stored = localStorage.getItem("workerRecords");
+  return stored ? JSON.parse(stored) : [];
+};
+
+const saveRecords = (records) => {
+  localStorage.setItem("workerRecords", JSON.stringify(records));
+};
+
+const buildFormId = () => {
+  const date = new Date();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  const year = date.getFullYear();
+  const random = Math.floor(Math.random() * 9000 + 1000);
+  return `FORM-${year}${month}${day}-${random}`;
+};
+
+const formatDateTime = (value) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  return date.toLocaleString(currentLanguage === "th" ? "th-TH" : "en-US");
+};
+
+const getFormTypeLabel = (value) => {
+  const map = {
+    personal: translations[currentLanguage].formTypePersonal,
+    employment: translations[currentLanguage].formTypeEmployment,
+    documents: translations[currentLanguage].formTypeDocuments,
+    report: translations[currentLanguage].formTypeReport,
+  };
+  return map[value] || value;
+};
+
+const collectFormData = () => {
+  const formData = {
+    formType: formType.value,
+    fullName: fullName.value.trim(),
+    passport: passportInput.value.trim(),
+    nationality: nationality.value.trim(),
+    dob: dob.value,
+    gender: gender.value,
+    company: company.value.trim(),
+    position: position.value.trim(),
+    workSite: workSite.value.trim(),
+    startDate: startDate.value,
+    employerId: employerId.value.trim(),
+    permitType: permitType.value,
+    permitNo: permitNo.value.trim(),
+    expiry: expiry.value,
+    verification: verification.value,
+    inspector: inspector.value.trim(),
+    inspectionDate: inspectionDate.value,
+    notes: notes.value.trim(),
+    attachments: Array.from(uploadInputs).flatMap((input) => Array.from(input.files)).map((file) => file.name),
+  };
+  const hasAnyValue = Object.entries(formData).some(([key, value]) => {
+    if (key === "formType" || key === "attachments") return false;
+    return value;
+  });
+  return { formData, hasAnyValue };
+};
+
+const renderRecords = () => {
+  const records = loadRecords();
+  const query = recordSearch.value.trim().toLowerCase();
+  const filter = recordFilter.value;
+  const filtered = records.filter((record) => {
+    const matchesFilter = filter === "all" || record.formType === filter;
+    if (!query) return matchesFilter;
+    const searchable = `${record.formId} ${record.formTypeLabel} ${record.displayName}`.toLowerCase();
+    return matchesFilter && searchable.includes(query);
+  });
+
+  recordsList.innerHTML = "";
+  if (!records.length) {
+    recordsStatus.textContent = translations[currentLanguage].recordsStatus;
+  } else if (!filtered.length) {
+    recordsStatus.textContent = translations[currentLanguage].recordSearchEmpty;
+  } else {
+    recordsStatus.textContent = `${filtered.length} ${translations[currentLanguage].recordsCount}`;
+  }
+
+  filtered.forEach((record) => {
+    const card = document.createElement("div");
+    card.className = "record-card";
+    const title = document.createElement("div");
+    title.className = "record-title";
+    title.textContent = record.displayName || record.formTypeLabel;
+    const meta = document.createElement("div");
+    meta.className = "record-meta";
+    meta.textContent = `${translations[currentLanguage].recordFormId}: ${record.formId} • ${
+      translations[currentLanguage].recordFormType
+    }: ${record.formTypeLabel} • ${translations[currentLanguage].recordUpdated}: ${formatDateTime(
+      record.updatedAt
+    )}`;
+    const tags = document.createElement("div");
+    tags.className = "record-tags";
+    const chip = document.createElement("span");
+    chip.className = "record-chip";
+    chip.textContent = record.formTypeLabel;
+    tags.appendChild(chip);
+    card.appendChild(title);
+    card.appendChild(meta);
+    card.appendChild(tags);
+    recordsList.appendChild(card);
+  });
+};
+
+const saveRecord = () => {
+  const { formData, hasAnyValue } = collectFormData();
+  if (!hasAnyValue) {
+    setStatus(formSaveStatus, translations[currentLanguage].saveDraftEmpty, "warn");
+    return;
+  }
+  const records = loadRecords();
+  const formId = buildFormId();
+  const displayName = formData.fullName || formData.company || formData.passport || formId;
+  const record = {
+    formId,
+    formType: formData.formType,
+    formTypeLabel: getFormTypeLabel(formData.formType),
+    displayName,
+    updatedAt: new Date().toISOString(),
+    data: formData,
+  };
+  records.unshift(record);
+  saveRecords(records);
+  setStatus(formSaveStatus, `${translations[currentLanguage].saveDraftSuccess}: ${formId}`, "ok");
+  renderRecords();
+};
+
 formType.addEventListener("change", updateSections);
 passportInput.addEventListener("input", () => validatePassport(passportInput.value, passportInlineStatus));
 passportCheckInput.addEventListener("input", () =>
@@ -262,6 +446,7 @@ expiryInput.addEventListener("change", updateExpiryStatus);
 uploadInputs.forEach((input) => input.addEventListener("change", updateUploadList));
 updateSections();
 updateUploadList();
+renderRecords();
 
 const applyTranslations = (lang) => {
   const dict = translations[lang];
@@ -289,6 +474,7 @@ const applyTranslations = (lang) => {
   }
   updateExpiryStatus();
   updateUploadList();
+  renderRecords();
 };
 
 languageButtons.forEach((button) => {
@@ -300,3 +486,17 @@ languageButtons.forEach((button) => {
 });
 
 applyTranslations(currentLanguage);
+
+workerForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  saveRecord();
+});
+
+document.querySelector(".form-actions .secondary").addEventListener("click", saveRecord);
+recordSearch.addEventListener("input", renderRecords);
+recordFilter.addEventListener("change", renderRecords);
+clearRecordsButton.addEventListener("click", () => {
+  saveRecords([]);
+  renderRecords();
+  setStatus(formSaveStatus, translations[currentLanguage].recordsStatus);
+});

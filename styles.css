@@ -198,6 +198,12 @@ textarea {
   gap: 12px;
   flex-wrap: wrap;
   justify-content: flex-end;
+  align-items: center;
+}
+
+.form-actions .status-text {
+  margin-top: 0;
+  margin-right: auto;
 }
 
 .upload-grid {
@@ -260,6 +266,54 @@ button {
   grid-template-columns: 2fr 1fr;
   gap: 24px;
   align-items: center;
+}
+
+.records-toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.records-list {
+  margin-top: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.record-card {
+  border: 1px solid #e0e6f2;
+  border-radius: 14px;
+  padding: 14px 16px;
+  background: #fdfdff;
+  display: grid;
+  gap: 6px;
+}
+
+.record-title {
+  font-weight: 600;
+}
+
+.record-meta {
+  font-size: 0.9rem;
+  color: #5b657a;
+}
+
+.record-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.record-chip {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #edf2ff;
+  color: #2c4fb5;
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 
 .status-card {

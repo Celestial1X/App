@@ -699,6 +699,11 @@ if (recordSearch) {
     recordSearch.value = storedQuery;
     localStorage.removeItem(RECORD_SEARCH_KEY);
     renderRecords();
+    const matched = findRecordByQuery(storedQuery);
+    if (!matched) {
+      recordSearch.value = "";
+      renderRecords();
+    }
   }
 }
 

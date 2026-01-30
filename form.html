@@ -182,16 +182,22 @@
             <div class="form-row">
               <label data-i18n="uploadLabel">เอกสารประกอบ (อัปโหลดรูป/ไฟล์)</label>
               <div class="upload-grid">
-                <label class="upload-card">
-                  <span data-i18n="uploadFace">รูปหน้าคน</span>
+                <label class="upload-card" data-upload="facePhoto">
+                  <span class="upload-title" data-i18n="uploadFace">รูปหน้าคน</span>
+                  <img class="upload-thumb" alt="" />
+                  <span class="upload-filename"></span>
                   <input id="facePhoto" type="file" accept="image/*" />
                 </label>
-                <label class="upload-card">
-                  <span data-i18n="uploadId">บัตรประชาชน/บัตรชมพู</span>
+                <label class="upload-card" data-upload="idCard">
+                  <span class="upload-title" data-i18n="uploadId">บัตรประชาชน/บัตรชมพู</span>
+                  <img class="upload-thumb" alt="" />
+                  <span class="upload-filename"></span>
                   <input id="idCard" type="file" accept="image/*,.pdf" />
                 </label>
-                <label class="upload-card">
-                  <span data-i18n="uploadHouse">ทะเบียนบ้าน</span>
+                <label class="upload-card" data-upload="houseDoc">
+                  <span class="upload-title" data-i18n="uploadHouse">ทะเบียนบ้าน</span>
+                  <img class="upload-thumb" alt="" />
+                  <span class="upload-filename"></span>
                   <input id="houseDoc" type="file" accept="image/*,.pdf" />
                 </label>
               </div>
@@ -217,8 +223,10 @@
             <div class="form-row">
               <label data-i18n="paymentSlipLabel">แนบสลิปการชำระเงิน</label>
               <div class="upload-grid single-upload">
-                <label class="upload-card">
-                  <span data-i18n="paymentSlipUpload">อัปโหลดสลิป</span>
+                <label class="upload-card" data-upload="paymentSlip">
+                  <span class="upload-title" data-i18n="paymentSlipUpload">อัปโหลดสลิป</span>
+                  <img class="upload-thumb" alt="" />
+                  <span class="upload-filename"></span>
                   <input id="paymentSlip" type="file" accept="image/*,.pdf" />
                 </label>
               </div>

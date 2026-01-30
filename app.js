@@ -23,7 +23,14 @@ const employerCheckInput = document.getElementById("employerCheck");
 const employerStatus = document.getElementById("employerStatus");
 const expiryInput = document.getElementById("expiry");
 const expiryStatus = document.getElementById("expiryStatus");
+const facePhotoInput = document.getElementById("facePhoto");
+const idCardInput = document.getElementById("idCard");
+const houseDocInput = document.getElementById("houseDoc");
 const uploadInputs = document.querySelectorAll("#facePhoto, #idCard, #houseDoc");
+const facePhotoCard = document.querySelector('[data-upload="facePhoto"]');
+const idCardCard = document.querySelector('[data-upload="idCard"]');
+const houseDocCard = document.querySelector('[data-upload="houseDoc"]');
+const paymentSlipCard = document.querySelector('[data-upload="paymentSlip"]');
 const uploadPreview = document.getElementById("uploadPreview");
 const paymentSlipInput = document.getElementById("paymentSlip");
 const paymentSlipPreview = document.getElementById("paymentSlipPreview");
@@ -47,6 +54,18 @@ const recordedBy = document.getElementById("recordedBy");
 const EDIT_KEY = "editRecordId";
 const RECORD_SEARCH_KEY = "recordSearchQuery";
 let currentEditId = null;
+const uploadCache = {
+  facePhoto: { name: "", dataUrl: "" },
+  idCard: { name: "", dataUrl: "" },
+  houseDoc: { name: "", dataUrl: "" },
+  paymentSlip: { name: "", dataUrl: "" },
+};
+const uploadFieldConfigs = [
+  { key: "facePhoto", input: facePhotoInput, card: facePhotoCard },
+  { key: "idCard", input: idCardInput, card: idCardCard },
+  { key: "houseDoc", input: houseDocInput, card: houseDocCard },
+];
+const paymentSlipConfig = { key: "paymentSlip", input: paymentSlipInput, card: paymentSlipCard };
 
 const updateSections = () => {
   if (!formType || !sections.length) {
@@ -374,21 +393,78 @@ const renderPreview = (container, files, onRemove) => {
   });
 };
 
+const setUploadCardPreview = (card, preview) => {
+  if (!card) return;
+  const thumb = card.querySelector(".upload-thumb");
+  const filename = card.querySelector(".upload-filename");
+  card.classList.remove("has-preview", "has-file");
+  if (thumb) {
+    thumb.removeAttribute("src");
+  }
+  if (filename) {
+    filename.textContent = "";
+  }
+  if (!preview) return;
+  if (preview.dataUrl && thumb) {
+    thumb.src = preview.dataUrl;
+    card.classList.add("has-preview");
+  } else if (preview.name && filename) {
+    filename.textContent = preview.name;
+    card.classList.add("has-file");
+  }
+};
+
+const cacheUploadFromFile = (key, file) => {
+  if (!file) {
+    uploadCache[key] = { name: "", dataUrl: "" };
+    return;
+  }
+  uploadCache[key] = { name: file.name, dataUrl: "" };
+  if (file.type && file.type.startsWith("image/")) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      uploadCache[key] = { name: file.name, dataUrl: reader.result };
+      const config = [...uploadFieldConfigs, paymentSlipConfig].find((item) => item.key === key);
+      if (config) {
+        setUploadCardPreview(config.card, uploadCache[key]);
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+};
+
 const updateUploadPreview = () => {
   if (!uploadPreview || !uploadInputs.length) {
     return;
   }
-  const files = Array.from(uploadInputs).flatMap((input) => Array.from(input.files));
+  const files = [];
+  const indexMap = [];
+  uploadFieldConfigs.forEach((config) => {
+    const file = config.input?.files?.[0];
+    if (file) {
+      cacheUploadFromFile(config.key, file);
+      files.push(file);
+      indexMap.push(config);
+    }
+    const cached = uploadCache[config.key];
+    if (!file && cached?.name) {
+      setUploadCardPreview(config.card, cached);
+    } else if (file) {
+      const preview = {
+        name: file.name,
+        dataUrl: file.type.startsWith("image/") ? URL.createObjectURL(file) : "",
+      };
+      setUploadCardPreview(config.card, preview);
+    } else {
+      setUploadCardPreview(config.card, null);
+    }
+  });
   renderPreview(uploadPreview, files, (indexToRemove) => {
-    uploadInputs.forEach((input) => {
-      const filesArray = Array.from(input.files);
-      if (filesArray[indexToRemove]) {
-        filesArray.splice(indexToRemove, 1);
-        const dataTransfer = new DataTransfer();
-        filesArray.forEach((file) => dataTransfer.items.add(file));
-        input.files = dataTransfer.files;
-      }
-    });
+    const config = indexMap[indexToRemove];
+    if (config?.input) {
+      config.input.value = "";
+      uploadCache[config.key] = { name: "", dataUrl: "" };
+    }
     updateUploadPreview();
   });
 };
@@ -397,9 +473,25 @@ const updatePaymentSlipPreview = () => {
   if (!paymentSlipInput || !paymentSlipPreview) {
     return;
   }
-  const files = paymentSlipInput.files ? Array.from(paymentSlipInput.files) : [];
+  const file = paymentSlipInput.files?.[0];
+  if (file) {
+    cacheUploadFromFile("paymentSlip", file);
+  }
+  if (file) {
+    const preview = {
+      name: file.name,
+      dataUrl: file.type.startsWith("image/") ? URL.createObjectURL(file) : "",
+    };
+    setUploadCardPreview(paymentSlipCard, preview);
+  } else if (uploadCache.paymentSlip?.name) {
+    setUploadCardPreview(paymentSlipCard, uploadCache.paymentSlip);
+  } else {
+    setUploadCardPreview(paymentSlipCard, null);
+  }
+  const files = file ? [file] : [];
   renderPreview(paymentSlipPreview, files, () => {
     paymentSlipInput.value = "";
+    uploadCache.paymentSlip = { name: "", dataUrl: "" };
     updatePaymentSlipPreview();
   });
 };
@@ -459,11 +551,15 @@ const collectFormData = () => {
     paymentDate: paymentDate.value,
     paymentNotes: paymentNotes.value.trim(),
     recordedBy: recordedBy ? recordedBy.value.trim() : "",
-    facePhoto: uploadInputs[0]?.files?.[0]?.name || "",
-    idCard: uploadInputs[1]?.files?.[0]?.name || "",
-    houseDoc: uploadInputs[2]?.files?.[0]?.name || "",
+    facePhoto: facePhotoInput?.files?.[0]?.name || uploadCache.facePhoto.name || "",
+    facePhotoData: uploadCache.facePhoto.dataUrl || "",
+    idCard: idCardInput?.files?.[0]?.name || uploadCache.idCard.name || "",
+    idCardData: uploadCache.idCard.dataUrl || "",
+    houseDoc: houseDocInput?.files?.[0]?.name || uploadCache.houseDoc.name || "",
+    houseDocData: uploadCache.houseDoc.dataUrl || "",
     attachments: Array.from(uploadInputs).flatMap((input) => Array.from(input.files)).map((file) => file.name),
-    paymentSlip: paymentSlipInput?.files?.[0]?.name || "",
+    paymentSlip: paymentSlipInput?.files?.[0]?.name || uploadCache.paymentSlip.name || "",
+    paymentSlipData: uploadCache.paymentSlip.dataUrl || "",
   };
   const hasAnyValue = Object.entries(formData).some(([key, value]) => {
     if (key === "formType" || key === "attachments") return false;
@@ -605,24 +701,28 @@ const openRecordModal = (record) => {
       attachments.push({
         label: translations[currentLanguage].recordFacePhotoLabel,
         value: record.data.facePhoto,
+        dataUrl: record.data.facePhotoData || "",
       });
     }
     if (record.data.idCard) {
       attachments.push({
         label: translations[currentLanguage].recordIdCardLabel,
         value: record.data.idCard,
+        dataUrl: record.data.idCardData || "",
       });
     }
     if (record.data.houseDoc) {
       attachments.push({
         label: translations[currentLanguage].recordHouseDocLabel,
         value: record.data.houseDoc,
+        dataUrl: record.data.houseDocData || "",
       });
     }
     if (record.data.paymentSlip) {
       attachments.push({
         label: translations[currentLanguage].recordPaymentSlipLabel,
         value: record.data.paymentSlip,
+        dataUrl: record.data.paymentSlipData || "",
       });
     }
     if (!attachments.length && Array.isArray(record.data.attachments)) {
@@ -639,7 +739,20 @@ const openRecordModal = (record) => {
       const attachmentList = document.createElement("ul");
       attachments.forEach((item) => {
         const listItem = document.createElement("li");
-        listItem.textContent = `${item.label}: ${item.value}`;
+        const label = document.createElement("span");
+        label.textContent = `${item.label}: `;
+        listItem.appendChild(label);
+        if (item.dataUrl && item.dataUrl.startsWith("data:image")) {
+          const image = document.createElement("img");
+          image.src = item.dataUrl;
+          image.alt = item.value;
+          image.className = "attachment-thumb";
+          listItem.appendChild(image);
+        } else {
+          const value = document.createElement("span");
+          value.textContent = item.value;
+          listItem.appendChild(value);
+        }
         attachmentList.appendChild(listItem);
       });
       recordModalBody.appendChild(attachmentTitle);
@@ -724,8 +837,26 @@ const populateForm = (record) => {
   if (paymentStatus) paymentStatus.value = record.data.paymentStatus || "pending";
   if (paymentDate) paymentDate.value = record.data.paymentDate || "";
   if (paymentNotes) paymentNotes.value = record.data.paymentNotes || "";
+  uploadCache.facePhoto = {
+    name: record.data.facePhoto || "",
+    dataUrl: record.data.facePhotoData || "",
+  };
+  uploadCache.idCard = {
+    name: record.data.idCard || "",
+    dataUrl: record.data.idCardData || "",
+  };
+  uploadCache.houseDoc = {
+    name: record.data.houseDoc || "",
+    dataUrl: record.data.houseDocData || "",
+  };
+  uploadCache.paymentSlip = {
+    name: record.data.paymentSlip || "",
+    dataUrl: record.data.paymentSlipData || "",
+  };
   updateSections();
   updateExpiryStatus();
+  updateUploadPreview();
+  updatePaymentSlipPreview();
 };
 
 if (formType) {

@@ -56,10 +56,6 @@ const registerId = document.getElementById("registerId");
 const registerEmployerId = document.getElementById("registerEmployerId");
 const registerButton = document.getElementById("registerButton");
 const registerStatus = document.getElementById("registerStatus");
-const pageTabs = document.querySelectorAll(".tab-btn");
-const pageSections = document.querySelectorAll("[data-page]");
-const authTabs = document.querySelectorAll(".auth-tabs .tab-btn");
-const authPanels = document.querySelectorAll(".auth-panel");
 
 const updateSections = () => {
   const selected = formType.value;
@@ -688,29 +684,27 @@ const handleLogin = () => {
   renderRecords();
 };
 
-const updatePageView = (page) => {
-  pageTabs.forEach((tab) => tab.classList.toggle("is-active", tab.dataset.page === page));
-  pageSections.forEach((section) => {
-    section.style.display = section.dataset.page === page ? "block" : "none";
-  });
-};
+const updatePageView = () => {};
 
-const updateAuthView = (panel) => {
-  authTabs.forEach((tab) => tab.classList.toggle("is-active", tab.dataset.auth === panel));
-  authPanels.forEach((section) => {
-    section.classList.toggle("is-active", section.dataset.auth === panel);
-  });
-};
-
-formType.addEventListener("change", updateSections);
-passportInput.addEventListener("input", () => validatePassport(passportInput.value, passportInlineStatus));
-passportCheckInput.addEventListener("input", () =>
-  validatePassport(passportCheckInput.value, passportStatus)
-);
-employerCheckInput.addEventListener("input", updateEmployerStatus);
-expiryInput.addEventListener("change", updateExpiryStatus);
+if (formType) {
+  formType.addEventListener("change", updateSections);
+}
+if (passportInput && passportInlineStatus) {
+  passportInput.addEventListener("input", () => validatePassport(passportInput.value, passportInlineStatus));
+}
+if (passportCheckInput && passportStatus) {
+  passportCheckInput.addEventListener("input", () => validatePassport(passportCheckInput.value, passportStatus));
+}
+if (employerCheckInput) {
+  employerCheckInput.addEventListener("input", updateEmployerStatus);
+}
+if (expiryInput) {
+  expiryInput.addEventListener("change", updateExpiryStatus);
+}
 uploadInputs.forEach((input) => input.addEventListener("change", updateUploadPreview));
-paymentSlipInput.addEventListener("change", updatePaymentSlipPreview);
+if (paymentSlipInput) {
+  paymentSlipInput.addEventListener("change", updatePaymentSlipPreview);
+}
 updateSections();
 updateUploadPreview();
 updatePaymentSlipPreview();
@@ -756,45 +750,63 @@ languageButtons.forEach((button) => {
 
 applyTranslations(currentLanguage);
 
-workerForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  saveRecord();
-});
+if (workerForm) {
+  workerForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    saveRecord();
+  });
+}
 
-draftButton.addEventListener("click", saveRecord);
-recordSearch.addEventListener("input", renderRecords);
-recordFilter.addEventListener("change", renderRecords);
-clearRecordsButton.addEventListener("click", () => {
-  saveRecords([]);
-  renderRecords();
-  setStatus(formSaveStatus, translations[currentLanguage].recordsStatus);
-});
-passportCheckButton.addEventListener("click", () => {
-  const record = findRecordByQuery(passportCheckInput.value);
-  openRecordModal(record);
-});
-employerCheckButton.addEventListener("click", () => {
-  const record = findRecordByQuery(employerCheckInput.value);
-  openRecordModal(record);
-});
-verifyRecordButton.addEventListener("click", () => {
-  const record = findRecordByQuery(passportInput.value || fullName.value || company.value);
-  openRecordModal(record);
-});
-recordModalClose.addEventListener("click", closeRecordModal);
-recordModalCloseButton.addEventListener("click", closeRecordModal);
-recordModal.addEventListener("click", (event) => {
-  if (event.target === recordModal) {
-    closeRecordModal();
-  }
-});
-loginButton.addEventListener("click", handleLogin);
-registerButton.addEventListener("click", handleRegister);
-pageTabs.forEach((tab) => {
-  tab.addEventListener("click", () => updatePageView(tab.dataset.page));
-});
-updatePageView("auth");
-authTabs.forEach((tab) => {
-  tab.addEventListener("click", () => updateAuthView(tab.dataset.auth));
-});
-updateAuthView("login");
+if (draftButton) {
+  draftButton.addEventListener("click", saveRecord);
+}
+if (recordSearch) {
+  recordSearch.addEventListener("input", renderRecords);
+}
+if (recordFilter) {
+  recordFilter.addEventListener("change", renderRecords);
+}
+if (clearRecordsButton) {
+  clearRecordsButton.addEventListener("click", () => {
+    saveRecords([]);
+    renderRecords();
+    setStatus(formSaveStatus, translations[currentLanguage].recordsStatus);
+  });
+}
+if (passportCheckButton) {
+  passportCheckButton.addEventListener("click", () => {
+    const record = findRecordByQuery(passportCheckInput.value);
+    openRecordModal(record);
+  });
+}
+if (employerCheckButton) {
+  employerCheckButton.addEventListener("click", () => {
+    const record = findRecordByQuery(employerCheckInput.value);
+    openRecordModal(record);
+  });
+}
+if (verifyRecordButton) {
+  verifyRecordButton.addEventListener("click", () => {
+    const record = findRecordByQuery(passportInput?.value || fullName?.value || company?.value);
+    openRecordModal(record);
+  });
+}
+if (recordModalClose) {
+  recordModalClose.addEventListener("click", closeRecordModal);
+}
+if (recordModalCloseButton) {
+  recordModalCloseButton.addEventListener("click", closeRecordModal);
+}
+if (recordModal) {
+  recordModal.addEventListener("click", (event) => {
+    if (event.target === recordModal) {
+      closeRecordModal();
+    }
+  });
+}
+if (loginButton) {
+  loginButton.addEventListener("click", handleLogin);
+}
+if (registerButton) {
+  registerButton.addEventListener("click", handleRegister);
+}

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ข้อมูลบันทึก - ระบบตรวจสอบข้อมูลแรงงานต่างด้าว</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero__content">
+        <div class="hero__top">
+          <div class="lang-switch" role="group" aria-label="เลือกภาษา">
+            <button type="button" class="lang-btn is-active" data-lang="th">TH</button>
+            <button type="button" class="lang-btn" data-lang="en">EN</button>
+          </div>
+        </div>
+        <h1 data-i18n="heroTitle">ระบบตรวจสอบข้อมูลแรงงานต่างด้าว</h1>
+      </div>
+    </header>
+
+    <main class="container">
+      <nav class="page-tabs">
+        <a class="tab-btn" href="index.html" data-i18n="tabAuth">เข้าสู่ระบบ</a>
+        <a class="tab-btn" href="register.html" data-i18n="registerTitle">สมัครสมาชิก</a>
+        <a class="tab-btn" href="lookup.html" data-i18n="tabLookup">ค้นหาข้อมูล</a>
+        <a class="tab-btn is-active" href="records.html" data-i18n="tabRecords">ข้อมูลบันทึก</a>
+        <a class="tab-btn" href="form.html" data-i18n="tabForm">กรอกแบบฟอร์ม</a>
+      </nav>
+
+      <section class="panel">
+        <h2 data-i18n="recordsTitle">ค้นหา/บันทึกข้อมูลในระบบ</h2>
+        <p class="subtitle" data-i18n="recordsSubtitle">
+          บันทึกข้อมูลจากแบบฟอร์มและค้นหาด้วยเลขฟอร์มหรือหัวข้อ
+        </p>
+        <div class="grid-2">
+          <div class="form-row">
+            <label for="recordSearch" data-i18n="recordsSearchLabel">ค้นหาด้วยเลขฟอร์ม/หัวข้อ</label>
+            <input
+              id="recordSearch"
+              type="text"
+              placeholder="เช่น FORM-2024-0001 หรือ ข้อมูลส่วนตัวแรงงาน"
+              data-i18n-placeholder="recordsSearchPlaceholder"
+            />
+          </div>
+          <div class="form-row">
+            <label for="recordFilter" data-i18n="recordsFilterLabel">กรองตามหัวข้อ</label>
+            <select id="recordFilter">
+              <option value="all" data-i18n="recordsFilterAll">ทุกหัวข้อ</option>
+              <option value="personal" data-i18n="formTypePersonal">ข้อมูลส่วนตัวแรงงาน</option>
+              <option value="employment" data-i18n="formTypeEmployment">ข้อมูลนายจ้าง/การจ้างงาน</option>
+              <option value="documents" data-i18n="formTypeDocuments">ข้อมูลเอกสารและใบอนุญาต</option>
+              <option value="report" data-i18n="formTypeReport">ยืนยันการชำระเงิน</option>
+            </select>
+          </div>
+        </div>
+        <div class="records-toolbar">
+          <span class="status-text" id="recordsStatus" data-i18n="recordsStatus">ยังไม่มีข้อมูลที่บันทึก</span>
+          <button type="button" class="secondary" id="clearRecords" data-i18n="clearButton">
+            ลบข้อมูลทั้งหมด
+          </button>
+        </div>
+        <div id="recordsList" class="records-list"></div>
+      </section>
+    </main>
+
+    <div class="modal" id="recordModal" aria-hidden="true">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="recordModalTitle" data-i18n="recordModalTitle">ผลการค้นหา</h3>
+          <button type="button" class="modal-close" id="recordModalClose" aria-label="ปิด">
+            ✕
+          </button>
+        </div>
+        <div id="recordModalBody" class="modal-body"></div>
+        <div class="modal-actions">
+          <button type="button" class="secondary" id="recordModalCloseButton" data-i18n="closeButton">
+            ปิดหน้าต่าง
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

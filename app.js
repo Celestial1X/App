@@ -33,6 +33,15 @@ const recordFilter = document.getElementById("recordFilter");
 const recordsStatus = document.getElementById("recordsStatus");
 const recordsList = document.getElementById("recordsList");
 const clearRecordsButton = document.getElementById("clearRecords");
+const passportCheckButton = document.getElementById("passportCheckButton");
+const employerCheckButton = document.getElementById("employerCheckButton");
+const verifyRecordButton = document.getElementById("verifyRecord");
+const recordModal = document.getElementById("recordModal");
+const recordModalTitle = document.getElementById("recordModalTitle");
+const recordModalBody = document.getElementById("recordModalBody");
+const recordModalClose = document.getElementById("recordModalClose");
+const recordModalCloseButton = document.getElementById("recordModalCloseButton");
+const draftButton = document.getElementById("draftButton");
 
 const updateSections = () => {
   const selected = formType.value;
@@ -43,11 +52,8 @@ const updateSections = () => {
 
 const translations = {
   th: {
-    tag: "เว็บต้นแบบสำหรับ PC + มือถือ",
     heroTitle: "ระบบตรวจสอบข้อมูลแรงงานต่างด้าว",
-    heroSubtitle: "กรอกแบบฟอร์มแบบเลือกหัวข้อ ลดงานเอกสาร และตรวจสอบข้อมูลก่อนส่งงาน",
-    sectionSelectTitle: "เลือกหัวข้อสำหรับกรอกแบบฟอร์ม",
-    sectionSelectSubtitle: "เลือกประเภทแบบฟอร์มเพื่อแสดงช่องข้อมูลที่เกี่ยวข้อง",
+    sectionSelectTitle: "ค้นหาข้อมูลพื้นฐาน",
     passportCheckTitle: "ตรวจเลขพาสปอร์ต",
     passportCheckPlaceholder: "กรอกเลขพาสปอร์ตเพื่อเช็คข้อมูล",
     checkButton: "ตรวจสอบ",
@@ -138,13 +144,19 @@ const translations = {
     recordUpdated: "อัปเดตล่าสุด",
     recordSearchEmpty: "ไม่พบข้อมูลที่ตรงกับคำค้นหา",
     recordsCount: "รายการที่พบ",
+    verifyButton: "ตรวจสอบข้อมูล",
+    recordModalTitle: "ผลการค้นหา",
+    closeButton: "ปิดหน้าต่าง",
+    recordNotFound: "ไม่พบข้อมูลที่ตรงกัน",
+    recordDetailsTitle: "ข้อมูลที่พบ",
+    recordFormTypeLabel: "หัวข้อแบบฟอร์ม",
+    recordNameLabel: "ชื่อ",
+    recordPassportLabel: "พาสปอร์ต",
+    recordEmployerLabel: "นายจ้าง",
   },
   en: {
-    tag: "Web prototype for desktop & mobile",
     heroTitle: "Foreign Worker Data Verification",
-    heroSubtitle: "Select form sections to reduce paperwork and verify data before submission.",
-    sectionSelectTitle: "Choose a form section",
-    sectionSelectSubtitle: "Pick a form type to display the relevant fields.",
+    sectionSelectTitle: "Quick lookup",
     passportCheckTitle: "Passport number check",
     passportCheckPlaceholder: "Enter passport number to check",
     checkButton: "Check",
@@ -235,6 +247,15 @@ const translations = {
     recordUpdated: "Last updated",
     recordSearchEmpty: "No matching records found.",
     recordsCount: "records found",
+    verifyButton: "Verify record",
+    recordModalTitle: "Search results",
+    closeButton: "Close",
+    recordNotFound: "No matching records found.",
+    recordDetailsTitle: "Matched record",
+    recordFormTypeLabel: "Section",
+    recordNameLabel: "Name",
+    recordPassportLabel: "Passport",
+    recordEmployerLabel: "Employer",
   },
 };
 
@@ -406,11 +427,71 @@ const renderRecords = () => {
     chip.className = "record-chip";
     chip.textContent = record.formTypeLabel;
     tags.appendChild(chip);
+    const verifyButton = document.createElement("button");
+    verifyButton.type = "button";
+    verifyButton.className = "secondary";
+    verifyButton.textContent = translations[currentLanguage].verifyButton;
+    verifyButton.addEventListener("click", () => openRecordModal(record));
     card.appendChild(title);
     card.appendChild(meta);
     card.appendChild(tags);
+    card.appendChild(verifyButton);
     recordsList.appendChild(card);
   });
+};
+
+const openRecordModal = (record) => {
+  recordModalTitle.textContent = translations[currentLanguage].recordModalTitle;
+  recordModalBody.innerHTML = "";
+  if (!record) {
+    const message = document.createElement("p");
+    message.textContent = translations[currentLanguage].recordNotFound;
+    recordModalBody.appendChild(message);
+  } else {
+    const title = document.createElement("h4");
+    title.textContent = translations[currentLanguage].recordDetailsTitle;
+    const list = document.createElement("ul");
+    const nameItem = document.createElement("li");
+    nameItem.textContent = `${translations[currentLanguage].recordNameLabel}: ${
+      record.data.fullName || "-"
+    }`;
+    const passportItem = document.createElement("li");
+    passportItem.textContent = `${translations[currentLanguage].recordPassportLabel}: ${
+      record.data.passport || "-"
+    }`;
+    const employerItem = document.createElement("li");
+    employerItem.textContent = `${translations[currentLanguage].recordEmployerLabel}: ${
+      record.data.company || record.data.employerId || "-"
+    }`;
+    const typeItem = document.createElement("li");
+    typeItem.textContent = `${translations[currentLanguage].recordFormTypeLabel}: ${record.formTypeLabel}`;
+    list.appendChild(nameItem);
+    list.appendChild(passportItem);
+    list.appendChild(employerItem);
+    list.appendChild(typeItem);
+    recordModalBody.appendChild(title);
+    recordModalBody.appendChild(list);
+  }
+  recordModal.classList.add("is-open");
+  recordModal.setAttribute("aria-hidden", "false");
+};
+
+const closeRecordModal = () => {
+  recordModal.classList.remove("is-open");
+  recordModal.setAttribute("aria-hidden", "true");
+};
+
+const findRecordByQuery = (query) => {
+  if (!query) return null;
+  const records = loadRecords();
+  const normalized = query.trim().toLowerCase();
+  return (
+    records.find((record) => record.formId.toLowerCase() === normalized) ||
+    records.find((record) => record.data.passport?.toLowerCase() === normalized) ||
+    records.find((record) => record.data.company?.toLowerCase().includes(normalized)) ||
+    records.find((record) => record.data.employerId?.toLowerCase().includes(normalized)) ||
+    records.find((record) => record.data.fullName?.toLowerCase().includes(normalized))
+  );
 };
 
 const saveRecord = () => {
@@ -492,11 +573,30 @@ workerForm.addEventListener("submit", (event) => {
   saveRecord();
 });
 
-document.querySelector(".form-actions .secondary").addEventListener("click", saveRecord);
+draftButton.addEventListener("click", saveRecord);
 recordSearch.addEventListener("input", renderRecords);
 recordFilter.addEventListener("change", renderRecords);
 clearRecordsButton.addEventListener("click", () => {
   saveRecords([]);
   renderRecords();
   setStatus(formSaveStatus, translations[currentLanguage].recordsStatus);
+});
+passportCheckButton.addEventListener("click", () => {
+  const record = findRecordByQuery(passportCheckInput.value);
+  openRecordModal(record);
+});
+employerCheckButton.addEventListener("click", () => {
+  const record = findRecordByQuery(employerCheckInput.value);
+  openRecordModal(record);
+});
+verifyRecordButton.addEventListener("click", () => {
+  const record = findRecordByQuery(passportInput.value || fullName.value || company.value);
+  openRecordModal(record);
+});
+recordModalClose.addEventListener("click", closeRecordModal);
+recordModalCloseButton.addEventListener("click", closeRecordModal);
+recordModal.addEventListener("click", (event) => {
+  if (event.target === recordModal) {
+    closeRecordModal();
+  }
 });

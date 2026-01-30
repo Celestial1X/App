@@ -16,25 +16,18 @@
     <header class="hero">
       <div class="hero__content">
         <div class="hero__top">
-          <span class="tag" data-i18n="tag">เว็บต้นแบบสำหรับ PC + มือถือ</span>
           <div class="lang-switch" role="group" aria-label="เลือกภาษา">
             <button type="button" class="lang-btn is-active" data-lang="th">TH</button>
             <button type="button" class="lang-btn" data-lang="en">EN</button>
           </div>
         </div>
         <h1 data-i18n="heroTitle">ระบบตรวจสอบข้อมูลแรงงานต่างด้าว</h1>
-        <p data-i18n="heroSubtitle">
-          กรอกแบบฟอร์มแบบเลือกหัวข้อ ลดงานเอกสาร และตรวจสอบข้อมูลก่อนส่งงาน
-        </p>
       </div>
     </header>
 
     <main class="container">
       <section class="panel">
-        <h2 data-i18n="sectionSelectTitle">เลือกหัวข้อสำหรับกรอกแบบฟอร์ม</h2>
-        <p class="subtitle" data-i18n="sectionSelectSubtitle">
-          เลือกประเภทแบบฟอร์มเพื่อแสดงช่องข้อมูลที่เกี่ยวข้อง
-        </p>
+        <h2 data-i18n="sectionSelectTitle">ค้นหาข้อมูลพื้นฐาน</h2>
         <div class="status-grid">
           <div class="status-box">
             <p class="status-title" data-i18n="passportCheckTitle">ตรวจเลขพาสปอร์ต</p>
@@ -45,7 +38,14 @@
                 placeholder="กรอกเลขพาสปอร์ตเพื่อเช็คข้อมูล"
                 data-i18n-placeholder="passportCheckPlaceholder"
               />
-              <button type="button" class="secondary" data-i18n="checkButton">ตรวจสอบ</button>
+              <button
+                type="button"
+                class="secondary"
+                id="passportCheckButton"
+                data-i18n="checkButton"
+              >
+                ตรวจสอบ
+              </button>
             </div>
             <span
               id="passportStatus"
@@ -62,21 +62,19 @@
                 placeholder="กรอกเลขแรงงาน หรือชื่อนายจ้าง"
                 data-i18n-placeholder="employerSearchPlaceholder"
               />
-              <button type="button" class="secondary" data-i18n="searchButton">ค้นหา</button>
+              <button
+                type="button"
+                class="secondary"
+                id="employerCheckButton"
+                data-i18n="searchButton"
+              >
+                ค้นหา
+              </button>
             </div>
             <span id="employerStatus" class="status-text" data-i18n="employerSearchHint"
               >ยังไม่มีคำค้นหา</span
             >
           </div>
-        </div>
-        <div class="form-row">
-          <label for="formType" data-i18n="formTypeLabel">หัวข้อแบบฟอร์ม</label>
-          <select id="formType">
-            <option value="personal" data-i18n="formTypePersonal">ข้อมูลส่วนตัวแรงงาน</option>
-            <option value="employment" data-i18n="formTypeEmployment">ข้อมูลนายจ้าง/การจ้างงาน</option>
-            <option value="documents" data-i18n="formTypeDocuments">ข้อมูลเอกสารและใบอนุญาต</option>
-            <option value="report" data-i18n="formTypeReport">รายงานตรวจสอบภาคสนาม</option>
-          </select>
         </div>
       </section>
 
@@ -119,6 +117,15 @@
 
       <section class="panel" id="formPanel">
         <form class="form-grid" id="workerForm">
+          <div class="form-row">
+            <label for="formType" data-i18n="formTypeLabel">หัวข้อแบบฟอร์ม</label>
+            <select id="formType">
+              <option value="personal" data-i18n="formTypePersonal">ข้อมูลส่วนตัวแรงงาน</option>
+              <option value="employment" data-i18n="formTypeEmployment">ข้อมูลนายจ้าง/การจ้างงาน</option>
+              <option value="documents" data-i18n="formTypeDocuments">ข้อมูลเอกสารและใบอนุญาต</option>
+              <option value="report" data-i18n="formTypeReport">รายงานตรวจสอบภาคสนาม</option>
+            </select>
+          </div>
           <div class="form-section" data-section="personal">
             <h3 data-i18n="personalTitle">ข้อมูลส่วนตัวแรงงาน</h3>
             <div class="grid-2">
@@ -301,32 +308,38 @@
 
           <div class="form-actions">
             <span class="status-text" id="formSaveStatus"></span>
-            <button type="button" class="secondary" data-i18n="draftButton">บันทึกฉบับร่าง</button>
+            <button
+              type="button"
+              class="secondary"
+              id="draftButton"
+              data-i18n="draftButton"
+            >
+              บันทึกฉบับร่าง
+            </button>
             <button type="submit" class="primary" data-i18n="submitButton">ยืนยันตรวจสอบ</button>
+            <button type="button" class="secondary" id="verifyRecord" data-i18n="verifyButton">
+              ตรวจสอบข้อมูล
+            </button>
           </div>
         </form>
       </section>
-
-      <section class="panel info">
-        <div>
-          <h2 data-i18n="guideTitle">แนวทางลดงานเอกสาร</h2>
-          <ul>
-            <li data-i18n="guideItem1">ระบบแสดงช่องข้อมูลเฉพาะที่จำเป็น</li>
-            <li data-i18n="guideItem2">ตรวจสอบสถานะใบอนุญาตก่อนส่งงาน</li>
-            <li data-i18n="guideItem3">รองรับการใช้งานบนมือถือสำหรับลงพื้นที่</li>
-          </ul>
-        </div>
-        <div class="status-card">
-          <h3 data-i18n="statusTitle">สถานะระบบ</h3>
-          <p data-i18n="statusDescription">พร้อมใช้งานสำหรับการตรวจสอบเบื้องต้น</p>
-          <span class="status-chip" data-i18n="statusChip">เว็บต้นแบบ</span>
-        </div>
-      </section>
     </main>
-
-    <footer>
-      <p data-i18n="footerText">ต่อยอดเป็นแอป iOS/Android ได้ในอนาคต</p>
-    </footer>
+    <div class="modal" id="recordModal" aria-hidden="true">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="recordModalTitle" data-i18n="recordModalTitle">ผลการค้นหา</h3>
+          <button type="button" class="modal-close" id="recordModalClose" aria-label="ปิด">
+            ✕
+          </button>
+        </div>
+        <div id="recordModalBody" class="modal-body"></div>
+        <div class="modal-actions">
+          <button type="button" class="secondary" id="recordModalCloseButton" data-i18n="closeButton">
+            ปิดหน้าต่าง
+          </button>
+        </div>
+      </div>
+    </div>
 
     <script src="app.js"></script>
   </body>

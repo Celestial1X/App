@@ -58,6 +58,8 @@ const registerButton = document.getElementById("registerButton");
 const registerStatus = document.getElementById("registerStatus");
 const pageTabs = document.querySelectorAll(".tab-btn");
 const pageSections = document.querySelectorAll("[data-page]");
+const authTabs = document.querySelectorAll(".auth-tabs .tab-btn");
+const authPanels = document.querySelectorAll(".auth-panel");
 
 const updateSections = () => {
   const selected = formType.value;
@@ -184,6 +186,7 @@ const translations = {
     loginSuccess: "เข้าสู่ระบบสำเร็จ",
     registerSuccess: "สมัครสมาชิกเรียบร้อยแล้ว",
     loginFailed: "ไม่พบผู้ใช้งาน กรุณาสมัครสมาชิก",
+    employerIdNotRequired: "พนักงาน/นายจ้างไม่ต้องกรอกเลขประจำตัวนายจ้าง",
   },
   en: {
     heroTitle: "Foreign Worker Data Verification",
@@ -302,6 +305,7 @@ const translations = {
     loginSuccess: "Login successful.",
     registerSuccess: "Registration complete.",
     loginFailed: "User not found. Please register.",
+    employerIdNotRequired: "Employer ID not required for staff/employers.",
   },
 };
 
@@ -652,6 +656,9 @@ const getCurrentUser = () => {
 
 const handleRegister = () => {
   const users = loadUsers();
+  if (registerRole.value !== "worker") {
+    registerEmployerId.value = "";
+  }
   const user = {
     role: registerRole.value,
     name: registerName.value.trim(),
@@ -685,6 +692,13 @@ const updatePageView = (page) => {
   pageTabs.forEach((tab) => tab.classList.toggle("is-active", tab.dataset.page === page));
   pageSections.forEach((section) => {
     section.style.display = section.dataset.page === page ? "block" : "none";
+  });
+};
+
+const updateAuthView = (panel) => {
+  authTabs.forEach((tab) => tab.classList.toggle("is-active", tab.dataset.auth === panel));
+  authPanels.forEach((section) => {
+    section.classList.toggle("is-active", section.dataset.auth === panel);
   });
 };
 
@@ -780,3 +794,7 @@ pageTabs.forEach((tab) => {
   tab.addEventListener("click", () => updatePageView(tab.dataset.page));
 });
 updatePageView("auth");
+authTabs.forEach((tab) => {
+  tab.addEventListener("click", () => updateAuthView(tab.dataset.auth));
+});
+updateAuthView("login");

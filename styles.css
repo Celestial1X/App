@@ -76,6 +76,27 @@ h1 {
   flex-wrap: wrap;
 }
 
+.auth-tabs {
+  margin-bottom: 16px;
+}
+
+.auth-panels {
+  position: relative;
+}
+
+.auth-panel {
+  display: none;
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.auth-panel.is-active {
+  display: block;
+  animation: fadeUp 0.35s ease;
+  opacity: 1;
+  transform: translateY(0);
+}
+
 .tab-btn {
   border: 1px solid #d5dbe8;
   background: #fff;
@@ -416,6 +437,17 @@ button {
 .modal-actions {
   display: flex;
   justify-content: flex-end;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (max-width: 900px) {

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ระบบตรวจสอบข้อมูลแรงงานต่างด้าว</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero__content">
+        <span class="tag">ต้นแบบเว็บสำหรับ PC + มือถือ</span>
+        <h1>ระบบตรวจสอบข้อมูลแรงงานต่างด้าว</h1>
+        <p>
+          กรอกแบบฟอร์มด้วยการเลือกหัวข้อที่ต้องการ เพื่อช่วยลดงานเอกสาร
+          และตรวจสอบความถูกต้องก่อนจัดทำเอกสารจริง
+        </p>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="panel">
+        <h2>เลือกหัวข้อสำหรับกรอกแบบฟอร์ม</h2>
+        <p class="subtitle">
+          เลือกประเภทแบบฟอร์มเพื่อแสดงช่องข้อมูลที่เกี่ยวข้อง
+        </p>
+        <div class="status-grid">
+          <div class="status-box">
+            <p class="status-title">ตรวจเลขพาสปอร์ต</p>
+            <div class="inline-input">
+              <input id="passportCheck" type="text" placeholder="กรอกเลขพาสปอร์ตเพื่อเช็คข้อมูล" />
+              <button type="button" class="secondary">ตรวจสอบ</button>
+            </div>
+            <span id="passportStatus" class="status-text">กรุณากรอกเลขพาสปอร์ต</span>
+          </div>
+          <div class="status-box">
+            <p class="status-title">ค้นหานายจ้าง/แรงงาน</p>
+            <div class="inline-input">
+              <input id="employerCheck" type="text" placeholder="กรอกเลขแรงงาน หรือชื่อนายจ้าง" />
+              <button type="button" class="secondary">ค้นหา</button>
+            </div>
+            <span id="employerStatus" class="status-text">ยังไม่มีคำค้นหา</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <label for="formType">หัวข้อแบบฟอร์ม</label>
+          <select id="formType">
+            <option value="personal">ข้อมูลส่วนตัวแรงงาน</option>
+            <option value="employment">ข้อมูลนายจ้าง/การจ้างงาน</option>
+            <option value="documents">ข้อมูลเอกสารและใบอนุญาต</option>
+            <option value="report">รายงานตรวจสอบภาคสนาม</option>
+          </select>
+        </div>
+      </section>
+
+      <section class="panel" id="formPanel">
+        <form class="form-grid">
+          <div class="form-section" data-section="personal">
+            <h3>ข้อมูลส่วนตัวแรงงาน</h3>
+            <div class="grid-2">
+              <div class="form-row">
+                <label for="fullName">ชื่อ-นามสกุล</label>
+                <input id="fullName" type="text" placeholder="กรอกชื่อแรงงาน" />
+              </div>
+              <div class="form-row">
+                <label for="passport">เลขหนังสือเดินทาง</label>
+                <input id="passport" type="text" placeholder="เช่น P1234567" />
+                <span id="passportInlineStatus" class="status-text"></span>
+              </div>
+            </div>
+            <div class="grid-3">
+              <div class="form-row">
+                <label for="nationality">สัญชาติ</label>
+                <input id="nationality" type="text" placeholder="เมียนมา / ลาว / กัมพูชา" />
+              </div>
+              <div class="form-row">
+                <label for="dob">วันเดือนปีเกิด</label>
+                <input id="dob" type="date" />
+              </div>
+              <div class="form-row">
+                <label for="gender">เพศ</label>
+                <select id="gender">
+                  <option>ชาย</option>
+                  <option>หญิง</option>
+                  <option>อื่น ๆ</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section" data-section="employment">
+            <h3>ข้อมูลนายจ้าง/การจ้างงาน</h3>
+            <div class="grid-2">
+              <div class="form-row">
+                <label for="company">ชื่อบริษัท/สถานประกอบการ</label>
+                <input id="company" type="text" placeholder="ระบุชื่อบริษัท" />
+              </div>
+              <div class="form-row">
+                <label for="position">ตำแหน่งงาน</label>
+                <input id="position" type="text" placeholder="เช่น พนักงานผลิต" />
+              </div>
+            </div>
+            <div class="grid-2">
+              <div class="form-row">
+                <label for="workSite">สถานที่ทำงาน</label>
+                <input id="workSite" type="text" placeholder="ที่อยู่สถานที่ทำงาน" />
+              </div>
+              <div class="form-row">
+                <label for="startDate">วันเริ่มงาน</label>
+                <input id="startDate" type="date" />
+              </div>
+            </div>
+            <div class="form-row">
+              <label for="employerId">เลขประจำตัวนายจ้าง</label>
+              <input id="employerId" type="text" placeholder="เช่น EMP-00123" />
+            </div>
+          </div>
+
+          <div class="form-section" data-section="documents">
+            <h3>ข้อมูลเอกสารและใบอนุญาต</h3>
+            <div class="grid-2">
+              <div class="form-row">
+                <label for="permitType">ประเภทใบอนุญาต</label>
+                <select id="permitType">
+                  <option>บัตรชมพู</option>
+                  <option>วีซ่าแรงงาน</option>
+                  <option>MOU</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label for="permitNo">เลขที่ใบอนุญาต</label>
+                <input id="permitNo" type="text" placeholder="ระบุเลขที่" />
+              </div>
+            </div>
+            <div class="grid-2">
+              <div class="form-row">
+                <label for="expiry">วันหมดอายุ</label>
+                <input id="expiry" type="date" />
+                <span id="expiryStatus" class="status-text"></span>
+              </div>
+              <div class="form-row">
+                <label for="verification">สถานะตรวจสอบ</label>
+                <select id="verification">
+                  <option>รอตรวจสอบ</option>
+                  <option>ผ่านการตรวจสอบ</option>
+                  <option>ต้องแก้ไข</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <label>เอกสารประกอบ (อัปโหลดรูป/ไฟล์)</label>
+              <div class="upload-grid">
+                <label class="upload-card">
+                  <span>รูปหน้าคน</span>
+                  <input id="facePhoto" type="file" accept="image/*" />
+                </label>
+                <label class="upload-card">
+                  <span>บัตรประชาชน/บัตรชมพู</span>
+                  <input id="idCard" type="file" accept="image/*,.pdf" />
+                </label>
+                <label class="upload-card">
+                  <span>ทะเบียนบ้าน</span>
+                  <input id="houseDoc" type="file" accept="image/*,.pdf" />
+                </label>
+              </div>
+              <ul id="uploadList" class="upload-list"></ul>
+            </div>
+          </div>
+
+          <div class="form-section" data-section="report">
+            <h3>รายงานตรวจสอบภาคสนาม</h3>
+            <div class="grid-2">
+              <div class="form-row">
+                <label for="inspector">ผู้ตรวจสอบ</label>
+                <input id="inspector" type="text" placeholder="ชื่อผู้ตรวจสอบ" />
+              </div>
+              <div class="form-row">
+                <label for="inspectionDate">วันที่ตรวจสอบ</label>
+                <input id="inspectionDate" type="date" />
+              </div>
+            </div>
+            <div class="form-row">
+              <label for="notes">หมายเหตุ</label>
+              <textarea id="notes" rows="4" placeholder="สรุปผลการตรวจสอบ"></textarea>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="secondary">บันทึกฉบับร่าง</button>
+            <button type="submit" class="primary">ยืนยันตรวจสอบ</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel info">
+        <div>
+          <h2>แนวทางลดงานเอกสาร</h2>
+          <ul>
+            <li>ระบบแสดงช่องข้อมูลเฉพาะที่จำเป็น</li>
+            <li>ตรวจสอบสถานะใบอนุญาตก่อนส่งงาน</li>
+            <li>รองรับการใช้งานบนมือถือสำหรับลงพื้นที่</li>
+          </ul>
+        </div>
+        <div class="status-card">
+          <h3>สถานะระบบ</h3>
+          <p>พร้อมใช้งานสำหรับการตรวจสอบเบื้องต้น</p>
+          <span class="status-chip">เว็บต้นแบบ</span>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>ต้นแบบสำหรับพัฒนาเป็นแอป iOS/Android ในอนาคต</p>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>

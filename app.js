@@ -49,6 +49,9 @@ const RECORD_SEARCH_KEY = "recordSearchQuery";
 let currentEditId = null;
 
 const updateSections = () => {
+  if (!formType || !sections.length) {
+    return;
+  }
   const selected = formType.value;
   sections.forEach((section) => {
     section.style.display = section.dataset.section === selected ? "block" : "none";

@@ -151,6 +151,11 @@ const translations = {
     recordNameLabel: "ชื่อ",
     recordPassportLabel: "พาสปอร์ต",
     recordEmployerLabel: "นายจ้าง",
+    recordAttachmentsTitle: "เอกสารแนบ",
+    recordFacePhotoLabel: "รูปหน้า",
+    recordIdCardLabel: "บัตรประชาชน/บัตรชมพู",
+    recordHouseDocLabel: "ทะเบียนบ้าน",
+    recordPaymentSlipLabel: "สลิปการโอนเงิน",
     paymentTitle: "ยืนยันการชำระเงิน",
     paymentStatusLabel: "สถานะการชำระเงิน",
     paymentPending: "ยังไม่ชำระ",
@@ -258,6 +263,11 @@ const translations = {
     recordNameLabel: "Name",
     recordPassportLabel: "Passport",
     recordEmployerLabel: "Employer",
+    recordAttachmentsTitle: "Attachments",
+    recordFacePhotoLabel: "Face photo",
+    recordIdCardLabel: "ID/pink card",
+    recordHouseDocLabel: "House registration",
+    recordPaymentSlipLabel: "Payment slip",
     paymentTitle: "Payment confirmation",
     paymentStatusLabel: "Payment status",
     paymentPending: "Not paid",
@@ -449,6 +459,9 @@ const collectFormData = () => {
     paymentDate: paymentDate.value,
     paymentNotes: paymentNotes.value.trim(),
     recordedBy: recordedBy ? recordedBy.value.trim() : "",
+    facePhoto: uploadInputs[0]?.files?.[0]?.name || "",
+    idCard: uploadInputs[1]?.files?.[0]?.name || "",
+    houseDoc: uploadInputs[2]?.files?.[0]?.name || "",
     attachments: Array.from(uploadInputs).flatMap((input) => Array.from(input.files)).map((file) => file.name),
     paymentSlip: paymentSlipInput?.files?.[0]?.name || "",
   };
@@ -587,6 +600,51 @@ const openRecordModal = (record) => {
     list.appendChild(recordedByItem);
     recordModalBody.appendChild(title);
     recordModalBody.appendChild(list);
+    const attachments = [];
+    if (record.data.facePhoto) {
+      attachments.push({
+        label: translations[currentLanguage].recordFacePhotoLabel,
+        value: record.data.facePhoto,
+      });
+    }
+    if (record.data.idCard) {
+      attachments.push({
+        label: translations[currentLanguage].recordIdCardLabel,
+        value: record.data.idCard,
+      });
+    }
+    if (record.data.houseDoc) {
+      attachments.push({
+        label: translations[currentLanguage].recordHouseDocLabel,
+        value: record.data.houseDoc,
+      });
+    }
+    if (record.data.paymentSlip) {
+      attachments.push({
+        label: translations[currentLanguage].recordPaymentSlipLabel,
+        value: record.data.paymentSlip,
+      });
+    }
+    if (!attachments.length && Array.isArray(record.data.attachments)) {
+      record.data.attachments.forEach((fileName) => {
+        attachments.push({
+          label: translations[currentLanguage].recordAttachmentsTitle,
+          value: fileName,
+        });
+      });
+    }
+    if (attachments.length) {
+      const attachmentTitle = document.createElement("h5");
+      attachmentTitle.textContent = translations[currentLanguage].recordAttachmentsTitle;
+      const attachmentList = document.createElement("ul");
+      attachments.forEach((item) => {
+        const listItem = document.createElement("li");
+        listItem.textContent = `${item.label}: ${item.value}`;
+        attachmentList.appendChild(listItem);
+      });
+      recordModalBody.appendChild(attachmentTitle);
+      recordModalBody.appendChild(attachmentList);
+    }
   }
   recordModal.classList.add("is-open");
   recordModal.setAttribute("aria-hidden", "false");

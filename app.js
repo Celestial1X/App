@@ -297,6 +297,9 @@ const validatePassport = (value, target) => {
 };
 
 const updateEmployerStatus = () => {
+  if (!employerCheckInput || !employerStatus) {
+    return;
+  }
   const value = employerCheckInput.value.trim();
   if (!value) {
     setStatus(employerStatus, translations[currentLanguage].employerEmpty);
@@ -306,6 +309,9 @@ const updateEmployerStatus = () => {
 };
 
 const updateExpiryStatus = () => {
+  if (!expiryInput || !expiryStatus) {
+    return;
+  }
   if (!expiryInput.value) {
     setStatus(expiryStatus, "");
     return;
@@ -322,6 +328,9 @@ const updateExpiryStatus = () => {
 };
 
 const renderPreview = (container, files, onRemove) => {
+  if (!container) {
+    return;
+  }
   container.innerHTML = "";
   if (!files.length) {
     const emptyText = document.createElement("p");
@@ -352,6 +361,9 @@ const renderPreview = (container, files, onRemove) => {
 };
 
 const updateUploadPreview = () => {
+  if (!uploadPreview || !uploadInputs.length) {
+    return;
+  }
   const files = Array.from(uploadInputs).flatMap((input) => Array.from(input.files));
   renderPreview(uploadPreview, files, (indexToRemove) => {
     uploadInputs.forEach((input) => {
@@ -368,6 +380,9 @@ const updateUploadPreview = () => {
 };
 
 const updatePaymentSlipPreview = () => {
+  if (!paymentSlipInput || !paymentSlipPreview) {
+    return;
+  }
   const files = paymentSlipInput.files ? Array.from(paymentSlipInput.files) : [];
   renderPreview(paymentSlipPreview, files, () => {
     paymentSlipInput.value = "";
@@ -687,12 +702,14 @@ const applyTranslations = (lang) => {
   });
   currentLanguage = lang;
   updateEmployerStatus();
-  if (passportCheckInput.value) {
-    validatePassport(passportCheckInput.value, passportStatus);
-  } else {
-    setStatus(passportStatus, dict.passportEmpty);
+  if (passportCheckInput && passportStatus) {
+    if (passportCheckInput.value) {
+      validatePassport(passportCheckInput.value, passportStatus);
+    } else {
+      setStatus(passportStatus, dict.passportEmpty);
+    }
   }
-  if (passportInput.value) {
+  if (passportInput && passportInlineStatus && passportInput.value) {
     validatePassport(passportInput.value, passportInlineStatus);
   }
   updateExpiryStatus();

@@ -16,15 +16,17 @@ const employerId = document.getElementById("employerId");
 const permitType = document.getElementById("permitType");
 const permitNo = document.getElementById("permitNo");
 const verification = document.getElementById("verification");
-const inspector = document.getElementById("inspector");
-const inspectionDate = document.getElementById("inspectionDate");
-const notes = document.getElementById("notes");
+const paymentStatus = document.getElementById("paymentStatus");
+const paymentDate = document.getElementById("paymentDate");
+const paymentNotes = document.getElementById("paymentNotes");
 const employerCheckInput = document.getElementById("employerCheck");
 const employerStatus = document.getElementById("employerStatus");
 const expiryInput = document.getElementById("expiry");
 const expiryStatus = document.getElementById("expiryStatus");
 const uploadInputs = document.querySelectorAll("#facePhoto, #idCard, #houseDoc");
-const uploadList = document.getElementById("uploadList");
+const uploadPreview = document.getElementById("uploadPreview");
+const paymentSlipInput = document.getElementById("paymentSlip");
+const paymentSlipPreview = document.getElementById("paymentSlipPreview");
 const languageButtons = document.querySelectorAll(".lang-btn");
 const workerForm = document.getElementById("workerForm");
 const formSaveStatus = document.getElementById("formSaveStatus");
@@ -42,6 +44,20 @@ const recordModalBody = document.getElementById("recordModalBody");
 const recordModalClose = document.getElementById("recordModalClose");
 const recordModalCloseButton = document.getElementById("recordModalCloseButton");
 const draftButton = document.getElementById("draftButton");
+const loginRole = document.getElementById("loginRole");
+const loginEmail = document.getElementById("loginEmail");
+const loginId = document.getElementById("loginId");
+const loginButton = document.getElementById("loginButton");
+const loginStatus = document.getElementById("loginStatus");
+const registerRole = document.getElementById("registerRole");
+const registerName = document.getElementById("registerName");
+const registerEmail = document.getElementById("registerEmail");
+const registerId = document.getElementById("registerId");
+const registerEmployerId = document.getElementById("registerEmployerId");
+const registerButton = document.getElementById("registerButton");
+const registerStatus = document.getElementById("registerStatus");
+const pageTabs = document.querySelectorAll(".tab-btn");
+const pageSections = document.querySelectorAll("[data-page]");
 
 const updateSections = () => {
   const selected = formType.value;
@@ -66,7 +82,7 @@ const translations = {
     formTypePersonal: "ข้อมูลส่วนตัวแรงงาน",
     formTypeEmployment: "ข้อมูลนายจ้าง/การจ้างงาน",
     formTypeDocuments: "ข้อมูลเอกสารและใบอนุญาต",
-    formTypeReport: "รายงานตรวจสอบภาคสนาม",
+    formTypeReport: "ยืนยันการชำระเงิน",
     personalTitle: "ข้อมูลส่วนตัวแรงงาน",
     fullNameLabel: "ชื่อ-นามสกุล",
     fullNamePlaceholder: "กรอกชื่อแรงงาน",
@@ -105,22 +121,9 @@ const translations = {
     uploadFace: "รูปหน้าคน",
     uploadId: "บัตรประชาชน/บัตรชมพู",
     uploadHouse: "ทะเบียนบ้าน",
-    reportTitle: "รายงานตรวจสอบภาคสนาม",
-    inspectorLabel: "ผู้ตรวจสอบ",
-    inspectorPlaceholder: "ชื่อผู้ตรวจสอบ",
-    inspectionDateLabel: "วันที่ตรวจสอบ",
-    notesLabel: "หมายเหตุ",
-    notesPlaceholder: "สรุปผลการตรวจสอบ",
+    reportTitle: "ยืนยันการชำระเงิน",
     draftButton: "บันทึกฉบับร่าง",
     submitButton: "ยืนยันตรวจสอบ",
-    guideTitle: "แนวทางลดงานเอกสาร",
-    guideItem1: "ระบบแสดงช่องข้อมูลเฉพาะที่จำเป็น",
-    guideItem2: "ตรวจสอบสถานะใบอนุญาตก่อนส่งงาน",
-    guideItem3: "รองรับการใช้งานบนมือถือสำหรับลงพื้นที่",
-    statusTitle: "สถานะระบบ",
-    statusDescription: "พร้อมใช้งานสำหรับการตรวจสอบเบื้องต้น",
-    statusChip: "เว็บต้นแบบ",
-    footerText: "ต่อยอดเป็นแอป iOS/Android ได้ในอนาคต",
     passportEmpty: "กรุณากรอกเลขพาสปอร์ต",
     passportValid: "รูปแบบเลขพาสปอร์ตถูกต้อง (ตัวอย่าง)",
     passportInvalid: "รูปแบบไม่ถูกต้อง (ต้องมีตัวอักษร 1 ตัว + ตัวเลข 6-8 ตัว)",
@@ -153,6 +156,34 @@ const translations = {
     recordNameLabel: "ชื่อ",
     recordPassportLabel: "พาสปอร์ต",
     recordEmployerLabel: "นายจ้าง",
+    paymentTitle: "ยืนยันการชำระเงิน",
+    paymentStatusLabel: "สถานะการชำระเงิน",
+    paymentPending: "ยังไม่ชำระ",
+    paymentPaid: "ชำระแล้ว",
+    paymentDateLabel: "วันที่ชำระเงิน",
+    paymentSlipLabel: "แนบสลิปการชำระเงิน",
+    paymentSlipUpload: "อัปโหลดสลิป",
+    paymentNotesLabel: "หมายเหตุ",
+    paymentNotesPlaceholder: "รายละเอียดเพิ่มเติม",
+    tabAuth: "เข้าสู่ระบบ",
+    tabLookup: "ค้นหาข้อมูล",
+    tabRecords: "ข้อมูลบันทึก",
+    tabForm: "กรอกแบบฟอร์ม",
+    authTitle: "เข้าสู่ระบบ/สมัครสมาชิก",
+    loginTitle: "เข้าสู่ระบบ",
+    registerTitle: "สมัครสมาชิก",
+    roleLabel: "ประเภทผู้ใช้งาน",
+    roleWorker: "แรงงานต่างด้าว",
+    roleEmployer: "นายจ้าง",
+    roleStaff: "พนักงาน/เจ้าหน้าที่",
+    emailLabel: "อีเมล",
+    idLabel: "เลขประจำตัว",
+    nameLabel: "ชื่อ-นามสกุล",
+    loginButton: "เข้าสู่ระบบ",
+    registerButton: "สมัครสมาชิก",
+    loginSuccess: "เข้าสู่ระบบสำเร็จ",
+    registerSuccess: "สมัครสมาชิกเรียบร้อยแล้ว",
+    loginFailed: "ไม่พบผู้ใช้งาน กรุณาสมัครสมาชิก",
   },
   en: {
     heroTitle: "Foreign Worker Data Verification",
@@ -169,7 +200,7 @@ const translations = {
     formTypePersonal: "Personal details",
     formTypeEmployment: "Employer & employment",
     formTypeDocuments: "Documents & permits",
-    formTypeReport: "Field inspection report",
+    formTypeReport: "Payment confirmation",
     personalTitle: "Personal details",
     fullNameLabel: "Full name",
     fullNamePlaceholder: "Worker name",
@@ -208,22 +239,9 @@ const translations = {
     uploadFace: "Face photo",
     uploadId: "ID card / pink card",
     uploadHouse: "House registration",
-    reportTitle: "Field inspection report",
-    inspectorLabel: "Inspector",
-    inspectorPlaceholder: "Inspector name",
-    inspectionDateLabel: "Inspection date",
-    notesLabel: "Notes",
-    notesPlaceholder: "Inspection summary",
+    reportTitle: "Payment confirmation",
     draftButton: "Save draft",
     submitButton: "Confirm verification",
-    guideTitle: "Paperwork reduction tips",
-    guideItem1: "Shows only required fields",
-    guideItem2: "Check permit status before submission",
-    guideItem3: "Mobile-friendly for on-site use",
-    statusTitle: "System status",
-    statusDescription: "Ready for preliminary verification",
-    statusChip: "Prototype",
-    footerText: "Ready to evolve into iOS/Android apps",
     passportEmpty: "Please enter a passport number.",
     passportValid: "Passport format looks valid (sample).",
     passportInvalid: "Invalid format (1 letter + 6-8 digits).",
@@ -256,6 +274,34 @@ const translations = {
     recordNameLabel: "Name",
     recordPassportLabel: "Passport",
     recordEmployerLabel: "Employer",
+    paymentTitle: "Payment confirmation",
+    paymentStatusLabel: "Payment status",
+    paymentPending: "Not paid",
+    paymentPaid: "Paid",
+    paymentDateLabel: "Payment date",
+    paymentSlipLabel: "Attach payment slip",
+    paymentSlipUpload: "Upload slip",
+    paymentNotesLabel: "Notes",
+    paymentNotesPlaceholder: "Additional details",
+    tabAuth: "Login",
+    tabLookup: "Lookup",
+    tabRecords: "Records",
+    tabForm: "Form",
+    authTitle: "Login / Register",
+    loginTitle: "Login",
+    registerTitle: "Register",
+    roleLabel: "User role",
+    roleWorker: "Foreign worker",
+    roleEmployer: "Employer",
+    roleStaff: "Staff",
+    emailLabel: "Email",
+    idLabel: "ID number",
+    nameLabel: "Full name",
+    loginButton: "Login",
+    registerButton: "Register",
+    loginSuccess: "Login successful.",
+    registerSuccess: "Registration complete.",
+    loginFailed: "User not found. Please register.",
   },
 };
 
@@ -309,19 +355,57 @@ const updateExpiryStatus = () => {
   );
 };
 
-const updateUploadList = () => {
-  const files = Array.from(uploadInputs).flatMap((input) => Array.from(input.files));
-  uploadList.innerHTML = "";
+const renderPreview = (container, files, onRemove) => {
+  container.innerHTML = "";
   if (!files.length) {
-    const emptyItem = document.createElement("li");
-    emptyItem.textContent = translations[currentLanguage].uploadEmpty;
-    uploadList.appendChild(emptyItem);
+    const emptyText = document.createElement("p");
+    emptyText.className = "status-text";
+    emptyText.textContent = translations[currentLanguage].uploadEmpty;
+    container.appendChild(emptyText);
     return;
   }
-  files.forEach((file) => {
-    const item = document.createElement("li");
-    item.textContent = `${file.name} (${Math.round(file.size / 1024)} KB)`;
-    uploadList.appendChild(item);
+  files.forEach((file, index) => {
+    const card = document.createElement("div");
+    card.className = "preview-card";
+    const image = document.createElement("img");
+    image.alt = file.name;
+    image.src = URL.createObjectURL(file);
+    const meta = document.createElement("div");
+    meta.className = "preview-meta";
+    meta.textContent = `${file.name} (${Math.round(file.size / 1024)} KB)`;
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "preview-remove";
+    remove.textContent = currentLanguage === "th" ? "ลบ" : "Remove";
+    remove.addEventListener("click", () => onRemove(index));
+    card.appendChild(image);
+    card.appendChild(meta);
+    card.appendChild(remove);
+    container.appendChild(card);
+  });
+};
+
+const updateUploadPreview = () => {
+  const files = Array.from(uploadInputs).flatMap((input) => Array.from(input.files));
+  renderPreview(uploadPreview, files, (indexToRemove) => {
+    uploadInputs.forEach((input) => {
+      const filesArray = Array.from(input.files);
+      if (filesArray[indexToRemove]) {
+        filesArray.splice(indexToRemove, 1);
+        const dataTransfer = new DataTransfer();
+        filesArray.forEach((file) => dataTransfer.items.add(file));
+        input.files = dataTransfer.files;
+      }
+    });
+    updateUploadPreview();
+  });
+};
+
+const updatePaymentSlipPreview = () => {
+  const files = paymentSlipInput.files ? Array.from(paymentSlipInput.files) : [];
+  renderPreview(paymentSlipPreview, files, () => {
+    paymentSlipInput.value = "";
+    updatePaymentSlipPreview();
   });
 };
 
@@ -376,10 +460,11 @@ const collectFormData = () => {
     permitNo: permitNo.value.trim(),
     expiry: expiry.value,
     verification: verification.value,
-    inspector: inspector.value.trim(),
-    inspectionDate: inspectionDate.value,
-    notes: notes.value.trim(),
+    paymentStatus: paymentStatus.value,
+    paymentDate: paymentDate.value,
+    paymentNotes: paymentNotes.value.trim(),
     attachments: Array.from(uploadInputs).flatMap((input) => Array.from(input.files)).map((file) => file.name),
+    paymentSlip: paymentSlipInput?.files?.[0]?.name || "",
   };
   const hasAnyValue = Object.entries(formData).some(([key, value]) => {
     if (key === "formType" || key === "attachments") return false;
@@ -398,17 +483,28 @@ const renderRecords = () => {
     const searchable = `${record.formId} ${record.formTypeLabel} ${record.displayName}`.toLowerCase();
     return matchesFilter && searchable.includes(query);
   });
+  const currentUser = getCurrentUser();
+  const scoped = filtered.filter((record) => {
+    if (!currentUser) return true;
+    if (currentUser.role === "employer") {
+      return record.data.employerId && record.data.employerId === currentUser.employerId;
+    }
+    if (currentUser.role === "worker") {
+      return record.data.passport && record.data.passport === currentUser.id;
+    }
+    return true;
+  });
 
   recordsList.innerHTML = "";
   if (!records.length) {
     recordsStatus.textContent = translations[currentLanguage].recordsStatus;
-  } else if (!filtered.length) {
+  } else if (!scoped.length) {
     recordsStatus.textContent = translations[currentLanguage].recordSearchEmpty;
   } else {
-    recordsStatus.textContent = `${filtered.length} ${translations[currentLanguage].recordsCount}`;
+    recordsStatus.textContent = `${scoped.length} ${translations[currentLanguage].recordsCount}`;
   }
 
-  filtered.forEach((record) => {
+  scoped.forEach((record) => {
     const card = document.createElement("div");
     card.className = "record-card";
     const title = document.createElement("div");
@@ -451,24 +547,43 @@ const openRecordModal = (record) => {
     const title = document.createElement("h4");
     title.textContent = translations[currentLanguage].recordDetailsTitle;
     const list = document.createElement("ul");
-    const nameItem = document.createElement("li");
-    nameItem.textContent = `${translations[currentLanguage].recordNameLabel}: ${
-      record.data.fullName || "-"
-    }`;
-    const passportItem = document.createElement("li");
-    passportItem.textContent = `${translations[currentLanguage].recordPassportLabel}: ${
-      record.data.passport || "-"
-    }`;
-    const employerItem = document.createElement("li");
-    employerItem.textContent = `${translations[currentLanguage].recordEmployerLabel}: ${
-      record.data.company || record.data.employerId || "-"
-    }`;
-    const typeItem = document.createElement("li");
-    typeItem.textContent = `${translations[currentLanguage].recordFormTypeLabel}: ${record.formTypeLabel}`;
-    list.appendChild(nameItem);
-    list.appendChild(passportItem);
-    list.appendChild(employerItem);
-    list.appendChild(typeItem);
+    const currentUser = getCurrentUser();
+    if (currentUser?.role === "worker") {
+      const expiryItem = document.createElement("li");
+      expiryItem.textContent = `${translations[currentLanguage].expiryLabel}: ${record.data.expiry || "-"}`;
+      const paymentItem = document.createElement("li");
+      paymentItem.textContent = `${translations[currentLanguage].paymentStatusLabel}: ${
+        record.data.paymentStatus === "paid"
+          ? translations[currentLanguage].paymentPaid
+          : translations[currentLanguage].paymentPending
+      }`;
+      const paymentDateItem = document.createElement("li");
+      paymentDateItem.textContent = `${translations[currentLanguage].paymentDateLabel}: ${
+        record.data.paymentDate || "-"
+      }`;
+      list.appendChild(expiryItem);
+      list.appendChild(paymentItem);
+      list.appendChild(paymentDateItem);
+    } else {
+      const nameItem = document.createElement("li");
+      nameItem.textContent = `${translations[currentLanguage].recordNameLabel}: ${
+        record.data.fullName || "-"
+      }`;
+      const passportItem = document.createElement("li");
+      passportItem.textContent = `${translations[currentLanguage].recordPassportLabel}: ${
+        record.data.passport || "-"
+      }`;
+      const employerItem = document.createElement("li");
+      employerItem.textContent = `${translations[currentLanguage].recordEmployerLabel}: ${
+        record.data.company || record.data.employerId || "-"
+      }`;
+      const typeItem = document.createElement("li");
+      typeItem.textContent = `${translations[currentLanguage].recordFormTypeLabel}: ${record.formTypeLabel}`;
+      list.appendChild(nameItem);
+      list.appendChild(passportItem);
+      list.appendChild(employerItem);
+      list.appendChild(typeItem);
+    }
     recordModalBody.appendChild(title);
     recordModalBody.appendChild(list);
   }
@@ -517,6 +632,62 @@ const saveRecord = () => {
   renderRecords();
 };
 
+const loadUsers = () => {
+  const stored = localStorage.getItem("users");
+  return stored ? JSON.parse(stored) : [];
+};
+
+const saveUsers = (users) => {
+  localStorage.setItem("users", JSON.stringify(users));
+};
+
+const setCurrentUser = (user) => {
+  localStorage.setItem("currentUser", JSON.stringify(user));
+};
+
+const getCurrentUser = () => {
+  const stored = localStorage.getItem("currentUser");
+  return stored ? JSON.parse(stored) : null;
+};
+
+const handleRegister = () => {
+  const users = loadUsers();
+  const user = {
+    role: registerRole.value,
+    name: registerName.value.trim(),
+    email: registerEmail.value.trim(),
+    id: registerId.value.trim(),
+    employerId: registerEmployerId.value.trim(),
+  };
+  users.push(user);
+  saveUsers(users);
+  setStatus(registerStatus, translations[currentLanguage].registerSuccess, "ok");
+};
+
+const handleLogin = () => {
+  const users = loadUsers();
+  const user = users.find(
+    (item) =>
+      item.email === loginEmail.value.trim() &&
+      item.id === loginId.value.trim() &&
+      item.role === loginRole.value
+  );
+  if (!user) {
+    setStatus(loginStatus, translations[currentLanguage].loginFailed, "warn");
+    return;
+  }
+  setCurrentUser(user);
+  setStatus(loginStatus, translations[currentLanguage].loginSuccess, "ok");
+  renderRecords();
+};
+
+const updatePageView = (page) => {
+  pageTabs.forEach((tab) => tab.classList.toggle("is-active", tab.dataset.page === page));
+  pageSections.forEach((section) => {
+    section.style.display = section.dataset.page === page ? "block" : "none";
+  });
+};
+
 formType.addEventListener("change", updateSections);
 passportInput.addEventListener("input", () => validatePassport(passportInput.value, passportInlineStatus));
 passportCheckInput.addEventListener("input", () =>
@@ -524,9 +695,11 @@ passportCheckInput.addEventListener("input", () =>
 );
 employerCheckInput.addEventListener("input", updateEmployerStatus);
 expiryInput.addEventListener("change", updateExpiryStatus);
-uploadInputs.forEach((input) => input.addEventListener("change", updateUploadList));
+uploadInputs.forEach((input) => input.addEventListener("change", updateUploadPreview));
+paymentSlipInput.addEventListener("change", updatePaymentSlipPreview);
 updateSections();
-updateUploadList();
+updateUploadPreview();
+updatePaymentSlipPreview();
 renderRecords();
 
 const applyTranslations = (lang) => {
@@ -554,7 +727,8 @@ const applyTranslations = (lang) => {
     validatePassport(passportInput.value, passportInlineStatus);
   }
   updateExpiryStatus();
-  updateUploadList();
+  updateUploadPreview();
+  updatePaymentSlipPreview();
   renderRecords();
 };
 
@@ -600,3 +774,9 @@ recordModal.addEventListener("click", (event) => {
     closeRecordModal();
   }
 });
+loginButton.addEventListener("click", handleLogin);
+registerButton.addEventListener("click", handleRegister);
+pageTabs.forEach((tab) => {
+  tab.addEventListener("click", () => updatePageView(tab.dataset.page));
+});
+updatePageView("auth");

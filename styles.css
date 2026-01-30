@@ -70,6 +70,27 @@ h1 {
   gap: 24px;
 }
 
+.page-tabs {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.tab-btn {
+  border: 1px solid #d5dbe8;
+  background: #fff;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tab-btn.is-active {
+  background: #1f5eff;
+  color: #fff;
+  border-color: #1f5eff;
+}
+
 .panel {
   background: #fff;
   padding: 24px;
@@ -231,6 +252,49 @@ textarea {
   margin: 8px 0 0;
   padding-left: 18px;
   color: #3b465b;
+}
+
+.upload-preview {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.preview-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid #e0e6f2;
+  background: #fff;
+}
+
+.preview-card img {
+  width: 68px;
+  height: 68px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.preview-meta {
+  flex: 1;
+  font-size: 0.9rem;
+  color: #3b465b;
+}
+
+.preview-remove {
+  border: none;
+  background: #fdecec;
+  color: #b42318;
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.single-upload {
+  grid-template-columns: 1fr;
 }
 
 button {

@@ -26,7 +26,76 @@
     </header>
 
     <main class="container">
-      <section class="panel">
+      <nav class="page-tabs">
+        <button type="button" class="tab-btn is-active" data-page="auth" data-i18n="tabAuth">
+          เข้าสู่ระบบ
+        </button>
+        <button type="button" class="tab-btn" data-page="lookup" data-i18n="tabLookup">ค้นหาข้อมูล</button>
+        <button type="button" class="tab-btn" data-page="records" data-i18n="tabRecords">ข้อมูลบันทึก</button>
+        <button type="button" class="tab-btn" data-page="form" data-i18n="tabForm">กรอกแบบฟอร์ม</button>
+      </nav>
+
+      <section class="panel" data-page="auth">
+        <h2 data-i18n="authTitle">เข้าสู่ระบบ/สมัครสมาชิก</h2>
+        <div class="grid-2">
+          <div>
+            <h3 data-i18n="loginTitle">เข้าสู่ระบบ</h3>
+            <div class="form-row">
+              <label for="loginRole" data-i18n="roleLabel">ประเภทผู้ใช้งาน</label>
+              <select id="loginRole">
+                <option value="worker" data-i18n="roleWorker">แรงงานต่างด้าว</option>
+                <option value="employer" data-i18n="roleEmployer">นายจ้าง</option>
+                <option value="staff" data-i18n="roleStaff">พนักงาน/เจ้าหน้าที่</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label for="loginEmail" data-i18n="emailLabel">อีเมล</label>
+              <input id="loginEmail" type="email" placeholder="name@example.com" />
+            </div>
+            <div class="form-row">
+              <label for="loginId" data-i18n="idLabel">เลขประจำตัว</label>
+              <input id="loginId" type="text" placeholder="เลขพาสปอร์ตหรือเลขนายจ้าง" />
+            </div>
+            <button type="button" class="primary" id="loginButton" data-i18n="loginButton">
+              เข้าสู่ระบบ
+            </button>
+            <span class="status-text" id="loginStatus"></span>
+          </div>
+          <div>
+            <h3 data-i18n="registerTitle">สมัครสมาชิก</h3>
+            <div class="form-row">
+              <label for="registerRole" data-i18n="roleLabel">ประเภทผู้ใช้งาน</label>
+              <select id="registerRole">
+                <option value="worker" data-i18n="roleWorker">แรงงานต่างด้าว</option>
+                <option value="employer" data-i18n="roleEmployer">นายจ้าง</option>
+                <option value="staff" data-i18n="roleStaff">พนักงาน/เจ้าหน้าที่</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label for="registerName" data-i18n="nameLabel">ชื่อ-นามสกุล</label>
+              <input id="registerName" type="text" placeholder="กรอกชื่อ" />
+            </div>
+            <div class="form-row">
+              <label for="registerEmail" data-i18n="emailLabel">อีเมล</label>
+              <input id="registerEmail" type="email" placeholder="name@example.com" />
+            </div>
+            <div class="form-row">
+              <label for="registerId" data-i18n="idLabel">เลขประจำตัว</label>
+              <input id="registerId" type="text" placeholder="เลขพาสปอร์ต/เลขนายจ้าง/เลขพนักงาน" />
+            </div>
+            <div class="form-row">
+              <label for="registerEmployerId" data-i18n="employerIdLabel">เลขประจำตัวนายจ้าง</label>
+              <input id="registerEmployerId" type="text" placeholder="เช่น EMP-00123" />
+            </div>
+            <button type="button" class="secondary" id="registerButton" data-i18n="registerButton">
+              สมัครสมาชิก
+            </button>
+            <span class="status-text" id="registerStatus"></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" data-page="lookup">
         <h2 data-i18n="sectionSelectTitle">ค้นหาข้อมูลพื้นฐาน</h2>
         <div class="status-grid">
           <div class="status-box">
@@ -78,7 +147,7 @@
         </div>
       </section>
 
-      <section class="panel">
+      <section class="panel" data-page="records">
         <h2 data-i18n="recordsTitle">ค้นหา/บันทึกข้อมูลในระบบ</h2>
         <p class="subtitle" data-i18n="recordsSubtitle">
           บันทึกข้อมูลจากแบบฟอร์มและค้นหาด้วยเลขฟอร์มหรือหัวข้อ
@@ -115,7 +184,7 @@
         <div id="recordsList" class="records-list"></div>
       </section>
 
-      <section class="panel" id="formPanel">
+      <section class="panel" id="formPanel" data-page="form">
         <form class="form-grid" id="workerForm">
           <div class="form-row">
             <label for="formType" data-i18n="formTypeLabel">หัวข้อแบบฟอร์ม</label>
@@ -274,34 +343,42 @@
                   <input id="houseDoc" type="file" accept="image/*,.pdf" />
                 </label>
               </div>
-              <ul id="uploadList" class="upload-list"></ul>
+              <div id="uploadPreview" class="upload-preview"></div>
             </div>
           </div>
 
           <div class="form-section" data-section="report">
-            <h3 data-i18n="reportTitle">รายงานตรวจสอบภาคสนาม</h3>
+            <h3 data-i18n="paymentTitle">ยืนยันการชำระเงิน</h3>
             <div class="grid-2">
               <div class="form-row">
-                <label for="inspector" data-i18n="inspectorLabel">ผู้ตรวจสอบ</label>
-                <input
-                  id="inspector"
-                  type="text"
-                  placeholder="ชื่อผู้ตรวจสอบ"
-                  data-i18n-placeholder="inspectorPlaceholder"
-                />
+                <label for="paymentStatus" data-i18n="paymentStatusLabel">สถานะการชำระเงิน</label>
+                <select id="paymentStatus">
+                  <option value="pending" data-i18n="paymentPending">ยังไม่ชำระ</option>
+                  <option value="paid" data-i18n="paymentPaid">ชำระแล้ว</option>
+                </select>
               </div>
               <div class="form-row">
-                <label for="inspectionDate" data-i18n="inspectionDateLabel">วันที่ตรวจสอบ</label>
-                <input id="inspectionDate" type="date" />
+                <label for="paymentDate" data-i18n="paymentDateLabel">วันที่ชำระเงิน</label>
+                <input id="paymentDate" type="date" />
               </div>
             </div>
             <div class="form-row">
-              <label for="notes" data-i18n="notesLabel">หมายเหตุ</label>
+              <label data-i18n="paymentSlipLabel">แนบสลิปการชำระเงิน</label>
+              <div class="upload-grid single-upload">
+                <label class="upload-card">
+                  <span data-i18n="paymentSlipUpload">อัปโหลดสลิป</span>
+                  <input id="paymentSlip" type="file" accept="image/*,.pdf" />
+                </label>
+              </div>
+              <div class="upload-preview" id="paymentSlipPreview"></div>
+            </div>
+            <div class="form-row">
+              <label for="paymentNotes" data-i18n="paymentNotesLabel">หมายเหตุ</label>
               <textarea
-                id="notes"
-                rows="4"
-                placeholder="สรุปผลการตรวจสอบ"
-                data-i18n-placeholder="notesPlaceholder"
+                id="paymentNotes"
+                rows="3"
+                placeholder="รายละเอียดเพิ่มเติม"
+                data-i18n-placeholder="paymentNotesPlaceholder"
               ></textarea>
             </div>
           </div>

@@ -1,6 +1,6 @@
 :root {
   color-scheme: light;
-  font-family: "Inter", "Noto Sans Thai", system-ui, sans-serif;
+  font-family: "Noto Sans Thai", "Inter", system-ui, sans-serif;
   background: #f5f7fb;
   color: #1c2230;
 }
@@ -12,6 +12,7 @@
 body {
   margin: 0;
   background: #f5f7fb;
+  line-height: 1.6;
 }
 
 .hero {
@@ -31,8 +32,39 @@ body {
   padding: 6px 12px;
   border-radius: 999px;
   font-size: 0.85rem;
+  font-weight: 600;
 }
 
+.hero__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.lang-switch {
+  display: inline-flex;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.18);
+  padding: 6px;
+  border-radius: 999px;
+}
+
+.lang-btn {
+  border: none;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: transparent;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.lang-btn.is-active {
+  background: #fff;
+  color: #1f5eff;
+}
 h1 {
   margin: 16px 0 8px;
   font-size: 2.2rem;
@@ -128,6 +160,13 @@ textarea {
   background: #fff;
 }
 
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid rgba(31, 94, 255, 0.2);
+  border-color: #8aa9ff;
+}
+
 textarea {
   resize: vertical;
 }
@@ -179,6 +218,12 @@ textarea {
   color: #3b465b;
   cursor: pointer;
   min-height: 72px;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.upload-card:hover {
+  border-color: #7b9cff;
+  background: #f4f7ff;
 }
 
 .upload-card input {
@@ -202,6 +247,7 @@ button {
 .primary {
   background: #1f5eff;
   color: #fff;
+  box-shadow: 0 10px 20px rgba(31, 94, 255, 0.2);
 }
 
 .secondary {

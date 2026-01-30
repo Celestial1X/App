@@ -45,6 +45,7 @@ const recordModalCloseButton = document.getElementById("recordModalCloseButton")
 const draftButton = document.getElementById("draftButton");
 const recordedBy = document.getElementById("recordedBy");
 const EDIT_KEY = "editRecordId";
+const RECORD_SEARCH_KEY = "recordSearchQuery";
 let currentEditId = null;
 
 const updateSections = () => {
@@ -635,6 +636,10 @@ const saveRecord = (status = "draft") => {
   currentEditId = null;
   localStorage.removeItem(EDIT_KEY);
   renderRecords();
+  if (workerForm) {
+    localStorage.setItem(RECORD_SEARCH_KEY, formId);
+    window.location.href = "records.html";
+  }
 };
 
 const populateForm = (record) => {
@@ -685,6 +690,14 @@ updateSections();
 updateUploadPreview();
 updatePaymentSlipPreview();
 renderRecords();
+if (recordSearch) {
+  const storedQuery = localStorage.getItem(RECORD_SEARCH_KEY);
+  if (storedQuery) {
+    recordSearch.value = storedQuery;
+    localStorage.removeItem(RECORD_SEARCH_KEY);
+    renderRecords();
+  }
+}
 
 const applyTranslations = (lang) => {
   const dict = translations[lang];
@@ -757,8 +770,13 @@ if (employerCheckButton) {
 }
 if (verifyRecordButton) {
   verifyRecordButton.addEventListener("click", () => {
-    const record = findRecordByQuery(passportInput?.value || fullName?.value || company?.value);
-    openRecordModal(record);
+    const query = passportInput?.value || fullName?.value || company?.value;
+    if (!query) {
+      setStatus(formSaveStatus, translations[currentLanguage].recordNotFound, "warn");
+      return;
+    }
+    localStorage.setItem(RECORD_SEARCH_KEY, query);
+    window.location.href = "records.html";
   });
 }
 if (recordModalClose) {

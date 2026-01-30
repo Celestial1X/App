@@ -27,7 +27,6 @@ const uploadInputs = document.querySelectorAll("#facePhoto, #idCard, #houseDoc")
 const uploadPreview = document.getElementById("uploadPreview");
 const paymentSlipInput = document.getElementById("paymentSlip");
 const paymentSlipPreview = document.getElementById("paymentSlipPreview");
-const languageButtons = document.querySelectorAll(".lang-btn");
 const workerForm = document.getElementById("workerForm");
 const formSaveStatus = document.getElementById("formSaveStatus");
 const recordSearch = document.getElementById("recordSearch");
@@ -44,18 +43,7 @@ const recordModalBody = document.getElementById("recordModalBody");
 const recordModalClose = document.getElementById("recordModalClose");
 const recordModalCloseButton = document.getElementById("recordModalCloseButton");
 const draftButton = document.getElementById("draftButton");
-const loginRole = document.getElementById("loginRole");
-const loginEmail = document.getElementById("loginEmail");
-const loginId = document.getElementById("loginId");
-const loginButton = document.getElementById("loginButton");
-const loginStatus = document.getElementById("loginStatus");
-const registerRole = document.getElementById("registerRole");
-const registerName = document.getElementById("registerName");
-const registerEmail = document.getElementById("registerEmail");
-const registerId = document.getElementById("registerId");
-const registerEmployerId = document.getElementById("registerEmployerId");
-const registerButton = document.getElementById("registerButton");
-const registerStatus = document.getElementById("registerStatus");
+const recordedBy = document.getElementById("recordedBy");
 
 const updateSections = () => {
   const selected = formType.value;
@@ -163,26 +151,11 @@ const translations = {
     paymentSlipUpload: "อัปโหลดสลิป",
     paymentNotesLabel: "หมายเหตุ",
     paymentNotesPlaceholder: "รายละเอียดเพิ่มเติม",
-    tabAuth: "เข้าสู่ระบบ",
     tabLookup: "ค้นหาข้อมูล",
     tabRecords: "ข้อมูลบันทึก",
     tabForm: "กรอกแบบฟอร์ม",
-    authTitle: "เข้าสู่ระบบ/สมัครสมาชิก",
-    loginTitle: "เข้าสู่ระบบ",
-    registerTitle: "สมัครสมาชิก",
-    roleLabel: "ประเภทผู้ใช้งาน",
-    roleWorker: "แรงงานต่างด้าว",
-    roleEmployer: "นายจ้าง",
-    roleStaff: "พนักงาน/เจ้าหน้าที่",
-    emailLabel: "อีเมล",
-    idLabel: "เลขประจำตัว",
-    nameLabel: "ชื่อ-นามสกุล",
-    loginButton: "เข้าสู่ระบบ",
-    registerButton: "สมัครสมาชิก",
-    loginSuccess: "เข้าสู่ระบบสำเร็จ",
-    registerSuccess: "สมัครสมาชิกเรียบร้อยแล้ว",
-    loginFailed: "ไม่พบผู้ใช้งาน กรุณาสมัครสมาชิก",
-    employerIdNotRequired: "พนักงาน/นายจ้างไม่ต้องกรอกเลขประจำตัวนายจ้าง",
+    recordedByLabel: "ชื่อผู้บันทึก",
+    recordedByPlaceholder: "กรอกชื่อผู้บันทึก",
   },
   en: {
     heroTitle: "Foreign Worker Data Verification",
@@ -282,26 +255,11 @@ const translations = {
     paymentSlipUpload: "Upload slip",
     paymentNotesLabel: "Notes",
     paymentNotesPlaceholder: "Additional details",
-    tabAuth: "Login",
     tabLookup: "Lookup",
     tabRecords: "Records",
     tabForm: "Form",
-    authTitle: "Login / Register",
-    loginTitle: "Login",
-    registerTitle: "Register",
-    roleLabel: "User role",
-    roleWorker: "Foreign worker",
-    roleEmployer: "Employer",
-    roleStaff: "Staff",
-    emailLabel: "Email",
-    idLabel: "ID number",
-    nameLabel: "Full name",
-    loginButton: "Login",
-    registerButton: "Register",
-    loginSuccess: "Login successful.",
-    registerSuccess: "Registration complete.",
-    loginFailed: "User not found. Please register.",
-    employerIdNotRequired: "Employer ID not required for staff/employers.",
+    recordedByLabel: "Recorded by",
+    recordedByPlaceholder: "Enter recorder name",
   },
 };
 
@@ -463,6 +421,7 @@ const collectFormData = () => {
     paymentStatus: paymentStatus.value,
     paymentDate: paymentDate.value,
     paymentNotes: paymentNotes.value.trim(),
+    recordedBy: recordedBy ? recordedBy.value.trim() : "",
     attachments: Array.from(uploadInputs).flatMap((input) => Array.from(input.files)).map((file) => file.name),
     paymentSlip: paymentSlipInput?.files?.[0]?.name || "",
   };
@@ -483,17 +442,7 @@ const renderRecords = () => {
     const searchable = `${record.formId} ${record.formTypeLabel} ${record.displayName}`.toLowerCase();
     return matchesFilter && searchable.includes(query);
   });
-  const currentUser = getCurrentUser();
-  const scoped = filtered.filter((record) => {
-    if (!currentUser) return true;
-    if (currentUser.role === "employer") {
-      return record.data.employerId && record.data.employerId === currentUser.employerId;
-    }
-    if (currentUser.role === "worker") {
-      return record.data.passport && record.data.passport === currentUser.id;
-    }
-    return true;
-  });
+  const scoped = filtered;
 
   recordsList.innerHTML = "";
   if (!records.length) {
@@ -547,43 +496,42 @@ const openRecordModal = (record) => {
     const title = document.createElement("h4");
     title.textContent = translations[currentLanguage].recordDetailsTitle;
     const list = document.createElement("ul");
-    const currentUser = getCurrentUser();
-    if (currentUser?.role === "worker") {
-      const expiryItem = document.createElement("li");
-      expiryItem.textContent = `${translations[currentLanguage].expiryLabel}: ${record.data.expiry || "-"}`;
-      const paymentItem = document.createElement("li");
-      paymentItem.textContent = `${translations[currentLanguage].paymentStatusLabel}: ${
-        record.data.paymentStatus === "paid"
-          ? translations[currentLanguage].paymentPaid
-          : translations[currentLanguage].paymentPending
-      }`;
-      const paymentDateItem = document.createElement("li");
-      paymentDateItem.textContent = `${translations[currentLanguage].paymentDateLabel}: ${
-        record.data.paymentDate || "-"
-      }`;
-      list.appendChild(expiryItem);
-      list.appendChild(paymentItem);
-      list.appendChild(paymentDateItem);
-    } else {
-      const nameItem = document.createElement("li");
-      nameItem.textContent = `${translations[currentLanguage].recordNameLabel}: ${
-        record.data.fullName || "-"
-      }`;
-      const passportItem = document.createElement("li");
-      passportItem.textContent = `${translations[currentLanguage].recordPassportLabel}: ${
-        record.data.passport || "-"
-      }`;
-      const employerItem = document.createElement("li");
-      employerItem.textContent = `${translations[currentLanguage].recordEmployerLabel}: ${
-        record.data.company || record.data.employerId || "-"
-      }`;
-      const typeItem = document.createElement("li");
-      typeItem.textContent = `${translations[currentLanguage].recordFormTypeLabel}: ${record.formTypeLabel}`;
-      list.appendChild(nameItem);
-      list.appendChild(passportItem);
-      list.appendChild(employerItem);
-      list.appendChild(typeItem);
-    }
+    const nameItem = document.createElement("li");
+    nameItem.textContent = `${translations[currentLanguage].recordNameLabel}: ${record.data.fullName || "-"}`;
+    const passportItem = document.createElement("li");
+    passportItem.textContent = `${translations[currentLanguage].recordPassportLabel}: ${
+      record.data.passport || "-"
+    }`;
+    const employerItem = document.createElement("li");
+    employerItem.textContent = `${translations[currentLanguage].recordEmployerLabel}: ${
+      record.data.company || record.data.employerId || "-"
+    }`;
+    const typeItem = document.createElement("li");
+    typeItem.textContent = `${translations[currentLanguage].recordFormTypeLabel}: ${record.formTypeLabel}`;
+    const expiryItem = document.createElement("li");
+    expiryItem.textContent = `${translations[currentLanguage].expiryLabel}: ${record.data.expiry || "-"}`;
+    const paymentItem = document.createElement("li");
+    paymentItem.textContent = `${translations[currentLanguage].paymentStatusLabel}: ${
+      record.data.paymentStatus === "paid"
+        ? translations[currentLanguage].paymentPaid
+        : translations[currentLanguage].paymentPending
+    }`;
+    const paymentDateItem = document.createElement("li");
+    paymentDateItem.textContent = `${translations[currentLanguage].paymentDateLabel}: ${
+      record.data.paymentDate || "-"
+    }`;
+    const recordedByItem = document.createElement("li");
+    recordedByItem.textContent = `${translations[currentLanguage].recordedByLabel}: ${
+      record.data.recordedBy || "-"
+    }`;
+    list.appendChild(nameItem);
+    list.appendChild(passportItem);
+    list.appendChild(employerItem);
+    list.appendChild(typeItem);
+    list.appendChild(expiryItem);
+    list.appendChild(paymentItem);
+    list.appendChild(paymentDateItem);
+    list.appendChild(recordedByItem);
     recordModalBody.appendChild(title);
     recordModalBody.appendChild(list);
   }
@@ -631,60 +579,6 @@ const saveRecord = () => {
   setStatus(formSaveStatus, `${translations[currentLanguage].saveDraftSuccess}: ${formId}`, "ok");
   renderRecords();
 };
-
-const loadUsers = () => {
-  const stored = localStorage.getItem("users");
-  return stored ? JSON.parse(stored) : [];
-};
-
-const saveUsers = (users) => {
-  localStorage.setItem("users", JSON.stringify(users));
-};
-
-const setCurrentUser = (user) => {
-  localStorage.setItem("currentUser", JSON.stringify(user));
-};
-
-const getCurrentUser = () => {
-  const stored = localStorage.getItem("currentUser");
-  return stored ? JSON.parse(stored) : null;
-};
-
-const handleRegister = () => {
-  const users = loadUsers();
-  if (registerRole.value !== "worker") {
-    registerEmployerId.value = "";
-  }
-  const user = {
-    role: registerRole.value,
-    name: registerName.value.trim(),
-    email: registerEmail.value.trim(),
-    id: registerId.value.trim(),
-    employerId: registerEmployerId.value.trim(),
-  };
-  users.push(user);
-  saveUsers(users);
-  setStatus(registerStatus, translations[currentLanguage].registerSuccess, "ok");
-};
-
-const handleLogin = () => {
-  const users = loadUsers();
-  const user = users.find(
-    (item) =>
-      item.email === loginEmail.value.trim() &&
-      item.id === loginId.value.trim() &&
-      item.role === loginRole.value
-  );
-  if (!user) {
-    setStatus(loginStatus, translations[currentLanguage].loginFailed, "warn");
-    return;
-  }
-  setCurrentUser(user);
-  setStatus(loginStatus, translations[currentLanguage].loginSuccess, "ok");
-  renderRecords();
-};
-
-const updatePageView = () => {};
 
 if (formType) {
   formType.addEventListener("change", updateSections);
@@ -739,14 +633,6 @@ const applyTranslations = (lang) => {
   updatePaymentSlipPreview();
   renderRecords();
 };
-
-languageButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    languageButtons.forEach((btn) => btn.classList.remove("is-active"));
-    button.classList.add("is-active");
-    applyTranslations(button.dataset.lang);
-  });
-});
 
 applyTranslations(currentLanguage);
 
@@ -804,9 +690,4 @@ if (recordModal) {
     }
   });
 }
-if (loginButton) {
-  loginButton.addEventListener("click", handleLogin);
-}
-if (registerButton) {
-  registerButton.addEventListener("click", handleRegister);
-}
+// login/register removed

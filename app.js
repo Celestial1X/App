@@ -44,6 +44,8 @@ const recordModalClose = document.getElementById("recordModalClose");
 const recordModalCloseButton = document.getElementById("recordModalCloseButton");
 const draftButton = document.getElementById("draftButton");
 const recordedBy = document.getElementById("recordedBy");
+const EDIT_KEY = "editRecordId";
+let currentEditId = null;
 
 const updateSections = () => {
   const selected = formType.value;
@@ -109,7 +111,7 @@ const translations = {
     uploadHouse: "ทะเบียนบ้าน",
     reportTitle: "ยืนยันการชำระเงิน",
     draftButton: "บันทึกฉบับร่าง",
-    submitButton: "ยืนยันตรวจสอบ",
+    submitButton: "บันทึกข้อมูล",
     passportEmpty: "กรุณากรอกเลขพาสปอร์ต",
     passportValid: "รูปแบบเลขพาสปอร์ตถูกต้อง (ตัวอย่าง)",
     passportInvalid: "รูปแบบไม่ถูกต้อง (ต้องมีตัวอักษร 1 ตัว + ตัวเลข 6-8 ตัว)",
@@ -133,6 +135,9 @@ const translations = {
     recordUpdated: "อัปเดตล่าสุด",
     recordSearchEmpty: "ไม่พบข้อมูลที่ตรงกับคำค้นหา",
     recordsCount: "รายการที่พบ",
+    recordStatusDraft: "ฉบับร่าง",
+    recordStatusFinal: "สำเร็จแล้ว",
+    editButton: "แก้ไข",
     verifyButton: "ตรวจสอบข้อมูล",
     recordModalTitle: "ผลการค้นหา",
     closeButton: "ปิดหน้าต่าง",
@@ -213,7 +218,7 @@ const translations = {
     uploadHouse: "House registration",
     reportTitle: "Payment confirmation",
     draftButton: "Save draft",
-    submitButton: "Confirm verification",
+    submitButton: "Save record",
     passportEmpty: "Please enter a passport number.",
     passportValid: "Passport format looks valid (sample).",
     passportInvalid: "Invalid format (1 letter + 6-8 digits).",
@@ -237,6 +242,9 @@ const translations = {
     recordUpdated: "Last updated",
     recordSearchEmpty: "No matching records found.",
     recordsCount: "records found",
+    recordStatusDraft: "Draft",
+    recordStatusFinal: "Completed",
+    editButton: "Edit",
     verifyButton: "Verify record",
     recordModalTitle: "Search results",
     closeButton: "Close",
@@ -472,15 +480,31 @@ const renderRecords = () => {
     chip.className = "record-chip";
     chip.textContent = record.formTypeLabel;
     tags.appendChild(chip);
+    const statusChip = document.createElement("span");
+    statusChip.className = "record-chip";
+    statusChip.textContent =
+      record.status === "final"
+        ? translations[currentLanguage].recordStatusFinal
+        : translations[currentLanguage].recordStatusDraft;
+    tags.appendChild(statusChip);
     const verifyButton = document.createElement("button");
     verifyButton.type = "button";
     verifyButton.className = "secondary";
     verifyButton.textContent = translations[currentLanguage].verifyButton;
     verifyButton.addEventListener("click", () => openRecordModal(record));
+    const editButton = document.createElement("button");
+    editButton.type = "button";
+    editButton.className = "secondary";
+    editButton.textContent = translations[currentLanguage].editButton;
+    editButton.addEventListener("click", () => {
+      localStorage.setItem(EDIT_KEY, record.formId);
+      window.location.href = "form.html";
+    });
     card.appendChild(title);
     card.appendChild(meta);
     card.appendChild(tags);
     card.appendChild(verifyButton);
+    card.appendChild(editButton);
     recordsList.appendChild(card);
   });
 };
@@ -508,6 +532,12 @@ const openRecordModal = (record) => {
     }`;
     const typeItem = document.createElement("li");
     typeItem.textContent = `${translations[currentLanguage].recordFormTypeLabel}: ${record.formTypeLabel}`;
+    const statusItem = document.createElement("li");
+    statusItem.textContent = `${translations[currentLanguage].verificationLabel}: ${
+      record.status === "final"
+        ? translations[currentLanguage].recordStatusFinal
+        : translations[currentLanguage].recordStatusDraft
+    }`;
     const expiryItem = document.createElement("li");
     expiryItem.textContent = `${translations[currentLanguage].expiryLabel}: ${record.data.expiry || "-"}`;
     const paymentItem = document.createElement("li");
@@ -528,6 +558,7 @@ const openRecordModal = (record) => {
     list.appendChild(passportItem);
     list.appendChild(employerItem);
     list.appendChild(typeItem);
+    list.appendChild(statusItem);
     list.appendChild(expiryItem);
     list.appendChild(paymentItem);
     list.appendChild(paymentDateItem);
@@ -557,27 +588,60 @@ const findRecordByQuery = (query) => {
   );
 };
 
-const saveRecord = () => {
+const saveRecord = (status = "draft") => {
   const { formData, hasAnyValue } = collectFormData();
   if (!hasAnyValue) {
     setStatus(formSaveStatus, translations[currentLanguage].saveDraftEmpty, "warn");
     return;
   }
   const records = loadRecords();
-  const formId = buildFormId();
+  const formId = currentEditId || buildFormId();
   const displayName = formData.fullName || formData.company || formData.passport || formId;
+  const existingIndex = records.findIndex((record) => record.formId === formId);
   const record = {
     formId,
     formType: formData.formType,
     formTypeLabel: getFormTypeLabel(formData.formType),
     displayName,
     updatedAt: new Date().toISOString(),
+    status,
     data: formData,
   };
-  records.unshift(record);
+  if (existingIndex >= 0) {
+    records.splice(existingIndex, 1, record);
+  } else {
+    records.unshift(record);
+  }
   saveRecords(records);
   setStatus(formSaveStatus, `${translations[currentLanguage].saveDraftSuccess}: ${formId}`, "ok");
+  currentEditId = null;
+  localStorage.removeItem(EDIT_KEY);
   renderRecords();
+};
+
+const populateForm = (record) => {
+  if (!record) return;
+  if (formType) formType.value = record.formType;
+  if (recordedBy) recordedBy.value = record.data.recordedBy || "";
+  if (fullName) fullName.value = record.data.fullName || "";
+  if (passportInput) passportInput.value = record.data.passport || "";
+  if (nationality) nationality.value = record.data.nationality || "";
+  if (dob) dob.value = record.data.dob || "";
+  if (gender) gender.value = record.data.gender || "";
+  if (company) company.value = record.data.company || "";
+  if (position) position.value = record.data.position || "";
+  if (workSite) workSite.value = record.data.workSite || "";
+  if (startDate) startDate.value = record.data.startDate || "";
+  if (employerId) employerId.value = record.data.employerId || "";
+  if (permitType) permitType.value = record.data.permitType || "";
+  if (permitNo) permitNo.value = record.data.permitNo || "";
+  if (expiryInput) expiryInput.value = record.data.expiry || "";
+  if (verification) verification.value = record.data.verification || "";
+  if (paymentStatus) paymentStatus.value = record.data.paymentStatus || "pending";
+  if (paymentDate) paymentDate.value = record.data.paymentDate || "";
+  if (paymentNotes) paymentNotes.value = record.data.paymentNotes || "";
+  updateSections();
+  updateExpiryStatus();
 };
 
 if (formType) {
@@ -639,12 +703,12 @@ applyTranslations(currentLanguage);
 if (workerForm) {
   workerForm.addEventListener("submit", (event) => {
     event.preventDefault();
-    saveRecord();
+    saveRecord("final");
   });
 }
 
 if (draftButton) {
-  draftButton.addEventListener("click", saveRecord);
+  draftButton.addEventListener("click", () => saveRecord("draft"));
 }
 if (recordSearch) {
   recordSearch.addEventListener("input", renderRecords);
@@ -690,4 +754,14 @@ if (recordModal) {
     }
   });
 }
-// login/register removed
+if (workerForm) {
+  const storedEditId = localStorage.getItem(EDIT_KEY);
+  if (storedEditId) {
+    const records = loadRecords();
+    const record = records.find((item) => item.formId === storedEditId);
+    if (record) {
+      currentEditId = record.formId;
+      populateForm(record);
+    }
+  }
+}

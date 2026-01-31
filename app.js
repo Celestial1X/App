@@ -1,31 +1,16 @@
 const formType = document.getElementById("formType");
 const sections = document.querySelectorAll(".form-section");
-const passportInput = document.getElementById("passport");
 const passportCheckInput = document.getElementById("passportCheck");
 const passportStatus = document.getElementById("passportStatus");
-const passportInlineStatus = document.getElementById("passportInlineStatus");
-const fullName = document.getElementById("fullName");
-const passportType = document.getElementById("passportType");
-const nationality = document.getElementById("nationality");
-const dob = document.getElementById("dob");
-const gender = document.getElementById("gender");
-const workerId = document.getElementById("workerId");
-const cardIssueDate = document.getElementById("cardIssueDate");
-const cardExpiryDate = document.getElementById("cardExpiryDate");
-const cardExpiryStatus = document.getElementById("cardExpiryStatus");
+const workerList = document.getElementById("workerList");
+const addWorkerButton = document.getElementById("addWorker");
+const workerTemplate = document.getElementById("workerTemplate");
 const company = document.getElementById("company");
 const caseType = document.getElementById("caseType");
 const position = document.getElementById("position");
 const workSite = document.getElementById("workSite");
 const startDate = document.getElementById("startDate");
-const ciNumber = document.getElementById("ciNumber");
 const employerId = document.getElementById("employerId");
-const permitType = document.getElementById("permitType");
-const permitNo = document.getElementById("permitNo");
-const visaNumber = document.getElementById("visaNumber");
-const visaIssueDate = document.getElementById("visaIssueDate");
-const visaExpiryDate = document.getElementById("visaExpiryDate");
-const visaExpiryStatus = document.getElementById("visaExpiryStatus");
 const renewalType = document.getElementById("renewalType");
 const renewalStatus = document.getElementById("renewalStatus");
 const receivedFacePhoto = document.getElementById("receivedFacePhoto");
@@ -41,8 +26,6 @@ const paymentDate = document.getElementById("paymentDate");
 const paymentNotes = document.getElementById("paymentNotes");
 const employerCheckInput = document.getElementById("employerCheck");
 const employerStatus = document.getElementById("employerStatus");
-const expiryInput = document.getElementById("expiry");
-const expiryStatus = document.getElementById("expiryStatus");
 const facePhotoInput = document.getElementById("facePhoto");
 const idCardInput = document.getElementById("idCard");
 const houseDocInput = document.getElementById("houseDoc");
@@ -115,6 +98,11 @@ const translations = {
     formTypeDocuments: "ข้อมูลเอกสารและใบอนุญาต",
     formTypeReport: "ยืนยันการชำระเงิน",
     personalTitle: "ข้อมูลส่วนตัวแรงงาน",
+    workerListHelper: "เพิ่มรายชื่อแรงงานหลายคนต่อ 1 นายจ้าง โดยแต่ละคนมีชุดข้อมูลของตัวเอง",
+    addWorkerButton: "เพิ่มรายชื่อ",
+    workerCardTitle: "แรงงานคนที่",
+    removeWorkerButton: "ลบรายชื่อ",
+    workerDetailsTitle: "รายชื่อแรงงาน",
     fullNameLabel: "ชื่อ-นามสกุล",
     fullNamePlaceholder: "กรอกชื่อแรงงาน",
     passportTypeLabel: "ประเภทพาสปอร์ต",
@@ -251,6 +239,7 @@ const translations = {
     tabForm: "กรอกแบบฟอร์ม",
     recordedByLabel: "ชื่อผู้บันทึก",
     recordedByPlaceholder: "กรอกชื่อผู้บันทึก",
+    workerCountSuffix: "คน",
   },
   en: {
     heroTitle: "Foreign Worker Data Verification",
@@ -269,6 +258,11 @@ const translations = {
     formTypeDocuments: "Documents & permits",
     formTypeReport: "Payment confirmation",
     personalTitle: "Personal details",
+    workerListHelper: "Add multiple workers per employer. Each person has their own details.",
+    addWorkerButton: "Add worker",
+    workerCardTitle: "Worker",
+    removeWorkerButton: "Remove",
+    workerDetailsTitle: "Worker details",
     fullNameLabel: "Full name",
     fullNamePlaceholder: "Worker name",
     passportTypeLabel: "Passport type",
@@ -405,6 +399,7 @@ const translations = {
     tabForm: "Form",
     recordedByLabel: "Recorded by",
     recordedByPlaceholder: "Enter recorder name",
+    workerCountSuffix: "workers",
   },
 };
 
@@ -469,52 +464,29 @@ const updateEmployerStatus = () => {
   setStatus(employerStatus, `${translations[currentLanguage].employerChecking} ${value}`, "warn");
 };
 
-const updateExpiryStatus = () => {
-  if (!expiryInput || !expiryStatus) {
-    return;
-  }
-  if (!expiryInput.value) {
-    setStatus(expiryStatus, "");
-    expiryInput.classList.remove("is-expired");
-    return;
-  }
-  const { state, days } = getExpiryState(expiryInput.value);
-  expiryInput.classList.toggle("is-expired", state === "expired");
-  expiryInput.classList.toggle("is-expiring", state === "warning");
-  const statusType = state === "expired" ? "error" : state === "warning" ? "warn" : "ok";
-  setStatus(expiryStatus, formatExpiryLabel(state, days), statusType);
-};
-
-const updateCardExpiryStatus = () => {
-  if (!cardExpiryDate || !cardExpiryStatus) {
-    return;
-  }
-  if (!cardExpiryDate.value) {
-    setStatus(cardExpiryStatus, "");
-    cardExpiryDate.classList.remove("is-expired", "is-expiring");
-    return;
-  }
-  const { state, days } = getExpiryState(cardExpiryDate.value);
-  cardExpiryDate.classList.toggle("is-expired", state === "expired");
-  cardExpiryDate.classList.toggle("is-expiring", state === "warning");
-  const statusType = state === "expired" ? "error" : state === "warning" ? "warn" : "ok";
-  setStatus(cardExpiryStatus, formatExpiryLabel(state, days), statusType);
-};
-
-const updateVisaExpiryStatus = () => {
-  if (!visaExpiryDate || !visaExpiryStatus) {
-    return;
-  }
-  if (!visaExpiryDate.value) {
-    setStatus(visaExpiryStatus, "");
-    visaExpiryDate.classList.remove("is-expired", "is-expiring");
-    return;
-  }
-  const { state, days } = getExpiryState(visaExpiryDate.value);
-  visaExpiryDate.classList.toggle("is-expired", state === "expired");
-  visaExpiryDate.classList.toggle("is-expiring", state === "warning");
-  const statusType = state === "expired" ? "error" : state === "warning" ? "warn" : "ok";
-  setStatus(visaExpiryStatus, formatExpiryLabel(state, days), statusType);
+const refreshWorkerStatuses = () => {
+  getWorkerCards().forEach((card) => {
+    const passportInput = card.querySelector('[data-field="passport"]');
+    const passportStatus = card.querySelector('[data-field-status="passport"]');
+    if (passportInput && passportStatus && passportInput.value) {
+      validatePassport(passportInput.value, passportStatus);
+    }
+    const cardExpiryInput = card.querySelector('[data-field="cardExpiryDate"]');
+    const cardExpiryStatus = card.querySelector('[data-field-status="cardExpiry"]');
+    if (cardExpiryInput && cardExpiryStatus) {
+      updateExpiryStatusForInput(cardExpiryInput, cardExpiryStatus);
+    }
+    const visaExpiryInput = card.querySelector('[data-field="visaExpiryDate"]');
+    const visaExpiryStatus = card.querySelector('[data-field-status="visaExpiry"]');
+    if (visaExpiryInput && visaExpiryStatus) {
+      updateExpiryStatusForInput(visaExpiryInput, visaExpiryStatus);
+    }
+    const expiryInput = card.querySelector('[data-field="expiry"]');
+    const expiryStatus = card.querySelector('[data-field-status="expiry"]');
+    if (expiryInput && expiryStatus) {
+      updateExpiryStatusForInput(expiryInput, expiryStatus);
+    }
+  });
 };
 
 const renderPreview = (container, files, onRemove) => {
@@ -729,6 +701,192 @@ const getRenewalStatusLabel = (value) => {
   return map[value] || value || "-";
 };
 
+const updateExpiryStatusForInput = (input, statusElement) => {
+  if (!input || !statusElement) {
+    return;
+  }
+  if (!input.value) {
+    setStatus(statusElement, "");
+    input.classList.remove("is-expired", "is-expiring");
+    return;
+  }
+  const { state, days } = getExpiryState(input.value);
+  input.classList.toggle("is-expired", state === "expired");
+  input.classList.toggle("is-expiring", state === "warning");
+  const statusType = state === "expired" ? "error" : state === "warning" ? "warn" : "ok";
+  setStatus(statusElement, formatExpiryLabel(state, days), statusType);
+};
+
+const updateWorkerCardTitle = (card, index) => {
+  const title = card.querySelector(".worker-card__title");
+  if (!title) return;
+  title.textContent = `${translations[currentLanguage].workerCardTitle} ${index + 1}`;
+};
+
+const getWorkerCards = () => (workerList ? Array.from(workerList.querySelectorAll(".worker-card")) : []);
+
+const hasWorkerValue = (worker) =>
+  Object.values(worker).some((value) => (Array.isArray(value) ? value.length > 0 : value));
+
+const extractWorkerData = (card) => {
+  const getValue = (field) => {
+    const input = card.querySelector(`[data-field="${field}"]`);
+    if (!input) return "";
+    return input.value?.trim?.() || input.value || "";
+  };
+  return {
+    fullName: getValue("fullName"),
+    passportType: getValue("passportType") || "ci",
+    passport: getValue("passport"),
+    workerId: getValue("workerId"),
+    ciNumber: getValue("ciNumber"),
+    permitType: getValue("permitType") || "pink",
+    permitNo: getValue("permitNo"),
+    nationality: getValue("nationality"),
+    cardIssueDate: getValue("cardIssueDate"),
+    cardExpiryDate: getValue("cardExpiryDate"),
+    dob: getValue("dob"),
+    gender: getValue("gender") || translations[currentLanguage].genderMale,
+    visaNumber: getValue("visaNumber"),
+    visaIssueDate: getValue("visaIssueDate"),
+    visaExpiryDate: getValue("visaExpiryDate"),
+    expiry: getValue("expiry"),
+  };
+};
+
+const normalizeWorkers = (data) => {
+  if (Array.isArray(data.workers) && data.workers.length) {
+    return data.workers;
+  }
+  const legacyWorker = {
+    fullName: data.fullName || "",
+    passportType: data.passportType || "ci",
+    passport: data.passport || "",
+    workerId: data.workerId || "",
+    ciNumber: data.ciNumber || "",
+    permitType: data.permitType || "pink",
+    permitNo: data.permitNo || "",
+    nationality: data.nationality || "",
+    cardIssueDate: data.cardIssueDate || "",
+    cardExpiryDate: data.cardExpiryDate || "",
+    dob: data.dob || "",
+    gender: data.gender || "",
+    visaNumber: data.visaNumber || "",
+    visaIssueDate: data.visaIssueDate || "",
+    visaExpiryDate: data.visaExpiryDate || "",
+    expiry: data.expiry || "",
+  };
+  return hasWorkerValue(legacyWorker) ? [legacyWorker] : [];
+};
+
+const createWorkerCard = (data = {}) => {
+  if (!workerTemplate) return null;
+  const fragment = workerTemplate.content.firstElementChild.cloneNode(true);
+  const setValue = (field, value) => {
+    const input = fragment.querySelector(`[data-field="${field}"]`);
+    if (!input) return;
+    if (input.tagName === "SELECT") {
+      input.value = value || input.value;
+    } else {
+      input.value = value || "";
+    }
+  };
+  setValue("fullName", data.fullName);
+  setValue("passportType", data.passportType);
+  setValue("passport", data.passport);
+  setValue("workerId", data.workerId);
+  setValue("ciNumber", data.ciNumber);
+  setValue("permitType", data.permitType);
+  setValue("permitNo", data.permitNo);
+  setValue("nationality", data.nationality);
+  setValue("cardIssueDate", data.cardIssueDate);
+  setValue("cardExpiryDate", data.cardExpiryDate);
+  setValue("dob", data.dob);
+  setValue("gender", data.gender);
+  setValue("visaNumber", data.visaNumber);
+  setValue("visaIssueDate", data.visaIssueDate);
+  setValue("visaExpiryDate", data.visaExpiryDate);
+  setValue("expiry", data.expiry);
+  const removeButton = fragment.querySelector(".remove-worker");
+  if (removeButton) {
+    removeButton.addEventListener("click", () => {
+      fragment.remove();
+      ensureWorkerCards();
+      getWorkerCards().forEach(updateWorkerCardTitle);
+      refreshWorkerStatuses();
+    });
+  }
+  const passportInput = fragment.querySelector('[data-field="passport"]');
+  const passportStatus = fragment.querySelector('[data-field-status="passport"]');
+  if (passportInput && passportStatus) {
+    passportInput.addEventListener("input", () => validatePassport(passportInput.value, passportStatus));
+  }
+  const cardExpiryInput = fragment.querySelector('[data-field="cardExpiryDate"]');
+  const cardExpiryStatus = fragment.querySelector('[data-field-status="cardExpiry"]');
+  if (cardExpiryInput && cardExpiryStatus) {
+    cardExpiryInput.addEventListener("change", () => updateExpiryStatusForInput(cardExpiryInput, cardExpiryStatus));
+    updateExpiryStatusForInput(cardExpiryInput, cardExpiryStatus);
+  }
+  const visaExpiryInput = fragment.querySelector('[data-field="visaExpiryDate"]');
+  const visaExpiryStatus = fragment.querySelector('[data-field-status="visaExpiry"]');
+  if (visaExpiryInput && visaExpiryStatus) {
+    visaExpiryInput.addEventListener("change", () => updateExpiryStatusForInput(visaExpiryInput, visaExpiryStatus));
+    updateExpiryStatusForInput(visaExpiryInput, visaExpiryStatus);
+  }
+  const expiryInput = fragment.querySelector('[data-field="expiry"]');
+  const expiryStatus = fragment.querySelector('[data-field-status="expiry"]');
+  if (expiryInput && expiryStatus) {
+    expiryInput.addEventListener("change", () => updateExpiryStatusForInput(expiryInput, expiryStatus));
+    updateExpiryStatusForInput(expiryInput, expiryStatus);
+  }
+  return fragment;
+};
+
+const ensureWorkerCards = () => {
+  if (!workerList || !workerTemplate) return;
+  if (getWorkerCards().length === 0) {
+    const card = createWorkerCard();
+    if (card) {
+      workerList.appendChild(card);
+    }
+  }
+  getWorkerCards().forEach(updateWorkerCardTitle);
+};
+
+const getWorkerSearchText = (workers) =>
+  workers
+    .map((worker) =>
+      [
+        worker.fullName,
+        worker.passport,
+        worker.workerId,
+        worker.ciNumber,
+        worker.visaNumber,
+        worker.permitNo,
+      ]
+        .filter(Boolean)
+        .join(" ")
+    )
+    .join(" ");
+
+const getAggregatedExpiryState = (workers, field) => {
+  let warningDays = null;
+  for (const worker of workers) {
+    const value = worker[field];
+    if (!value) continue;
+    const { state, days } = getExpiryState(value);
+    if (state === "expired") {
+      return { state: "expired", days };
+    }
+    if (state === "warning") {
+      warningDays = warningDays === null ? days : Math.min(warningDays, days);
+    }
+  }
+  if (warningDays !== null) {
+    return { state: "warning", days: warningDays };
+  }
+  return { state: "ok", days: null };
+};
 const collectFormData = () => {
   const receivedDocs = [];
   if (receivedFacePhoto?.checked) receivedDocs.push("facePhoto");
@@ -738,30 +896,16 @@ const collectFormData = () => {
   const requiredDocs = Array.from(requiredRenewalDocs)
     .filter((item) => item.checked)
     .map((item) => item.value);
+  const workers = getWorkerCards().map(extractWorkerData).filter(hasWorkerValue);
   const formData = {
     formType: formType.value,
-    fullName: fullName.value.trim(),
-    passportType: passportType?.value || "",
-    passport: passportInput.value.trim(),
-    workerId: workerId?.value?.trim() || "",
-    ciNumber: ciNumber?.value?.trim() || "",
-    cardIssueDate: cardIssueDate?.value || "",
-    cardExpiryDate: cardExpiryDate?.value || "",
-    nationality: nationality.value.trim(),
-    dob: dob.value,
-    gender: gender.value,
+    workers,
     company: company.value.trim(),
     caseType: caseType?.value || "",
     position: position?.value?.trim() || "",
     workSite: workSite?.value?.trim() || "",
     startDate: startDate?.value || "",
     employerId: employerId.value.trim(),
-    permitType: permitType.value,
-    permitNo: permitNo.value.trim(),
-    visaNumber: visaNumber?.value?.trim() || "",
-    visaIssueDate: visaIssueDate?.value || "",
-    visaExpiryDate: visaExpiryDate?.value || "",
-    expiry: expiryInput.value,
     verification: verification.value,
     paymentStatus: paymentStatus.value,
     paymentDate: paymentDate.value,
@@ -801,9 +945,10 @@ const renderRecords = () => {
   const filtered = records.filter((record) => {
     const matchesFilter = filter === "all" || record.formType === filter;
     if (!query) return matchesFilter;
-    const searchable = `${record.formId} ${record.formTypeLabel} ${record.displayName} ${
-      record.data.passport || ""
-    } ${record.data.workerId || ""} ${record.data.ciNumber || ""} ${record.data.visaNumber || ""}`.toLowerCase();
+    const workers = normalizeWorkers(record.data);
+    const searchable = `${record.formId} ${record.formTypeLabel} ${record.displayName} ${record.data.company || ""} ${
+      record.data.employerId || ""
+    } ${getWorkerSearchText(workers)}`.toLowerCase();
     return matchesFilter && searchable.includes(query);
   });
   const scoped = filtered;
@@ -887,7 +1032,8 @@ const renderRecords = () => {
     card.appendChild(tags);
     card.appendChild(verifyButton);
     card.appendChild(editButton);
-      const cardExpiryState = getExpiryState(record.data.cardExpiryDate);
+      const workers = normalizeWorkers(record.data);
+      const cardExpiryState = getAggregatedExpiryState(workers, "cardExpiryDate");
       if (cardExpiryState.state === "expired" || cardExpiryState.state === "warning") {
         const expiryChip = document.createElement("span");
         expiryChip.className = `record-chip ${cardExpiryState.state === "expired" ? "alert" : "warn"}`;
@@ -897,7 +1043,7 @@ const renderRecords = () => {
             : translations[currentLanguage].expiryWarning.replace("{days}", cardExpiryState.days);
         tags.appendChild(expiryChip);
       }
-      const visaExpiryState = getExpiryState(record.data.visaExpiryDate);
+      const visaExpiryState = getAggregatedExpiryState(workers, "visaExpiryDate");
       if (visaExpiryState.state === "expired" || visaExpiryState.state === "warning") {
         const visaChip = document.createElement("span");
         visaChip.className = `record-chip ${visaExpiryState.state === "expired" ? "alert" : "warn"}`;
@@ -923,20 +1069,6 @@ const openRecordModal = (record) => {
     const title = document.createElement("h4");
     title.textContent = translations[currentLanguage].recordDetailsTitle;
     const list = document.createElement("ul");
-    const nameItem = document.createElement("li");
-    nameItem.textContent = `${translations[currentLanguage].recordNameLabel}: ${record.data.fullName || "-"}`;
-    const passportItem = document.createElement("li");
-    passportItem.textContent = `${translations[currentLanguage].recordPassportLabel}: ${
-      record.data.passport || "-"
-    }`;
-    const workerIdItem = document.createElement("li");
-    workerIdItem.textContent = `${translations[currentLanguage].workerIdLabel}: ${record.data.workerId || "-"}`;
-    const passportTypeItem = document.createElement("li");
-    passportTypeItem.textContent = `${translations[currentLanguage].passportTypeLabel}: ${getPassportTypeLabel(
-      record.data.passportType
-    )}`;
-    const ciItem = document.createElement("li");
-    ciItem.textContent = `${translations[currentLanguage].ciNumberLabel}: ${record.data.ciNumber || "-"}`;
     const employerItem = document.createElement("li");
     employerItem.textContent = `${translations[currentLanguage].recordEmployerLabel}: ${
       record.data.company || record.data.employerId || "-"
@@ -953,22 +1085,6 @@ const openRecordModal = (record) => {
         ? translations[currentLanguage].recordStatusFinal
         : translations[currentLanguage].recordStatusDraft
     }`;
-    const expiryItem = document.createElement("li");
-    expiryItem.textContent = `${translations[currentLanguage].expiryLabel}: ${record.data.expiry || "-"}`;
-    const cardIssueItem = document.createElement("li");
-    cardIssueItem.textContent = `${translations[currentLanguage].cardIssueDateLabel}: ${record.data.cardIssueDate || "-"}`;
-    const cardExpiryItem = document.createElement("li");
-    const cardExpiryState = getExpiryState(record.data.cardExpiryDate);
-    const cardExpiryLabel = record.data.cardExpiryDate ? formatExpiryLabel(cardExpiryState.state, cardExpiryState.days) : "-";
-    cardExpiryItem.textContent = `${translations[currentLanguage].cardExpiryDateLabel}: ${cardExpiryLabel}`;
-    const visaIssueItem = document.createElement("li");
-    visaIssueItem.textContent = `${translations[currentLanguage].visaIssueDateLabel}: ${record.data.visaIssueDate || "-"}`;
-    const visaItem = document.createElement("li");
-    visaItem.textContent = `${translations[currentLanguage].visaNumberLabel}: ${record.data.visaNumber || "-"}`;
-    const visaExpiryItem = document.createElement("li");
-    const visaExpiryState = getExpiryState(record.data.visaExpiryDate);
-    const visaExpiryLabel = record.data.visaExpiryDate ? formatExpiryLabel(visaExpiryState.state, visaExpiryState.days) : "-";
-    visaExpiryItem.textContent = `${translations[currentLanguage].visaExpiryDateLabel}: ${visaExpiryLabel}`;
     const renewalTypeItem = document.createElement("li");
     renewalTypeItem.textContent = `${translations[currentLanguage].renewalTypeLabel}: ${getRenewalTypeLabel(
       record.data.renewalType
@@ -991,23 +1107,12 @@ const openRecordModal = (record) => {
     recordedByItem.textContent = `${translations[currentLanguage].recordedByLabel}: ${
       record.data.recordedBy || "-"
     }`;
-    list.appendChild(nameItem);
-    list.appendChild(passportItem);
-    list.appendChild(workerIdItem);
-    list.appendChild(passportTypeItem);
-    list.appendChild(ciItem);
     list.appendChild(employerItem);
     if (record.data.caseType) {
       list.appendChild(caseTypeItem);
     }
     list.appendChild(typeItem);
     list.appendChild(statusItem);
-    list.appendChild(cardIssueItem);
-    list.appendChild(cardExpiryItem);
-    list.appendChild(expiryItem);
-    list.appendChild(visaIssueItem);
-    list.appendChild(visaItem);
-    list.appendChild(visaExpiryItem);
     list.appendChild(paymentItem);
     list.appendChild(paymentDateItem);
     list.appendChild(recordedByItem);
@@ -1015,6 +1120,74 @@ const openRecordModal = (record) => {
     list.appendChild(renewalStatusItem);
     recordModalBody.appendChild(title);
     recordModalBody.appendChild(list);
+    const workers = normalizeWorkers(record.data);
+    if (workers.length) {
+      const workerTitle = document.createElement("h5");
+      workerTitle.textContent = translations[currentLanguage].workerDetailsTitle;
+      recordModalBody.appendChild(workerTitle);
+      workers.forEach((worker, index) => {
+        const workerCard = document.createElement("div");
+        workerCard.className = "worker-detail";
+        const workerHeading = document.createElement("h6");
+        workerHeading.textContent = `${translations[currentLanguage].workerCardTitle} ${index + 1}: ${
+          worker.fullName || "-"
+        }`;
+        const workerList = document.createElement("ul");
+        const workerIdItem = document.createElement("li");
+        workerIdItem.textContent = `${translations[currentLanguage].workerIdLabel}: ${worker.workerId || "-"}`;
+        const passportItem = document.createElement("li");
+        passportItem.textContent = `${translations[currentLanguage].recordPassportLabel}: ${worker.passport || "-"}`;
+        const passportTypeItem = document.createElement("li");
+        passportTypeItem.textContent = `${translations[currentLanguage].passportTypeLabel}: ${getPassportTypeLabel(
+          worker.passportType
+        )}`;
+        const ciItem = document.createElement("li");
+        ciItem.textContent = `${translations[currentLanguage].ciNumberLabel}: ${worker.ciNumber || "-"}`;
+        const permitItem = document.createElement("li");
+        permitItem.textContent = `${translations[currentLanguage].permitTypeLabel}: ${worker.permitType || "-"}`;
+        const permitNoItem = document.createElement("li");
+        permitNoItem.textContent = `${translations[currentLanguage].permitNoLabel}: ${worker.permitNo || "-"}`;
+        const cardIssueItem = document.createElement("li");
+        cardIssueItem.textContent = `${translations[currentLanguage].cardIssueDateLabel}: ${
+          worker.cardIssueDate || "-"
+        }`;
+        const cardExpiryItem = document.createElement("li");
+        const cardExpiryState = getExpiryState(worker.cardExpiryDate);
+        const cardExpiryLabel = worker.cardExpiryDate
+          ? formatExpiryLabel(cardExpiryState.state, cardExpiryState.days)
+          : "-";
+        cardExpiryItem.textContent = `${translations[currentLanguage].cardExpiryDateLabel}: ${cardExpiryLabel}`;
+        const expiryItem = document.createElement("li");
+        const expiryState = getExpiryState(worker.expiry);
+        const expiryLabel = worker.expiry ? formatExpiryLabel(expiryState.state, expiryState.days) : "-";
+        expiryItem.textContent = `${translations[currentLanguage].expiryLabel}: ${expiryLabel}`;
+        const visaIssueItem = document.createElement("li");
+        visaIssueItem.textContent = `${translations[currentLanguage].visaIssueDateLabel}: ${worker.visaIssueDate || "-"}`;
+        const visaItem = document.createElement("li");
+        visaItem.textContent = `${translations[currentLanguage].visaNumberLabel}: ${worker.visaNumber || "-"}`;
+        const visaExpiryItem = document.createElement("li");
+        const visaExpiryState = getExpiryState(worker.visaExpiryDate);
+        const visaExpiryLabel = worker.visaExpiryDate
+          ? formatExpiryLabel(visaExpiryState.state, visaExpiryState.days)
+          : "-";
+        visaExpiryItem.textContent = `${translations[currentLanguage].visaExpiryDateLabel}: ${visaExpiryLabel}`;
+        workerList.appendChild(workerIdItem);
+        workerList.appendChild(passportItem);
+        workerList.appendChild(passportTypeItem);
+        workerList.appendChild(ciItem);
+        workerList.appendChild(permitItem);
+        workerList.appendChild(permitNoItem);
+        workerList.appendChild(cardIssueItem);
+        workerList.appendChild(cardExpiryItem);
+        workerList.appendChild(expiryItem);
+        workerList.appendChild(visaIssueItem);
+        workerList.appendChild(visaItem);
+        workerList.appendChild(visaExpiryItem);
+        workerCard.appendChild(workerHeading);
+        workerCard.appendChild(workerList);
+        recordModalBody.appendChild(workerCard);
+      });
+    }
     if (record.data.receivedDocs?.length || record.data.requiredRenewalDocs?.length) {
       const docTitle = document.createElement("h5");
       docTitle.textContent = translations[currentLanguage].receivedDocsLabel;
@@ -1140,22 +1313,25 @@ const openEmployerModal = (query) => {
   } else {
     const list = document.createElement("ul");
     records.forEach((record) => {
-      const item = document.createElement("li");
-      const name = record.data.fullName || "-";
-      const workerIdValue = record.data.workerId || "-";
-      const expiryState = getExpiryState(record.data.cardExpiryDate);
-      const expiryLabel = record.data.cardExpiryDate
-        ? formatExpiryLabel(expiryState.state, expiryState.days)
-        : "-";
-      item.textContent = `${name} • ${translations[currentLanguage].workerIdLabel}: ${workerIdValue} • ${translations[currentLanguage].cardExpiryDateLabel}: ${expiryLabel}`;
-      const viewButton = document.createElement("button");
-      viewButton.type = "button";
-      viewButton.className = "secondary";
-      viewButton.textContent = translations[currentLanguage].verifyButton;
-      viewButton.addEventListener("click", () => openRecordModal(record));
-      item.appendChild(document.createElement("br"));
-      item.appendChild(viewButton);
-      list.appendChild(item);
+      const workers = normalizeWorkers(record.data);
+      workers.forEach((worker) => {
+        const item = document.createElement("li");
+        const name = worker.fullName || "-";
+        const workerIdValue = worker.workerId || "-";
+        const expiryState = getExpiryState(worker.cardExpiryDate);
+        const expiryLabel = worker.cardExpiryDate
+          ? formatExpiryLabel(expiryState.state, expiryState.days)
+          : "-";
+        item.textContent = `${name} • ${translations[currentLanguage].workerIdLabel}: ${workerIdValue} • ${translations[currentLanguage].cardExpiryDateLabel}: ${expiryLabel}`;
+        const viewButton = document.createElement("button");
+        viewButton.type = "button";
+        viewButton.className = "secondary";
+        viewButton.textContent = translations[currentLanguage].verifyButton;
+        viewButton.addEventListener("click", () => openRecordModal(record));
+        item.appendChild(document.createElement("br"));
+        item.appendChild(viewButton);
+        list.appendChild(item);
+      });
     });
     recordModalBody.appendChild(list);
   }
@@ -1174,13 +1350,21 @@ const findRecordByQuery = (query) => {
   const normalized = query.trim().toLowerCase();
   return (
     records.find((record) => record.formId.toLowerCase() === normalized) ||
-    records.find((record) => record.data.passport?.toLowerCase() === normalized) ||
-    records.find((record) => record.data.workerId?.toLowerCase() === normalized) ||
-    records.find((record) => record.data.ciNumber?.toLowerCase() === normalized) ||
-    records.find((record) => record.data.visaNumber?.toLowerCase() === normalized) ||
     records.find((record) => record.data.company?.toLowerCase().includes(normalized)) ||
     records.find((record) => record.data.employerId?.toLowerCase().includes(normalized)) ||
-    records.find((record) => record.data.fullName?.toLowerCase().includes(normalized))
+    records.find((record) =>
+      normalizeWorkers(record.data).some((worker) =>
+        [
+          worker.passport,
+          worker.workerId,
+          worker.ciNumber,
+          worker.visaNumber,
+          worker.fullName,
+        ]
+          .filter(Boolean)
+          .some((value) => value.toLowerCase().includes(normalized))
+      )
+    )
   );
 };
 
@@ -1190,7 +1374,7 @@ const saveRecord = (status = "draft") => {
     setStatus(formSaveStatus, translations[currentLanguage].saveDraftEmpty, "warn");
     return;
   }
-  const cardExpiryState = getExpiryState(cardExpiryDate?.value || "");
+  const cardExpiryState = getAggregatedExpiryState(formData.workers || [], "cardExpiryDate");
   if (cardExpiryState.state === "expired") {
     setStatus(formSaveStatus, translations[currentLanguage].expiryExpired, "error");
   } else if (cardExpiryState.state === "warning") {
@@ -1198,7 +1382,14 @@ const saveRecord = (status = "draft") => {
   }
   const records = loadRecords();
   const formId = currentEditId || buildFormId();
-  const displayName = formData.fullName || formData.company || formData.passport || formId;
+  const workerNames = (formData.workers || []).map((worker) => worker.fullName).filter(Boolean);
+  const workerCountLabel = workerNames.length
+    ? ` (${workerNames.length} ${translations[currentLanguage].workerCountSuffix})`
+    : "";
+  const displayName =
+    formData.company?.trim()
+      ? `${formData.company}${workerCountLabel}`
+      : workerNames[0] || formData.employerId || formId;
   const existingIndex = records.findIndex((record) => record.formId === formId);
   const record = {
     formId,
@@ -1229,29 +1420,24 @@ const populateForm = (record) => {
   if (!record) return;
   if (formType) formType.value = record.formType;
   if (recordedBy) recordedBy.value = record.data.recordedBy || "";
-  if (fullName) {
-    fullName.value = record.data.fullName || "";
+  if (workerList) {
+    workerList.innerHTML = "";
+    const workers = normalizeWorkers(record.data);
+    if (workers.length) {
+      workers.forEach((worker) => {
+        const card = createWorkerCard(worker);
+        if (card) workerList.appendChild(card);
+      });
+    }
+    ensureWorkerCards();
+    refreshWorkerStatuses();
   }
-  if (passportType) passportType.value = record.data.passportType || "ci";
-  if (passportInput) passportInput.value = record.data.passport || "";
-  if (workerId) workerId.value = record.data.workerId || "";
-  if (ciNumber) ciNumber.value = record.data.ciNumber || "";
-  if (cardIssueDate) cardIssueDate.value = record.data.cardIssueDate || "";
-  if (cardExpiryDate) cardExpiryDate.value = record.data.cardExpiryDate || "";
-  if (nationality) nationality.value = record.data.nationality || "";
-  if (dob) dob.value = record.data.dob || "";
-  if (gender) gender.value = record.data.gender || "";
   if (company) company.value = record.data.company || "";
   if (caseType) caseType.value = record.data.caseType || "changeEmployer";
   if (position) position.value = record.data.position || "";
   if (workSite) workSite.value = record.data.workSite || "";
   if (startDate) startDate.value = record.data.startDate || "";
   if (employerId) employerId.value = record.data.employerId || "";
-  if (permitType) permitType.value = record.data.permitType || "";
-  if (permitNo) permitNo.value = record.data.permitNo || "";
-  if (visaNumber) visaNumber.value = record.data.visaNumber || "";
-  if (visaIssueDate) visaIssueDate.value = record.data.visaIssueDate || "";
-  if (visaExpiryDate) visaExpiryDate.value = record.data.visaExpiryDate || "";
   if (renewalType) renewalType.value = record.data.renewalType || "passport";
   if (renewalStatus) renewalStatus.value = record.data.renewalStatus || "none";
   if (receivedFacePhoto) receivedFacePhoto.checked = record.data.receivedDocs?.includes("facePhoto") || false;
@@ -1265,7 +1451,6 @@ const populateForm = (record) => {
   }
   if (receivedDocsNote) receivedDocsNote.value = record.data.receivedDocsNote || "";
   if (renewalDocsNote) renewalDocsNote.value = record.data.renewalDocsNote || "";
-  if (expiryInput) expiryInput.value = record.data.expiry || "";
   if (verification) verification.value = record.data.verification || "";
   if (paymentStatus) paymentStatus.value = record.data.paymentStatus || "pending";
   if (paymentDate) paymentDate.value = record.data.paymentDate || "";
@@ -1287,9 +1472,6 @@ const populateForm = (record) => {
     dataUrl: record.data.paymentSlipData || "",
   };
   updateSections();
-  updateExpiryStatus();
-  updateCardExpiryStatus();
-  updateVisaExpiryStatus();
   updateUploadPreview();
   updatePaymentSlipPreview();
 };
@@ -1297,29 +1479,29 @@ const populateForm = (record) => {
 if (formType) {
   formType.addEventListener("change", updateSections);
 }
-if (passportInput && passportInlineStatus) {
-  passportInput.addEventListener("input", () => validatePassport(passportInput.value, passportInlineStatus));
-}
 if (passportCheckInput && passportStatus) {
   passportCheckInput.addEventListener("input", () => validatePassport(passportCheckInput.value, passportStatus));
 }
 if (employerCheckInput) {
   employerCheckInput.addEventListener("input", updateEmployerStatus);
 }
-if (expiryInput) {
-  expiryInput.addEventListener("change", updateExpiryStatus);
-}
-if (cardExpiryDate) {
-  cardExpiryDate.addEventListener("change", updateCardExpiryStatus);
-}
-if (visaExpiryDate) {
-  visaExpiryDate.addEventListener("change", updateVisaExpiryStatus);
+if (addWorkerButton) {
+  addWorkerButton.addEventListener("click", () => {
+    const card = createWorkerCard();
+    if (card && workerList) {
+      workerList.appendChild(card);
+      getWorkerCards().forEach(updateWorkerCardTitle);
+      refreshWorkerStatuses();
+      applyTranslations(currentLanguage);
+    }
+  });
 }
 uploadInputs.forEach((input) => input.addEventListener("change", updateUploadPreview));
 if (paymentSlipInput) {
   paymentSlipInput.addEventListener("change", updatePaymentSlipPreview);
 }
 updateSections();
+ensureWorkerCards();
 updateUploadPreview();
 updatePaymentSlipPreview();
 renderRecords();
@@ -1352,9 +1534,8 @@ const applyTranslations = (lang) => {
     }
   });
   currentLanguage = lang;
+  getWorkerCards().forEach(updateWorkerCardTitle);
   updateEmployerStatus();
-  updateCardExpiryStatus();
-  updateVisaExpiryStatus();
   if (passportCheckInput && passportStatus) {
     if (passportCheckInput.value) {
       validatePassport(passportCheckInput.value, passportStatus);
@@ -1362,10 +1543,7 @@ const applyTranslations = (lang) => {
       setStatus(passportStatus, dict.passportEmpty);
     }
   }
-  if (passportInput && passportInlineStatus && passportInput.value) {
-    validatePassport(passportInput.value, passportInlineStatus);
-  }
-  updateExpiryStatus();
+  refreshWorkerStatuses();
   updateUploadPreview();
   updatePaymentSlipPreview();
   renderRecords();
@@ -1414,7 +1592,10 @@ if (employerCheckButton) {
 }
 if (verifyRecordButton) {
   verifyRecordButton.addEventListener("click", () => {
-    const query = passportInput?.value || fullName?.value || company?.value;
+    const firstWorker = getWorkerCards()[0];
+    const workerPassport = firstWorker?.querySelector('[data-field="passport"]')?.value || "";
+    const workerName = firstWorker?.querySelector('[data-field="fullName"]')?.value || "";
+    const query = workerPassport || workerName || company?.value || "";
     if (!query) {
       setStatus(formSaveStatus, translations[currentLanguage].recordNotFound, "warn");
       return;

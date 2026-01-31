@@ -15,7 +15,13 @@
   <body>
     <header class="hero">
       <div class="hero__content">
-        <div class="hero__top"></div>
+        <div class="hero__top">
+          <div class="loading-indicator" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
         <h1 data-i18n="heroTitle">ระบบตรวจสอบข้อมูลแรงงานต่างด้าว</h1>
       </div>
     </header>
@@ -48,91 +54,154 @@
             />
           </div>
           <div class="form-section" data-section="personal">
-            <h3 data-i18n="personalTitle">ข้อมูลส่วนตัวแรงงาน</h3>
-            <div class="grid-2">
-              <div class="form-row">
-                <label for="fullName" data-i18n="fullNameLabel">ชื่อ-นามสกุล</label>
-                <input
-                  id="fullName"
-                  type="text"
-                  placeholder="กรอกชื่อแรงงาน"
-                  data-i18n-placeholder="fullNamePlaceholder"
-                />
-              </div>
-              <div class="form-row">
-                <label for="passportType" data-i18n="passportTypeLabel">ประเภทพาสปอร์ต</label>
-                <select id="passportType">
-                  <option value="ci" data-i18n="passportTypeCi">CI</option>
-                  <option value="pv" data-i18n="passportTypePv">PV</option>
-                  <option value="pj" data-i18n="passportTypePj">PJ</option>
-                  <option value="international" data-i18n="passportTypeInternational">พาสปอร์ตอินเตอร์</option>
-                </select>
-              </div>
+            <div class="section-header">
+              <h3 data-i18n="personalTitle">ข้อมูลส่วนตัวแรงงาน</h3>
+              <button type="button" class="secondary add-worker" id="addWorker" data-i18n="addWorkerButton">
+                เพิ่มรายชื่อ
+              </button>
             </div>
-            <div class="grid-2">
-              <div class="form-row">
-                <label for="passport" data-i18n="passportLabel">เลขหนังสือเดินทาง</label>
-                <input
-                  id="passport"
-                  type="text"
-                  placeholder="เช่น P1234567"
-                  data-i18n-placeholder="passportPlaceholder"
-                />
-                <span id="passportInlineStatus" class="status-text"></span>
+            <p class="helper-text" data-i18n="workerListHelper">
+              เพิ่มรายชื่อแรงงานหลายคนต่อ 1 นายจ้าง โดยแต่ละคนมีชุดข้อมูลของตัวเอง
+            </p>
+            <div id="workerList" class="worker-list"></div>
+            <template id="workerTemplate">
+              <div class="worker-card">
+                <div class="worker-card__header">
+                  <h4 class="worker-card__title" data-i18n="workerCardTitle">แรงงานคนที่</h4>
+                  <button type="button" class="ghost remove-worker" data-i18n="removeWorkerButton">ลบ</button>
+                </div>
+                <div class="grid-2">
+                  <div class="form-row">
+                    <label data-i18n="fullNameLabel">ชื่อ-นามสกุล</label>
+                    <input
+                      type="text"
+                      data-field="fullName"
+                      placeholder="กรอกชื่อแรงงาน"
+                      data-i18n-placeholder="fullNamePlaceholder"
+                    />
+                  </div>
+                  <div class="form-row">
+                    <label data-i18n="passportTypeLabel">ประเภทพาสปอร์ต</label>
+                    <select data-field="passportType">
+                      <option value="ci" data-i18n="passportTypeCi">CI</option>
+                      <option value="pv" data-i18n="passportTypePv">PV</option>
+                      <option value="pj" data-i18n="passportTypePj">PJ</option>
+                      <option value="international" data-i18n="passportTypeInternational">พาสปอร์ตอินเตอร์</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="grid-2">
+                  <div class="form-row">
+                    <label data-i18n="passportLabel">เลขหนังสือเดินทาง</label>
+                    <input
+                      type="text"
+                      data-field="passport"
+                      placeholder="เช่น P1234567"
+                      data-i18n-placeholder="passportPlaceholder"
+                    />
+                    <span class="status-text" data-field-status="passport"></span>
+                  </div>
+                  <div class="form-row">
+                    <label data-i18n="workerIdLabel">เลขต่างด้าว</label>
+                    <input
+                      type="text"
+                      data-field="workerId"
+                      placeholder="เช่น FW-0001"
+                      data-i18n-placeholder="workerIdPlaceholder"
+                    />
+                  </div>
+                </div>
+                <div class="grid-2">
+                  <div class="form-row">
+                    <label data-i18n="ciNumberLabel">เลข CI</label>
+                    <input
+                      type="text"
+                      data-field="ciNumber"
+                      placeholder="เช่น CI-000123"
+                      data-i18n-placeholder="ciNumberPlaceholder"
+                    />
+                  </div>
+                  <div class="form-row">
+                    <label data-i18n="permitNoLabel">เลขที่ใบอนุญาต</label>
+                    <input
+                      type="text"
+                      data-field="permitNo"
+                      placeholder="ระบุเลขที่"
+                      data-i18n-placeholder="permitNoPlaceholder"
+                    />
+                  </div>
+                </div>
+                <div class="grid-2">
+                  <div class="form-row">
+                    <label data-i18n="permitTypeLabel">ประเภทใบอนุญาต</label>
+                    <select data-field="permitType">
+                      <option value="pink" data-i18n="permitTypePink">บัตรชมพู</option>
+                      <option value="visa" data-i18n="permitTypeVisa">วีซ่าแรงงาน</option>
+                      <option value="mou" data-i18n="permitTypeMou">MOU</option>
+                    </select>
+                  </div>
+                  <div class="form-row">
+                    <label data-i18n="nationalityLabel">สัญชาติ</label>
+                    <input
+                      type="text"
+                      data-field="nationality"
+                      placeholder="เมียนมา / ลาว / กัมพูชา"
+                      data-i18n-placeholder="nationalityPlaceholder"
+                    />
+                  </div>
+                </div>
+                <div class="grid-3">
+                  <div class="form-row">
+                    <label data-i18n="cardIssueDateLabel">วันทำบัตร</label>
+                    <input data-field="cardIssueDate" type="date" />
+                  </div>
+                  <div class="form-row">
+                    <label data-i18n="cardExpiryDateLabel">วันหมดอายุบัตร</label>
+                    <input data-field="cardExpiryDate" type="date" />
+                    <span class="status-text" data-field-status="cardExpiry"></span>
+                  </div>
+                  <div class="form-row">
+                    <label data-i18n="dobLabel">วันเดือนปีเกิด</label>
+                    <input data-field="dob" type="date" />
+                  </div>
+                </div>
+                <div class="grid-3">
+                  <div class="form-row">
+                    <label data-i18n="visaNumberLabel">เลขวีซ่า</label>
+                    <input
+                      type="text"
+                      data-field="visaNumber"
+                      placeholder="ระบุเลขวีซ่า"
+                      data-i18n-placeholder="visaNumberPlaceholder"
+                    />
+                  </div>
+                  <div class="form-row">
+                    <label data-i18n="visaIssueDateLabel">วันทำวีซ่า</label>
+                    <input data-field="visaIssueDate" type="date" />
+                  </div>
+                  <div class="form-row">
+                    <label data-i18n="visaExpiryDateLabel">วันหมดอายุวีซ่า</label>
+                    <input data-field="visaExpiryDate" type="date" />
+                    <span class="status-text" data-field-status="visaExpiry"></span>
+                  </div>
+                </div>
+                <div class="grid-2">
+                  <div class="form-row">
+                    <label data-i18n="expiryLabel">วันหมดอายุ</label>
+                    <input data-field="expiry" type="date" />
+                    <span class="status-text" data-field-status="expiry"></span>
+                  </div>
+                  <div class="form-row">
+                    <label data-i18n="genderLabel">เพศ</label>
+                    <select data-field="gender">
+                      <option data-i18n="genderMale">ชาย</option>
+                      <option data-i18n="genderFemale">หญิง</option>
+                      <option data-i18n="genderOther">อื่น ๆ</option>
+                    </select>
+                  </div>
+                </div>
               </div>
-              <div class="form-row">
-                <label for="workerId" data-i18n="workerIdLabel">เลขต่างด้าว</label>
-                <input
-                  id="workerId"
-                  type="text"
-                  placeholder="เช่น FW-0001"
-                  data-i18n-placeholder="workerIdPlaceholder"
-                />
-              </div>
-            </div>
-            <div class="form-row">
-                <label for="ciNumber" data-i18n="ciNumberLabel">เลข CI</label>
-                <input
-                  id="ciNumber"
-                  type="text"
-                  placeholder="เช่น CI-000123"
-                  data-i18n-placeholder="ciNumberPlaceholder"
-                />
-              </div>
-            <div class="grid-2">
-              <div class="form-row">
-                <label for="cardIssueDate" data-i18n="cardIssueDateLabel">วันทำบัตร</label>
-                <input id="cardIssueDate" type="date" />
-              </div>
-              <div class="form-row">
-                <label for="cardExpiryDate" data-i18n="cardExpiryDateLabel">วันหมดอายุบัตร</label>
-                <input id="cardExpiryDate" type="date" />
-                <span id="cardExpiryStatus" class="status-text"></span>
-              </div>
-            </div>
-            <div class="grid-3">
-              <div class="form-row">
-                <label for="nationality" data-i18n="nationalityLabel">สัญชาติ</label>
-                <input
-                  id="nationality"
-                  type="text"
-                  placeholder="เมียนมา / ลาว / กัมพูชา"
-                  data-i18n-placeholder="nationalityPlaceholder"
-                />
-              </div>
-              <div class="form-row">
-                <label for="dob" data-i18n="dobLabel">วันเดือนปีเกิด</label>
-                <input id="dob" type="date" />
-              </div>
-              <div class="form-row">
-                <label for="gender" data-i18n="genderLabel">เพศ</label>
-                <select id="gender">
-                  <option data-i18n="genderMale">ชาย</option>
-                  <option data-i18n="genderFemale">หญิง</option>
-                  <option data-i18n="genderOther">อื่น ๆ</option>
-                </select>
-              </div>
-            </div>
+            </template>
           </div>
 
           <div class="form-section" data-section="employment">
@@ -169,45 +238,6 @@
             <h3 data-i18n="documentsTitle">ข้อมูลเอกสารและใบอนุญาต</h3>
             <div class="grid-2">
               <div class="form-row">
-                <label for="permitType" data-i18n="permitTypeLabel">ประเภทใบอนุญาต</label>
-                <select id="permitType">
-                  <option data-i18n="permitTypePink">บัตรชมพู</option>
-                  <option data-i18n="permitTypeVisa">วีซ่าแรงงาน</option>
-                  <option data-i18n="permitTypeMou">MOU</option>
-                </select>
-              </div>
-              <div class="form-row">
-                <label for="permitNo" data-i18n="permitNoLabel">เลขที่ใบอนุญาต</label>
-                <input
-                  id="permitNo"
-                  type="text"
-                  placeholder="ระบุเลขที่"
-                  data-i18n-placeholder="permitNoPlaceholder"
-                />
-              </div>
-            </div>
-            <div class="grid-2">
-              <div class="form-row">
-                <label for="visaNumber" data-i18n="visaNumberLabel">เลขวีซ่า</label>
-                <input
-                  id="visaNumber"
-                  type="text"
-                  placeholder="ระบุเลขวีซ่า"
-                  data-i18n-placeholder="visaNumberPlaceholder"
-                />
-              </div>
-              <div class="form-row">
-                <label for="visaIssueDate" data-i18n="visaIssueDateLabel">วันทำวีซ่า</label>
-                <input id="visaIssueDate" type="date" />
-              </div>
-            </div>
-            <div class="grid-2">
-              <div class="form-row">
-                <label for="visaExpiryDate" data-i18n="visaExpiryDateLabel">วันหมดอายุวีซ่า</label>
-                <input id="visaExpiryDate" type="date" />
-                <span id="visaExpiryStatus" class="status-text"></span>
-              </div>
-              <div class="form-row">
                 <label for="renewalType" data-i18n="renewalTypeLabel">ประเภทการต่ออายุ</label>
                 <select id="renewalType">
                   <option value="passport" data-i18n="renewalTypePassport">บัตร/พาสปอร์ต</option>
@@ -215,8 +245,6 @@
                   <option value="permit" data-i18n="renewalTypePermit">ใบอนุญาตทำงาน</option>
                 </select>
               </div>
-            </div>
-            <div class="grid-2">
               <div class="form-row">
                 <label for="renewalStatus" data-i18n="renewalStatusLabel">สถานะต่ออายุ</label>
                 <select id="renewalStatus">
@@ -226,6 +254,8 @@
                   <option value="completed" data-i18n="renewalStatusCompleted">ต่ออายุแล้ว</option>
                 </select>
               </div>
+            </div>
+            <div class="grid-2">
               <div class="form-row">
                 <label data-i18n="receivedDocsLabel">เอกสารที่ได้รับ</label>
                 <div class="checkbox-grid">
@@ -293,20 +323,13 @@
                 ></textarea>
               </div>
             </div>
-            <div class="grid-2">
-              <div class="form-row">
-                <label for="expiry" data-i18n="expiryLabel">วันหมดอายุ</label>
-                <input id="expiry" type="date" />
-                <span id="expiryStatus" class="status-text"></span>
-              </div>
-              <div class="form-row">
-                <label for="verification" data-i18n="verificationLabel">สถานะตรวจสอบ</label>
-                <select id="verification">
-                  <option data-i18n="verificationPending">รอตรวจสอบ</option>
-                  <option data-i18n="verificationPass">ผ่านการตรวจสอบ</option>
-                  <option data-i18n="verificationFix">ต้องแก้ไข</option>
-                </select>
-              </div>
+            <div class="form-row">
+              <label for="verification" data-i18n="verificationLabel">สถานะตรวจสอบ</label>
+              <select id="verification">
+                <option data-i18n="verificationPending">รอตรวจสอบ</option>
+                <option data-i18n="verificationPass">ผ่านการตรวจสอบ</option>
+                <option data-i18n="verificationFix">ต้องแก้ไข</option>
+              </select>
             </div>
             <div class="form-row">
               <label data-i18n="uploadLabel">เอกสารประกอบ (อัปโหลดรูป/ไฟล์)</label>

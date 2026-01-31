@@ -188,6 +188,11 @@ input.is-expired {
   box-shadow: 0 0 0 2px rgba(180, 35, 24, 0.15);
 }
 
+input.is-expiring {
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.15);
+}
+
 input:focus,
 select:focus,
 textarea:focus {
@@ -448,6 +453,36 @@ button {
   color: #2c4fb5;
   font-size: 0.8rem;
   font-weight: 600;
+}
+
+.record-chip.warn {
+  background: #fff4e6;
+  color: #b3541e;
+}
+
+.record-chip.alert {
+  background: #fdecec;
+  color: #b42318;
+}
+
+.record-group-title {
+  margin: 18px 0 8px;
+  font-size: 1rem;
+  color: #1f2a44;
+}
+
+.checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: #3b465b;
 }
 
 .modal {

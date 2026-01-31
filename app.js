@@ -11,6 +11,9 @@ const passportType = document.getElementById("passportType");
 const nationality = document.getElementById("nationality");
 const dob = document.getElementById("dob");
 const gender = document.getElementById("gender");
+const cardIssueDate = document.getElementById("cardIssueDate");
+const cardExpiryDate = document.getElementById("cardExpiryDate");
+const cardExpiryStatus = document.getElementById("cardExpiryStatus");
 const company = document.getElementById("company");
 const caseType = document.getElementById("caseType");
 const position = document.getElementById("position");
@@ -21,7 +24,18 @@ const employerId = document.getElementById("employerId");
 const permitType = document.getElementById("permitType");
 const permitNo = document.getElementById("permitNo");
 const visaNumber = document.getElementById("visaNumber");
-const issueDate = document.getElementById("issueDate");
+const visaIssueDate = document.getElementById("visaIssueDate");
+const visaExpiryDate = document.getElementById("visaExpiryDate");
+const visaExpiryStatus = document.getElementById("visaExpiryStatus");
+const renewalType = document.getElementById("renewalType");
+const renewalStatus = document.getElementById("renewalStatus");
+const receivedFacePhoto = document.getElementById("receivedFacePhoto");
+const receivedIdCard = document.getElementById("receivedIdCard");
+const receivedHouseDoc = document.getElementById("receivedHouseDoc");
+const receivedPaymentSlip = document.getElementById("receivedPaymentSlip");
+const requiredRenewalDocs = document.querySelectorAll(".required-renewal-doc");
+const receivedDocsNote = document.getElementById("receivedDocsNote");
+const renewalDocsNote = document.getElementById("renewalDocsNote");
 const verification = document.getElementById("verification");
 const paymentStatus = document.getElementById("paymentStatus");
 const paymentDate = document.getElementById("paymentDate");
@@ -114,6 +128,8 @@ const translations = {
     passportPlaceholder: "เช่น P1234567",
     ciNumberLabel: "เลข CI",
     ciNumberPlaceholder: "เช่น CI-000123",
+    cardIssueDateLabel: "วันทำบัตร",
+    cardExpiryDateLabel: "วันหมดอายุบัตร",
     nationalityLabel: "สัญชาติ",
     nationalityPlaceholder: "เมียนมา / ลาว / กัมพูชา",
     dobLabel: "วันเดือนปีเกิด",
@@ -144,7 +160,28 @@ const translations = {
     permitNoPlaceholder: "ระบุเลขที่",
     visaNumberLabel: "เลขวีซ่า",
     visaNumberPlaceholder: "ระบุเลขวีซ่า",
-    issueDateLabel: "วันทำ",
+    visaIssueDateLabel: "วันทำวีซ่า",
+    visaExpiryDateLabel: "วันหมดอายุวีซ่า",
+    renewalTypeLabel: "ประเภทการต่ออายุ",
+    renewalTypePassport: "บัตร/พาสปอร์ต",
+    renewalTypeVisa: "วีซ่า",
+    renewalTypePermit: "ใบอนุญาตทำงาน",
+    renewalStatusLabel: "สถานะต่ออายุ",
+    renewalStatusNone: "ยังไม่ดำเนินการ",
+    renewalStatusPending: "กำลังเตรียมเอกสาร",
+    renewalStatusSubmitted: "ยื่นแล้ว",
+    renewalStatusCompleted: "ต่ออายุแล้ว",
+    receivedDocsLabel: "เอกสารที่ได้รับ",
+    requiredRenewalDocsLabel: "เอกสารที่ต้องใช้ต่ออายุ",
+    renewalDocPassport: "สำเนาพาสปอร์ต",
+    renewalDocVisa: "สำเนาวีซ่า",
+    renewalDocPermit: "ใบอนุญาตทำงาน",
+    renewalDocPhoto: "รูปถ่าย",
+    renewalDocEmployerLetter: "หนังสือรับรองนายจ้าง",
+    receivedDocsNoteLabel: "หมายเหตุเอกสารที่ได้รับ",
+    receivedDocsNotePlaceholder: "ระบุเอกสารที่ได้รับเพิ่มเติม",
+    renewalDocsNoteLabel: "หมายเหตุเอกสารที่ต้องใช้ต่อ",
+    renewalDocsNotePlaceholder: "ระบุเอกสารเพิ่มเติมที่ต้องใช้ต่ออายุ",
     expiryLabel: "วันหมดอายุ",
     verificationLabel: "สถานะตรวจสอบ",
     verificationPending: "รอตรวจสอบ",
@@ -164,6 +201,8 @@ const translations = {
     employerChecking: "กำลังตรวจสอบข้อมูล:",
     expiryExpired: "ใบอนุญาตหมดอายุแล้ว",
     expiryValid: "ใบอนุญาตยังไม่หมดอายุ",
+    expiryWarning: "ใกล้หมดอายุใน {days} วัน",
+    expiryDaysSuffix: "วัน",
     uploadEmpty: "ยังไม่มีไฟล์ที่อัปโหลด",
     recordsTitle: "ค้นหา/บันทึกข้อมูลในระบบ",
     recordsSubtitle: "บันทึกข้อมูลจากแบบฟอร์มและค้นหาด้วยเลขฟอร์มหรือหัวข้อ",
@@ -243,6 +282,8 @@ const translations = {
     passportPlaceholder: "e.g. P1234567",
     ciNumberLabel: "CI number",
     ciNumberPlaceholder: "e.g. CI-000123",
+    cardIssueDateLabel: "Card issue date",
+    cardExpiryDateLabel: "Card expiry date",
     nationalityLabel: "Nationality",
     nationalityPlaceholder: "Myanmar / Laos / Cambodia",
     dobLabel: "Date of birth",
@@ -273,7 +314,28 @@ const translations = {
     permitNoPlaceholder: "Enter permit number",
     visaNumberLabel: "Visa number",
     visaNumberPlaceholder: "Enter visa number",
-    issueDateLabel: "Issue date",
+    visaIssueDateLabel: "Visa issue date",
+    visaExpiryDateLabel: "Visa expiry date",
+    renewalTypeLabel: "Renewal type",
+    renewalTypePassport: "Passport/card",
+    renewalTypeVisa: "Visa",
+    renewalTypePermit: "Work permit",
+    renewalStatusLabel: "Renewal status",
+    renewalStatusNone: "Not started",
+    renewalStatusPending: "Preparing documents",
+    renewalStatusSubmitted: "Submitted",
+    renewalStatusCompleted: "Renewed",
+    receivedDocsLabel: "Received documents",
+    requiredRenewalDocsLabel: "Renewal required documents",
+    renewalDocPassport: "Passport copy",
+    renewalDocVisa: "Visa copy",
+    renewalDocPermit: "Work permit",
+    renewalDocPhoto: "Photo",
+    renewalDocEmployerLetter: "Employer letter",
+    receivedDocsNoteLabel: "Received docs note",
+    receivedDocsNotePlaceholder: "Additional received documents",
+    renewalDocsNoteLabel: "Renewal docs note",
+    renewalDocsNotePlaceholder: "Additional renewal requirements",
     expiryLabel: "Expiry date",
     verificationLabel: "Verification status",
     verificationPending: "Pending",
@@ -293,6 +355,8 @@ const translations = {
     employerChecking: "Checking record:",
     expiryExpired: "Permit has expired.",
     expiryValid: "Permit is still valid.",
+    expiryWarning: "Expires in {days} days",
+    expiryDaysSuffix: "days",
     uploadEmpty: "No files uploaded yet.",
     recordsTitle: "Search and save records",
     recordsSubtitle: "Save form data and search by form ID or section.",
@@ -356,6 +420,30 @@ const setStatus = (element, message, type = "") => {
   }
 };
 
+const getExpiryState = (dateValue) => {
+  if (!dateValue) return { state: "none", days: null };
+  const selectedDate = new Date(dateValue);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  selectedDate.setHours(0, 0, 0, 0);
+  const diffMs = selectedDate - today;
+  const days = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  if (days < 0) return { state: "expired", days };
+  if (days <= 7) return { state: "warning", days };
+  return { state: "ok", days };
+};
+
+const formatExpiryLabel = (state, days) => {
+  if (state === "expired") {
+    const suffix = translations[currentLanguage].expiryDaysSuffix;
+    return `${translations[currentLanguage].expiryExpired} (${Math.abs(days)} ${suffix})`;
+  }
+  if (state === "warning") {
+    return translations[currentLanguage].expiryWarning.replace("{days}", days);
+  }
+  return translations[currentLanguage].expiryValid;
+};
+
 const validatePassport = (value, target) => {
   if (!value) {
     setStatus(target, translations[currentLanguage].passportEmpty);
@@ -391,16 +479,43 @@ const updateExpiryStatus = () => {
     expiryInput.classList.remove("is-expired");
     return;
   }
-  const selectedDate = new Date(expiryInput.value);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const statusType = selectedDate < today ? "error" : "ok";
-  expiryInput.classList.toggle("is-expired", selectedDate < today);
-  setStatus(
-    expiryStatus,
-    selectedDate < today ? translations[currentLanguage].expiryExpired : translations[currentLanguage].expiryValid,
-    statusType
-  );
+  const { state, days } = getExpiryState(expiryInput.value);
+  expiryInput.classList.toggle("is-expired", state === "expired");
+  expiryInput.classList.toggle("is-expiring", state === "warning");
+  const statusType = state === "expired" ? "error" : state === "warning" ? "warn" : "ok";
+  setStatus(expiryStatus, formatExpiryLabel(state, days), statusType);
+};
+
+const updateCardExpiryStatus = () => {
+  if (!cardExpiryDate || !cardExpiryStatus) {
+    return;
+  }
+  if (!cardExpiryDate.value) {
+    setStatus(cardExpiryStatus, "");
+    cardExpiryDate.classList.remove("is-expired", "is-expiring");
+    return;
+  }
+  const { state, days } = getExpiryState(cardExpiryDate.value);
+  cardExpiryDate.classList.toggle("is-expired", state === "expired");
+  cardExpiryDate.classList.toggle("is-expiring", state === "warning");
+  const statusType = state === "expired" ? "error" : state === "warning" ? "warn" : "ok";
+  setStatus(cardExpiryStatus, formatExpiryLabel(state, days), statusType);
+};
+
+const updateVisaExpiryStatus = () => {
+  if (!visaExpiryDate || !visaExpiryStatus) {
+    return;
+  }
+  if (!visaExpiryDate.value) {
+    setStatus(visaExpiryStatus, "");
+    visaExpiryDate.classList.remove("is-expired", "is-expiring");
+    return;
+  }
+  const { state, days } = getExpiryState(visaExpiryDate.value);
+  visaExpiryDate.classList.toggle("is-expired", state === "expired");
+  visaExpiryDate.classList.toggle("is-expiring", state === "warning");
+  const statusType = state === "expired" ? "error" : state === "warning" ? "warn" : "ok";
+  setStatus(visaExpiryStatus, formatExpiryLabel(state, days), statusType);
 };
 
 const renderPreview = (container, files, onRemove) => {
@@ -502,6 +617,9 @@ const updateUploadPreview = () => {
       setUploadCardPreview(config.card, null);
     }
   });
+  if (receivedFacePhoto) receivedFacePhoto.checked = Boolean(uploadCache.facePhoto.name);
+  if (receivedIdCard) receivedIdCard.checked = Boolean(uploadCache.idCard.name);
+  if (receivedHouseDoc) receivedHouseDoc.checked = Boolean(uploadCache.houseDoc.name);
   renderPreview(uploadPreview, files, (indexToRemove) => {
     const config = indexMap[indexToRemove];
     if (config?.input) {
@@ -532,6 +650,7 @@ const updatePaymentSlipPreview = () => {
     setUploadCardPreview(paymentSlipCard, null);
   }
   const files = file ? [file] : [];
+  if (receivedPaymentSlip) receivedPaymentSlip.checked = Boolean(uploadCache.paymentSlip.name);
   renderPreview(paymentSlipPreview, files, () => {
     paymentSlipInput.value = "";
     uploadCache.paymentSlip = { name: "", dataUrl: "" };
@@ -588,6 +707,25 @@ const getPassportTypeLabel = (value) => {
     pv: translations[currentLanguage].passportTypePv,
     pj: translations[currentLanguage].passportTypePj,
     international: translations[currentLanguage].passportTypeInternational,
+  };
+  return map[value] || value || "-";
+};
+
+const getRenewalTypeLabel = (value) => {
+  const map = {
+    passport: translations[currentLanguage].renewalTypePassport,
+    visa: translations[currentLanguage].renewalTypeVisa,
+    permit: translations[currentLanguage].renewalTypePermit,
+  };
+  return map[value] || value || "-";
+};
+
+const getRenewalStatusLabel = (value) => {
+  const map = {
+    none: translations[currentLanguage].renewalStatusNone,
+    pending: translations[currentLanguage].renewalStatusPending,
+    submitted: translations[currentLanguage].renewalStatusSubmitted,
+    completed: translations[currentLanguage].renewalStatusCompleted,
   };
   return map[value] || value || "-";
 };
@@ -663,6 +801,14 @@ const addNameInput = () => {
 
 const collectFormData = () => {
   const names = getNameValues();
+  const receivedDocs = [];
+  if (receivedFacePhoto?.checked) receivedDocs.push("facePhoto");
+  if (receivedIdCard?.checked) receivedDocs.push("idCard");
+  if (receivedHouseDoc?.checked) receivedDocs.push("houseDoc");
+  if (receivedPaymentSlip?.checked) receivedDocs.push("paymentSlip");
+  const requiredDocs = Array.from(requiredRenewalDocs)
+    .filter((item) => item.checked)
+    .map((item) => item.value);
   const formData = {
     formType: formType.value,
     fullName: names[0] || "",
@@ -670,6 +816,8 @@ const collectFormData = () => {
     passportType: passportType?.value || "",
     passport: passportInput.value.trim(),
     ciNumber: ciNumber?.value?.trim() || "",
+    cardIssueDate: cardIssueDate?.value || "",
+    cardExpiryDate: cardExpiryDate?.value || "",
     nationality: nationality.value.trim(),
     dob: dob.value,
     gender: gender.value,
@@ -682,13 +830,20 @@ const collectFormData = () => {
     permitType: permitType.value,
     permitNo: permitNo.value.trim(),
     visaNumber: visaNumber?.value?.trim() || "",
-    issueDate: issueDate?.value || "",
+    visaIssueDate: visaIssueDate?.value || "",
+    visaExpiryDate: visaExpiryDate?.value || "",
     expiry: expiryInput.value,
     verification: verification.value,
     paymentStatus: paymentStatus.value,
     paymentDate: paymentDate.value,
     paymentNotes: paymentNotes.value.trim(),
     recordedBy: recordedBy ? recordedBy.value.trim() : "",
+    renewalType: renewalType?.value || "",
+    renewalStatus: renewalStatus?.value || "",
+    receivedDocs,
+    requiredRenewalDocs: requiredDocs,
+    receivedDocsNote: receivedDocsNote?.value?.trim() || "",
+    renewalDocsNote: renewalDocsNote?.value?.trim() || "",
     facePhoto: facePhotoInput?.files?.[0]?.name || uploadCache.facePhoto.name || "",
     facePhotoData: uploadCache.facePhoto.dataUrl || "",
     idCard: idCardInput?.files?.[0]?.name || uploadCache.idCard.name || "",
@@ -702,6 +857,7 @@ const collectFormData = () => {
   const hasAnyValue = Object.entries(formData).some(([key, value]) => {
     if (key === "formType" || key === "attachments") return false;
     if (key === "names") return value.length > 0;
+    if (Array.isArray(value)) return value.length > 0;
     return value;
   });
   return { formData, hasAnyValue };
@@ -720,7 +876,7 @@ const renderRecords = () => {
     const names = Array.isArray(record.data.names) ? record.data.names.join(" ") : "";
     const searchable = `${record.formId} ${record.formTypeLabel} ${record.displayName} ${names} ${
       record.data.passport || ""
-    } ${record.data.ciNumber || ""}`.toLowerCase();
+    } ${record.data.ciNumber || ""} ${record.data.visaNumber || ""}`.toLowerCase();
     return matchesFilter && searchable.includes(query);
   });
   const scoped = filtered;
@@ -734,9 +890,20 @@ const renderRecords = () => {
     recordsStatus.textContent = `${scoped.length} ${translations[currentLanguage].recordsCount}`;
   }
 
-  scoped.forEach((record) => {
-    const card = document.createElement("div");
-    card.className = "record-card";
+  const grouped = scoped.reduce((acc, record) => {
+    const key = record.data.company || record.data.employerId || translations[currentLanguage].recordEmployerLabel;
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(record);
+    return acc;
+  }, {});
+  Object.entries(grouped).forEach(([employerName, records]) => {
+    const groupTitle = document.createElement("h4");
+    groupTitle.className = "record-group-title";
+    groupTitle.textContent = employerName;
+    recordsList.appendChild(groupTitle);
+    records.forEach((record) => {
+      const card = document.createElement("div");
+      card.className = "record-card";
     const title = document.createElement("div");
     title.className = "record-title";
     title.textContent = record.displayName || record.formTypeLabel;
@@ -793,7 +960,28 @@ const renderRecords = () => {
     card.appendChild(tags);
     card.appendChild(verifyButton);
     card.appendChild(editButton);
-    recordsList.appendChild(card);
+      const cardExpiryState = getExpiryState(record.data.cardExpiryDate);
+      if (cardExpiryState.state === "expired" || cardExpiryState.state === "warning") {
+        const expiryChip = document.createElement("span");
+        expiryChip.className = `record-chip ${cardExpiryState.state === "expired" ? "alert" : "warn"}`;
+        expiryChip.textContent =
+          cardExpiryState.state === "expired"
+            ? translations[currentLanguage].expiryExpired
+            : translations[currentLanguage].expiryWarning.replace("{days}", cardExpiryState.days);
+        tags.appendChild(expiryChip);
+      }
+      const visaExpiryState = getExpiryState(record.data.visaExpiryDate);
+      if (visaExpiryState.state === "expired" || visaExpiryState.state === "warning") {
+        const visaChip = document.createElement("span");
+        visaChip.className = `record-chip ${visaExpiryState.state === "expired" ? "alert" : "warn"}`;
+        visaChip.textContent =
+          visaExpiryState.state === "expired"
+            ? translations[currentLanguage].expiryExpired
+            : translations[currentLanguage].expiryWarning.replace("{days}", visaExpiryState.days);
+        tags.appendChild(visaChip);
+      }
+      recordsList.appendChild(card);
+    });
   });
 };
 
@@ -839,10 +1027,28 @@ const openRecordModal = (record) => {
     }`;
     const expiryItem = document.createElement("li");
     expiryItem.textContent = `${translations[currentLanguage].expiryLabel}: ${record.data.expiry || "-"}`;
-    const issueDateItem = document.createElement("li");
-    issueDateItem.textContent = `${translations[currentLanguage].issueDateLabel}: ${record.data.issueDate || "-"}`;
+    const cardIssueItem = document.createElement("li");
+    cardIssueItem.textContent = `${translations[currentLanguage].cardIssueDateLabel}: ${record.data.cardIssueDate || "-"}`;
+    const cardExpiryItem = document.createElement("li");
+    const cardExpiryState = getExpiryState(record.data.cardExpiryDate);
+    const cardExpiryLabel = record.data.cardExpiryDate ? formatExpiryLabel(cardExpiryState.state, cardExpiryState.days) : "-";
+    cardExpiryItem.textContent = `${translations[currentLanguage].cardExpiryDateLabel}: ${cardExpiryLabel}`;
+    const visaIssueItem = document.createElement("li");
+    visaIssueItem.textContent = `${translations[currentLanguage].visaIssueDateLabel}: ${record.data.visaIssueDate || "-"}`;
     const visaItem = document.createElement("li");
     visaItem.textContent = `${translations[currentLanguage].visaNumberLabel}: ${record.data.visaNumber || "-"}`;
+    const visaExpiryItem = document.createElement("li");
+    const visaExpiryState = getExpiryState(record.data.visaExpiryDate);
+    const visaExpiryLabel = record.data.visaExpiryDate ? formatExpiryLabel(visaExpiryState.state, visaExpiryState.days) : "-";
+    visaExpiryItem.textContent = `${translations[currentLanguage].visaExpiryDateLabel}: ${visaExpiryLabel}`;
+    const renewalTypeItem = document.createElement("li");
+    renewalTypeItem.textContent = `${translations[currentLanguage].renewalTypeLabel}: ${getRenewalTypeLabel(
+      record.data.renewalType
+    )}`;
+    const renewalStatusItem = document.createElement("li");
+    renewalStatusItem.textContent = `${translations[currentLanguage].renewalStatusLabel}: ${getRenewalStatusLabel(
+      record.data.renewalStatus
+    )}`;
     const paymentItem = document.createElement("li");
     paymentItem.textContent = `${translations[currentLanguage].paymentStatusLabel}: ${
       record.data.paymentStatus === "paid"
@@ -868,12 +1074,17 @@ const openRecordModal = (record) => {
     }
     list.appendChild(typeItem);
     list.appendChild(statusItem);
-    list.appendChild(issueDateItem);
+    list.appendChild(cardIssueItem);
+    list.appendChild(cardExpiryItem);
     list.appendChild(expiryItem);
+    list.appendChild(visaIssueItem);
     list.appendChild(visaItem);
+    list.appendChild(visaExpiryItem);
     list.appendChild(paymentItem);
     list.appendChild(paymentDateItem);
     list.appendChild(recordedByItem);
+    list.appendChild(renewalTypeItem);
+    list.appendChild(renewalStatusItem);
     if (namesList) {
       const namesItem = document.createElement("li");
       namesItem.textContent = `${translations[currentLanguage].recordNamesLabel}: ${namesList}`;
@@ -881,6 +1092,50 @@ const openRecordModal = (record) => {
     }
     recordModalBody.appendChild(title);
     recordModalBody.appendChild(list);
+    if (record.data.receivedDocs?.length || record.data.requiredRenewalDocs?.length) {
+      const docTitle = document.createElement("h5");
+      docTitle.textContent = translations[currentLanguage].receivedDocsLabel;
+      const docList = document.createElement("ul");
+      const receivedLabels = {
+        facePhoto: translations[currentLanguage].recordFacePhotoLabel,
+        idCard: translations[currentLanguage].recordIdCardLabel,
+        houseDoc: translations[currentLanguage].recordHouseDocLabel,
+        paymentSlip: translations[currentLanguage].recordPaymentSlipLabel,
+      };
+      const renewalLabels = {
+        passport: translations[currentLanguage].renewalDocPassport,
+        visa: translations[currentLanguage].renewalDocVisa,
+        permit: translations[currentLanguage].renewalDocPermit,
+        photo: translations[currentLanguage].renewalDocPhoto,
+        employerLetter: translations[currentLanguage].renewalDocEmployerLetter,
+      };
+      if (record.data.receivedDocs?.length) {
+        const receivedItem = document.createElement("li");
+        const receivedText = record.data.receivedDocs.map((item) => receivedLabels[item] || item).join(", ");
+        receivedItem.textContent = `${translations[currentLanguage].receivedDocsLabel}: ${receivedText}`;
+        docList.appendChild(receivedItem);
+      }
+      if (record.data.requiredRenewalDocs?.length) {
+        const requiredItem = document.createElement("li");
+        const requiredText = record.data.requiredRenewalDocs
+          .map((item) => renewalLabels[item] || item)
+          .join(", ");
+        requiredItem.textContent = `${translations[currentLanguage].requiredRenewalDocsLabel}: ${requiredText}`;
+        docList.appendChild(requiredItem);
+      }
+      if (record.data.receivedDocsNote) {
+        const noteItem = document.createElement("li");
+        noteItem.textContent = `${translations[currentLanguage].receivedDocsNoteLabel}: ${record.data.receivedDocsNote}`;
+        docList.appendChild(noteItem);
+      }
+      if (record.data.renewalDocsNote) {
+        const noteItem = document.createElement("li");
+        noteItem.textContent = `${translations[currentLanguage].renewalDocsNoteLabel}: ${record.data.renewalDocsNote}`;
+        docList.appendChild(noteItem);
+      }
+      recordModalBody.appendChild(docTitle);
+      recordModalBody.appendChild(docList);
+    }
     const attachments = [];
     if (record.data.facePhoto) {
       attachments.push({
@@ -961,6 +1216,7 @@ const findRecordByQuery = (query) => {
     records.find((record) => record.formId.toLowerCase() === normalized) ||
     records.find((record) => record.data.passport?.toLowerCase() === normalized) ||
     records.find((record) => record.data.ciNumber?.toLowerCase() === normalized) ||
+    records.find((record) => record.data.visaNumber?.toLowerCase() === normalized) ||
     records.find((record) => record.data.company?.toLowerCase().includes(normalized)) ||
     records.find((record) => record.data.employerId?.toLowerCase().includes(normalized)) ||
     records.find((record) => record.data.fullName?.toLowerCase().includes(normalized)) ||
@@ -977,6 +1233,12 @@ const saveRecord = (status = "draft") => {
   if (!hasAnyValue) {
     setStatus(formSaveStatus, translations[currentLanguage].saveDraftEmpty, "warn");
     return;
+  }
+  const cardExpiryState = getExpiryState(cardExpiryDate?.value || "");
+  if (cardExpiryState.state === "expired") {
+    setStatus(formSaveStatus, translations[currentLanguage].expiryExpired, "error");
+  } else if (cardExpiryState.state === "warning") {
+    setStatus(formSaveStatus, formatExpiryLabel(cardExpiryState.state, cardExpiryState.days), "warn");
   }
   const records = loadRecords();
   const formId = currentEditId || buildFormId();
@@ -1019,6 +1281,8 @@ const populateForm = (record) => {
   if (passportType) passportType.value = record.data.passportType || "ci";
   if (passportInput) passportInput.value = record.data.passport || "";
   if (ciNumber) ciNumber.value = record.data.ciNumber || "";
+  if (cardIssueDate) cardIssueDate.value = record.data.cardIssueDate || "";
+  if (cardExpiryDate) cardExpiryDate.value = record.data.cardExpiryDate || "";
   if (nationality) nationality.value = record.data.nationality || "";
   if (dob) dob.value = record.data.dob || "";
   if (gender) gender.value = record.data.gender || "";
@@ -1031,7 +1295,21 @@ const populateForm = (record) => {
   if (permitType) permitType.value = record.data.permitType || "";
   if (permitNo) permitNo.value = record.data.permitNo || "";
   if (visaNumber) visaNumber.value = record.data.visaNumber || "";
-  if (issueDate) issueDate.value = record.data.issueDate || "";
+  if (visaIssueDate) visaIssueDate.value = record.data.visaIssueDate || "";
+  if (visaExpiryDate) visaExpiryDate.value = record.data.visaExpiryDate || "";
+  if (renewalType) renewalType.value = record.data.renewalType || "passport";
+  if (renewalStatus) renewalStatus.value = record.data.renewalStatus || "none";
+  if (receivedFacePhoto) receivedFacePhoto.checked = record.data.receivedDocs?.includes("facePhoto") || false;
+  if (receivedIdCard) receivedIdCard.checked = record.data.receivedDocs?.includes("idCard") || false;
+  if (receivedHouseDoc) receivedHouseDoc.checked = record.data.receivedDocs?.includes("houseDoc") || false;
+  if (receivedPaymentSlip) receivedPaymentSlip.checked = record.data.receivedDocs?.includes("paymentSlip") || false;
+  if (requiredRenewalDocs?.length) {
+    requiredRenewalDocs.forEach((checkbox) => {
+      checkbox.checked = record.data.requiredRenewalDocs?.includes(checkbox.value) || false;
+    });
+  }
+  if (receivedDocsNote) receivedDocsNote.value = record.data.receivedDocsNote || "";
+  if (renewalDocsNote) renewalDocsNote.value = record.data.renewalDocsNote || "";
   if (expiryInput) expiryInput.value = record.data.expiry || "";
   if (verification) verification.value = record.data.verification || "";
   if (paymentStatus) paymentStatus.value = record.data.paymentStatus || "pending";
@@ -1055,6 +1333,8 @@ const populateForm = (record) => {
   };
   updateSections();
   updateExpiryStatus();
+  updateCardExpiryStatus();
+  updateVisaExpiryStatus();
   updateUploadPreview();
   updatePaymentSlipPreview();
 };
@@ -1073,6 +1353,12 @@ if (employerCheckInput) {
 }
 if (expiryInput) {
   expiryInput.addEventListener("change", updateExpiryStatus);
+}
+if (cardExpiryDate) {
+  cardExpiryDate.addEventListener("change", updateCardExpiryStatus);
+}
+if (visaExpiryDate) {
+  visaExpiryDate.addEventListener("change", updateVisaExpiryStatus);
 }
 if (addNameButton) {
   addNameButton.addEventListener("click", addNameInput);
@@ -1121,6 +1407,8 @@ const applyTranslations = (lang) => {
   if (nameList) {
     renderNameInputs(getNameValues());
   }
+  updateCardExpiryStatus();
+  updateVisaExpiryStatus();
   if (passportCheckInput && passportStatus) {
     if (passportCheckInput.value) {
       validatePassport(passportCheckInput.value, passportStatus);

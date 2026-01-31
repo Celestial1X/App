@@ -98,6 +98,17 @@
                 />
               </div>
             </div>
+            <div class="grid-2">
+              <div class="form-row">
+                <label for="cardIssueDate" data-i18n="cardIssueDateLabel">วันทำบัตร</label>
+                <input id="cardIssueDate" type="date" />
+              </div>
+              <div class="form-row">
+                <label for="cardExpiryDate" data-i18n="cardExpiryDateLabel">วันหมดอายุบัตร</label>
+                <input id="cardExpiryDate" type="date" />
+                <span id="cardExpiryStatus" class="status-text"></span>
+              </div>
+            </div>
             <div class="grid-3">
               <div class="form-row">
                 <label for="nationality" data-i18n="nationalityLabel">สัญชาติ</label>
@@ -185,8 +196,100 @@
                 />
               </div>
               <div class="form-row">
-                <label for="issueDate" data-i18n="issueDateLabel">วันทำ</label>
-                <input id="issueDate" type="date" />
+                <label for="visaIssueDate" data-i18n="visaIssueDateLabel">วันทำวีซ่า</label>
+                <input id="visaIssueDate" type="date" />
+              </div>
+            </div>
+            <div class="grid-2">
+              <div class="form-row">
+                <label for="visaExpiryDate" data-i18n="visaExpiryDateLabel">วันหมดอายุวีซ่า</label>
+                <input id="visaExpiryDate" type="date" />
+                <span id="visaExpiryStatus" class="status-text"></span>
+              </div>
+              <div class="form-row">
+                <label for="renewalType" data-i18n="renewalTypeLabel">ประเภทการต่ออายุ</label>
+                <select id="renewalType">
+                  <option value="passport" data-i18n="renewalTypePassport">บัตร/พาสปอร์ต</option>
+                  <option value="visa" data-i18n="renewalTypeVisa">วีซ่า</option>
+                  <option value="permit" data-i18n="renewalTypePermit">ใบอนุญาตทำงาน</option>
+                </select>
+              </div>
+            </div>
+            <div class="grid-2">
+              <div class="form-row">
+                <label for="renewalStatus" data-i18n="renewalStatusLabel">สถานะต่ออายุ</label>
+                <select id="renewalStatus">
+                  <option value="none" data-i18n="renewalStatusNone">ยังไม่ดำเนินการ</option>
+                  <option value="pending" data-i18n="renewalStatusPending">กำลังเตรียมเอกสาร</option>
+                  <option value="submitted" data-i18n="renewalStatusSubmitted">ยื่นแล้ว</option>
+                  <option value="completed" data-i18n="renewalStatusCompleted">ต่ออายุแล้ว</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label data-i18n="receivedDocsLabel">เอกสารที่ได้รับ</label>
+                <div class="checkbox-grid">
+                  <label class="checkbox-item">
+                    <input type="checkbox" id="receivedFacePhoto" />
+                    <span data-i18n="uploadFace">รูปหน้าคน</span>
+                  </label>
+                  <label class="checkbox-item">
+                    <input type="checkbox" id="receivedIdCard" />
+                    <span data-i18n="uploadId">บัตรประชาชน/บัตรชมพู</span>
+                  </label>
+                  <label class="checkbox-item">
+                    <input type="checkbox" id="receivedHouseDoc" />
+                    <span data-i18n="uploadHouse">ทะเบียนบ้าน</span>
+                  </label>
+                  <label class="checkbox-item">
+                    <input type="checkbox" id="receivedPaymentSlip" />
+                    <span data-i18n="paymentSlipLabel">แนบสลิปการชำระเงิน</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div class="form-row">
+              <label data-i18n="requiredRenewalDocsLabel">เอกสารที่ต้องใช้ต่ออายุ</label>
+              <div class="checkbox-grid">
+                <label class="checkbox-item">
+                  <input type="checkbox" value="passport" class="required-renewal-doc" />
+                  <span data-i18n="renewalDocPassport">สำเนาพาสปอร์ต</span>
+                </label>
+                <label class="checkbox-item">
+                  <input type="checkbox" value="visa" class="required-renewal-doc" />
+                  <span data-i18n="renewalDocVisa">สำเนาวีซ่า</span>
+                </label>
+                <label class="checkbox-item">
+                  <input type="checkbox" value="permit" class="required-renewal-doc" />
+                  <span data-i18n="renewalDocPermit">ใบอนุญาตทำงาน</span>
+                </label>
+                <label class="checkbox-item">
+                  <input type="checkbox" value="photo" class="required-renewal-doc" />
+                  <span data-i18n="renewalDocPhoto">รูปถ่าย</span>
+                </label>
+                <label class="checkbox-item">
+                  <input type="checkbox" value="employerLetter" class="required-renewal-doc" />
+                  <span data-i18n="renewalDocEmployerLetter">หนังสือรับรองนายจ้าง</span>
+                </label>
+              </div>
+            </div>
+            <div class="grid-2">
+              <div class="form-row">
+                <label for="receivedDocsNote" data-i18n="receivedDocsNoteLabel">หมายเหตุเอกสารที่ได้รับ</label>
+                <textarea
+                  id="receivedDocsNote"
+                  rows="3"
+                  placeholder="ระบุเอกสารที่ได้รับเพิ่มเติม"
+                  data-i18n-placeholder="receivedDocsNotePlaceholder"
+                ></textarea>
+              </div>
+              <div class="form-row">
+                <label for="renewalDocsNote" data-i18n="renewalDocsNoteLabel">หมายเหตุเอกสารที่ต้องใช้ต่อ</label>
+                <textarea
+                  id="renewalDocsNote"
+                  rows="3"
+                  placeholder="ระบุเอกสารเพิ่มเติมที่ต้องใช้ต่ออายุ"
+                  data-i18n-placeholder="renewalDocsNotePlaceholder"
+                ></textarea>
               </div>
             </div>
             <div class="grid-2">

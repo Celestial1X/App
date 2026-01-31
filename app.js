@@ -212,6 +212,7 @@ const translations = {
     recordStatusDraft: "ฉบับร่าง",
     recordStatusFinal: "สำเร็จแล้ว",
     editButton: "แก้ไข",
+    deleteButton: "ลบ",
     verifyButton: "ตรวจสอบข้อมูล",
     recordModalTitle: "ผลการค้นหา",
     closeButton: "ปิดหน้าต่าง",
@@ -242,6 +243,8 @@ const translations = {
     recordedByLabel: "ชื่อผู้บันทึก",
     recordedByPlaceholder: "กรอกชื่อผู้บันทึก",
     workerCountSuffix: "คน",
+    confirmClearRecords: "ยืนยันลบข้อมูลทั้งหมดหรือไม่?",
+    confirmDeleteRecord: "ต้องการลบรายการนี้หรือไม่?",
   },
   en: {
     heroTitle: "Foreign Worker Data Verification",
@@ -373,6 +376,7 @@ const translations = {
     recordStatusDraft: "Draft",
     recordStatusFinal: "Completed",
     editButton: "Edit",
+    deleteButton: "Delete",
     verifyButton: "Verify record",
     recordModalTitle: "Search results",
     closeButton: "Close",
@@ -403,6 +407,8 @@ const translations = {
     recordedByLabel: "Recorded by",
     recordedByPlaceholder: "Enter recorder name",
     workerCountSuffix: "workers",
+    confirmClearRecords: "Are you sure you want to clear all records?",
+    confirmDeleteRecord: "Delete this record?",
   },
 };
 
@@ -1029,11 +1035,6 @@ const renderRecords = () => {
           : translations[currentLanguage].paymentPending;
       tags.appendChild(paymentChip);
     }
-    const verifyButton = document.createElement("button");
-    verifyButton.type = "button";
-    verifyButton.className = "secondary";
-    verifyButton.textContent = translations[currentLanguage].verifyButton;
-    verifyButton.addEventListener("click", () => openRecordModal(record));
     const editButton = document.createElement("button");
     editButton.type = "button";
     editButton.className = "secondary";
@@ -1043,11 +1044,29 @@ const renderRecords = () => {
       showLoader();
       window.location.href = "form.html";
     });
+    const verifyButton = document.createElement("button");
+    verifyButton.type = "button";
+    verifyButton.className = "secondary";
+    verifyButton.textContent = translations[currentLanguage].verifyButton;
+    verifyButton.addEventListener("click", () => openRecordModal(record));
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "danger";
+    deleteButton.textContent = translations[currentLanguage].deleteButton;
+    deleteButton.addEventListener("click", () => {
+      const shouldDelete = window.confirm(translations[currentLanguage].confirmDeleteRecord);
+      if (!shouldDelete) return;
+      const records = loadRecords();
+      const nextRecords = records.filter((item) => item.formId !== record.formId);
+      saveRecords(nextRecords);
+      renderRecords();
+    });
     card.appendChild(title);
     card.appendChild(meta);
     card.appendChild(tags);
-    card.appendChild(verifyButton);
     card.appendChild(editButton);
+    card.appendChild(verifyButton);
+    card.appendChild(deleteButton);
       const workers = normalizeWorkers(record.data);
       const cardExpiryState = getAggregatedExpiryState(workers, "cardExpiryDate");
       if (cardExpiryState.state === "expired" || cardExpiryState.state === "warning") {
@@ -1532,6 +1551,7 @@ if (pageLoader) {
   window.addEventListener("load", () => {
     setTimeout(hideLoader, 350);
   });
+  setTimeout(hideLoader, 4000);
 }
 if (recordSearch) {
   const storedQuery = localStorage.getItem(RECORD_SEARCH_KEY);
@@ -1597,6 +1617,10 @@ if (recordFilter) {
 }
 if (clearRecordsButton) {
   clearRecordsButton.addEventListener("click", () => {
+    const shouldClear = window.confirm(translations[currentLanguage].confirmClearRecords);
+    if (!shouldClear) {
+      return;
+    }
     saveRecords([]);
     renderRecords();
     setStatus(formSaveStatus, translations[currentLanguage].recordsStatus);

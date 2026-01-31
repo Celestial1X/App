@@ -9,6 +9,7 @@ const passportType = document.getElementById("passportType");
 const nationality = document.getElementById("nationality");
 const dob = document.getElementById("dob");
 const gender = document.getElementById("gender");
+const workerId = document.getElementById("workerId");
 const cardIssueDate = document.getElementById("cardIssueDate");
 const cardExpiryDate = document.getElementById("cardExpiryDate");
 const cardExpiryStatus = document.getElementById("cardExpiryStatus");
@@ -123,6 +124,8 @@ const translations = {
     passportTypeInternational: "พาสปอร์ตอินเตอร์",
     passportLabel: "เลขหนังสือเดินทาง",
     passportPlaceholder: "เช่น P1234567",
+    workerIdLabel: "เลขต่างด้าว",
+    workerIdPlaceholder: "เช่น FW-0001",
     ciNumberLabel: "เลข CI",
     ciNumberPlaceholder: "เช่น CI-000123",
     cardIssueDateLabel: "วันทำบัตร",
@@ -275,6 +278,8 @@ const translations = {
     passportTypeInternational: "International passport",
     passportLabel: "Passport number",
     passportPlaceholder: "e.g. P1234567",
+    workerIdLabel: "Worker ID",
+    workerIdPlaceholder: "e.g. FW-0001",
     ciNumberLabel: "CI number",
     ciNumberPlaceholder: "e.g. CI-000123",
     cardIssueDateLabel: "Card issue date",
@@ -738,6 +743,7 @@ const collectFormData = () => {
     fullName: fullName.value.trim(),
     passportType: passportType?.value || "",
     passport: passportInput.value.trim(),
+    workerId: workerId?.value?.trim() || "",
     ciNumber: ciNumber?.value?.trim() || "",
     cardIssueDate: cardIssueDate?.value || "",
     cardExpiryDate: cardExpiryDate?.value || "",
@@ -797,7 +803,7 @@ const renderRecords = () => {
     if (!query) return matchesFilter;
     const searchable = `${record.formId} ${record.formTypeLabel} ${record.displayName} ${
       record.data.passport || ""
-    } ${record.data.ciNumber || ""} ${record.data.visaNumber || ""}`.toLowerCase();
+    } ${record.data.workerId || ""} ${record.data.ciNumber || ""} ${record.data.visaNumber || ""}`.toLowerCase();
     return matchesFilter && searchable.includes(query);
   });
   const scoped = filtered;
@@ -923,6 +929,8 @@ const openRecordModal = (record) => {
     passportItem.textContent = `${translations[currentLanguage].recordPassportLabel}: ${
       record.data.passport || "-"
     }`;
+    const workerIdItem = document.createElement("li");
+    workerIdItem.textContent = `${translations[currentLanguage].workerIdLabel}: ${record.data.workerId || "-"}`;
     const passportTypeItem = document.createElement("li");
     passportTypeItem.textContent = `${translations[currentLanguage].passportTypeLabel}: ${getPassportTypeLabel(
       record.data.passportType
@@ -985,6 +993,7 @@ const openRecordModal = (record) => {
     }`;
     list.appendChild(nameItem);
     list.appendChild(passportItem);
+    list.appendChild(workerIdItem);
     list.appendChild(passportTypeItem);
     list.appendChild(ciItem);
     list.appendChild(employerItem);
@@ -1117,6 +1126,43 @@ const openRecordModal = (record) => {
   recordModal.setAttribute("aria-hidden", "false");
 };
 
+const openEmployerModal = (query) => {
+  recordModalTitle.textContent = translations[currentLanguage].recordModalTitle;
+  recordModalBody.innerHTML = "";
+  const records = loadRecords().filter((record) => {
+    const employer = `${record.data.company || ""} ${record.data.employerId || ""}`.toLowerCase();
+    return employer.includes(query.toLowerCase());
+  });
+  if (!records.length) {
+    const message = document.createElement("p");
+    message.textContent = translations[currentLanguage].recordNotFound;
+    recordModalBody.appendChild(message);
+  } else {
+    const list = document.createElement("ul");
+    records.forEach((record) => {
+      const item = document.createElement("li");
+      const name = record.data.fullName || "-";
+      const workerIdValue = record.data.workerId || "-";
+      const expiryState = getExpiryState(record.data.cardExpiryDate);
+      const expiryLabel = record.data.cardExpiryDate
+        ? formatExpiryLabel(expiryState.state, expiryState.days)
+        : "-";
+      item.textContent = `${name} • ${translations[currentLanguage].workerIdLabel}: ${workerIdValue} • ${translations[currentLanguage].cardExpiryDateLabel}: ${expiryLabel}`;
+      const viewButton = document.createElement("button");
+      viewButton.type = "button";
+      viewButton.className = "secondary";
+      viewButton.textContent = translations[currentLanguage].verifyButton;
+      viewButton.addEventListener("click", () => openRecordModal(record));
+      item.appendChild(document.createElement("br"));
+      item.appendChild(viewButton);
+      list.appendChild(item);
+    });
+    recordModalBody.appendChild(list);
+  }
+  recordModal.classList.add("is-open");
+  recordModal.setAttribute("aria-hidden", "false");
+};
+
 const closeRecordModal = () => {
   recordModal.classList.remove("is-open");
   recordModal.setAttribute("aria-hidden", "true");
@@ -1129,6 +1175,7 @@ const findRecordByQuery = (query) => {
   return (
     records.find((record) => record.formId.toLowerCase() === normalized) ||
     records.find((record) => record.data.passport?.toLowerCase() === normalized) ||
+    records.find((record) => record.data.workerId?.toLowerCase() === normalized) ||
     records.find((record) => record.data.ciNumber?.toLowerCase() === normalized) ||
     records.find((record) => record.data.visaNumber?.toLowerCase() === normalized) ||
     records.find((record) => record.data.company?.toLowerCase().includes(normalized)) ||
@@ -1187,6 +1234,7 @@ const populateForm = (record) => {
   }
   if (passportType) passportType.value = record.data.passportType || "ci";
   if (passportInput) passportInput.value = record.data.passport || "";
+  if (workerId) workerId.value = record.data.workerId || "";
   if (ciNumber) ciNumber.value = record.data.ciNumber || "";
   if (cardIssueDate) cardIssueDate.value = record.data.cardIssueDate || "";
   if (cardExpiryDate) cardExpiryDate.value = record.data.cardExpiryDate || "";
@@ -1356,8 +1404,12 @@ if (passportCheckButton) {
 }
 if (employerCheckButton) {
   employerCheckButton.addEventListener("click", () => {
-    const record = findRecordByQuery(employerCheckInput.value);
-    openRecordModal(record);
+    const query = employerCheckInput.value;
+    if (!query) {
+      setStatus(employerStatus, translations[currentLanguage].employerEmpty, "warn");
+      return;
+    }
+    openEmployerModal(query);
   });
 }
 if (verifyRecordButton) {

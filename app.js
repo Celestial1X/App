@@ -125,8 +125,8 @@ const translations = {
     scheduleLocationPlaceholder: "เช่น สำนักงานจัดหางาน",
     ciNumberLabel: "เลข CI",
     ciNumberPlaceholder: "เช่น CI-000123",
-    cardIssueDateLabel: "วันทำบัตร",
-    cardExpiryDateLabel: "วันหมดอายุบัตร",
+    cardIssueDateLabel: "วันทำบัตร (CI/PV/PJ)",
+    cardExpiryDateLabel: "วันหมดอายุบัตร (CI/PV/PJ)",
     nationalityLabel: "สัญชาติ",
     nationalityPlaceholder: "เมียนมา / ลาว / กัมพูชา",
     dobLabel: "วันเดือนปีเกิด",
@@ -170,8 +170,8 @@ const translations = {
     renewalStatusCompleted: "ต่ออายุแล้ว",
     receivedDocsLabel: "เอกสารที่ได้รับ",
     requiredRenewalDocsLabel: "เอกสารที่ต้องใช้ต่ออายุ",
-    renewalDocPassport: "สำเนาพาสปอร์ต",
-    renewalDocVisa: "สำเนาวีซ่า",
+    renewalDocPassport: "พาสปอร์ต",
+    renewalDocVisa: "วีซ่า",
     renewalDocPermit: "ใบอนุญาตทำงาน",
     renewalDocPhoto: "รูปถ่าย",
     renewalDocEmployerLetter: "หนังสือรับรองนายจ้าง",
@@ -179,7 +179,7 @@ const translations = {
     receivedDocsNotePlaceholder: "ระบุเอกสารที่ได้รับเพิ่มเติม",
     renewalDocsNoteLabel: "หมายเหตุเอกสารที่ต้องใช้ต่อ",
     renewalDocsNotePlaceholder: "ระบุเอกสารเพิ่มเติมที่ต้องใช้ต่ออายุ",
-    expiryLabel: "วันหมดอายุ",
+    expiryLabel: "วันหมดอายุใบอนุญาตอื่น ๆ",
     verificationLabel: "สถานะตรวจสอบ",
     verificationPending: "รอตรวจสอบ",
     verificationPass: "ผ่านการตรวจสอบ",
@@ -299,8 +299,8 @@ const translations = {
     scheduleLocationPlaceholder: "e.g. Labor office",
     ciNumberLabel: "CI number",
     ciNumberPlaceholder: "e.g. CI-000123",
-    cardIssueDateLabel: "Card issue date",
-    cardExpiryDateLabel: "Card expiry date",
+    cardIssueDateLabel: "Card issue date (CI/PV/PJ)",
+    cardExpiryDateLabel: "Card expiry date (CI/PV/PJ)",
     nationalityLabel: "Nationality",
     nationalityPlaceholder: "Myanmar / Laos / Cambodia",
     dobLabel: "Date of birth",
@@ -344,8 +344,8 @@ const translations = {
     renewalStatusCompleted: "Renewed",
     receivedDocsLabel: "Received documents",
     requiredRenewalDocsLabel: "Renewal required documents",
-    renewalDocPassport: "Passport copy",
-    renewalDocVisa: "Visa copy",
+    renewalDocPassport: "Passport",
+    renewalDocVisa: "Visa",
     renewalDocPermit: "Work permit",
     renewalDocPhoto: "Photo",
     renewalDocEmployerLetter: "Employer letter",
@@ -353,7 +353,7 @@ const translations = {
     receivedDocsNotePlaceholder: "Additional received documents",
     renewalDocsNoteLabel: "Renewal docs note",
     renewalDocsNotePlaceholder: "Additional renewal requirements",
-    expiryLabel: "Expiry date",
+    expiryLabel: "Other permit expiry date",
     verificationLabel: "Verification status",
     verificationPending: "Pending",
     verificationPass: "Verified",
@@ -455,6 +455,8 @@ const hideLoader = () => {
   pageLoader.setAttribute("aria-hidden", "true");
 };
 
+const EXPIRY_WARNING_DAYS = 30;
+
 const getExpiryState = (dateValue) => {
   if (!dateValue) return { state: "none", days: null };
   const selectedDate = new Date(dateValue);
@@ -464,7 +466,7 @@ const getExpiryState = (dateValue) => {
   const diffMs = selectedDate - today;
   const days = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
   if (days < 0) return { state: "expired", days };
-  if (days <= 7) return { state: "warning", days };
+  if (days <= EXPIRY_WARNING_DAYS) return { state: "warning", days };
   return { state: "ok", days };
 };
 
@@ -477,6 +479,18 @@ const formatExpiryLabel = (state, days) => {
     return translations[currentLanguage].expiryWarning.replace("{days}", days);
   }
   return translations[currentLanguage].expiryValid;
+};
+
+const formatExpiryDisplay = (dateValue) => {
+  if (!dateValue) return "-";
+  const { state, days } = getExpiryState(dateValue);
+  if (state === "ok") {
+    return dateValue;
+  }
+  if (state === "warning" || state === "expired") {
+    return `${dateValue} (${formatExpiryLabel(state, days)})`;
+  }
+  return dateValue;
 };
 
 const validatePassport = (value, target) => {
@@ -957,11 +971,11 @@ const getRecordStatusSummary = (record) => {
     getAggregatedExpiryState(workers, "cardExpiryDate").state === "expired" ||
     getAggregatedExpiryState(workers, "visaExpiryDate").state === "expired" ||
     getAggregatedExpiryState(workers, "expiry").state === "expired";
-  const hasPaymentOverdue = record.data.paymentStatus === "pending";
+  const hasPaymentPending = record.data.paymentStatus === "pending";
   return {
     hasCompleted,
-    hasPending: hasPendingSchedule || hasExpiryWarning,
-    hasAlert: hasExpired || hasPaymentOverdue,
+    hasPending: hasPendingSchedule || hasExpiryWarning || hasPaymentPending,
+    hasAlert: hasExpired,
   };
 };
 const collectFormData = () => {
@@ -1216,7 +1230,19 @@ const openRecordModal = (record) => {
       recordModalBody.appendChild(workerTitle);
       workers.forEach((worker, index) => {
         const workerCard = document.createElement("div");
-        workerCard.className = "worker-detail";
+        const cardExpiryState = getExpiryState(worker.cardExpiryDate);
+        const visaExpiryState = getExpiryState(worker.visaExpiryDate);
+        const otherExpiryState = getExpiryState(worker.expiry);
+        const hasAlert =
+          cardExpiryState.state === "expired" ||
+          visaExpiryState.state === "expired" ||
+          otherExpiryState.state === "expired";
+        const hasWarn =
+          !hasAlert &&
+          (cardExpiryState.state === "warning" ||
+            visaExpiryState.state === "warning" ||
+            otherExpiryState.state === "warning");
+        workerCard.className = `worker-detail${hasAlert ? " alert" : hasWarn ? " warn" : ""}`;
         const workerHeading = document.createElement("h6");
         workerHeading.textContent = `${translations[currentLanguage].workerCardTitle} ${index + 1}: ${
           worker.fullName || "-"
@@ -1249,24 +1275,17 @@ const openRecordModal = (record) => {
           worker.cardIssueDate || "-"
         }`;
         const cardExpiryItem = document.createElement("li");
-        const cardExpiryState = getExpiryState(worker.cardExpiryDate);
-        const cardExpiryLabel = worker.cardExpiryDate
-          ? formatExpiryLabel(cardExpiryState.state, cardExpiryState.days)
-          : "-";
+        const cardExpiryLabel = formatExpiryDisplay(worker.cardExpiryDate);
         cardExpiryItem.textContent = `${translations[currentLanguage].cardExpiryDateLabel}: ${cardExpiryLabel}`;
         const expiryItem = document.createElement("li");
-        const expiryState = getExpiryState(worker.expiry);
-        const expiryLabel = worker.expiry ? formatExpiryLabel(expiryState.state, expiryState.days) : "-";
+        const expiryLabel = formatExpiryDisplay(worker.expiry);
         expiryItem.textContent = `${translations[currentLanguage].expiryLabel}: ${expiryLabel}`;
         const visaIssueItem = document.createElement("li");
         visaIssueItem.textContent = `${translations[currentLanguage].visaIssueDateLabel}: ${worker.visaIssueDate || "-"}`;
         const visaItem = document.createElement("li");
         visaItem.textContent = `${translations[currentLanguage].visaNumberLabel}: ${worker.visaNumber || "-"}`;
         const visaExpiryItem = document.createElement("li");
-        const visaExpiryState = getExpiryState(worker.visaExpiryDate);
-        const visaExpiryLabel = worker.visaExpiryDate
-          ? formatExpiryLabel(visaExpiryState.state, visaExpiryState.days)
-          : "-";
+        const visaExpiryLabel = formatExpiryDisplay(worker.visaExpiryDate);
         visaExpiryItem.textContent = `${translations[currentLanguage].visaExpiryDateLabel}: ${visaExpiryLabel}`;
         workerList.appendChild(workerIdItem);
         workerList.appendChild(scheduleItem);
@@ -1417,10 +1436,7 @@ const openEmployerModal = (query) => {
         const item = document.createElement("li");
         const name = worker.fullName || "-";
         const workerIdValue = worker.workerId || "-";
-        const expiryState = getExpiryState(worker.cardExpiryDate);
-        const expiryLabel = worker.cardExpiryDate
-          ? formatExpiryLabel(expiryState.state, expiryState.days)
-          : "-";
+        const expiryLabel = formatExpiryDisplay(worker.cardExpiryDate);
         item.textContent = `${name} • ${translations[currentLanguage].workerIdLabel}: ${workerIdValue} • ${translations[currentLanguage].cardExpiryDateLabel}: ${expiryLabel}`;
         const viewButton = document.createElement("button");
         viewButton.type = "button";

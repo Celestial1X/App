@@ -666,6 +666,16 @@ button {
   background: #f8f5ff;
 }
 
+.worker-detail.warn {
+  border-color: #f59e0b;
+  background: #fff7ed;
+}
+
+.worker-detail.alert {
+  border-color: #b42318;
+  background: #fdecec;
+}
+
 .worker-detail h6 {
   margin: 0 0 8px;
   font-size: 0.95rem;

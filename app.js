@@ -5,10 +5,13 @@ const passportCheckInput = document.getElementById("passportCheck");
 const passportStatus = document.getElementById("passportStatus");
 const passportInlineStatus = document.getElementById("passportInlineStatus");
 const fullName = document.getElementById("fullName");
+const nameList = document.getElementById("nameList");
+const addNameButton = document.getElementById("addName");
 const nationality = document.getElementById("nationality");
 const dob = document.getElementById("dob");
 const gender = document.getElementById("gender");
 const company = document.getElementById("company");
+const caseType = document.getElementById("caseType");
 const position = document.getElementById("position");
 const workSite = document.getElementById("workSite");
 const startDate = document.getElementById("startDate");
@@ -97,6 +100,7 @@ const translations = {
     personalTitle: "ข้อมูลส่วนตัวแรงงาน",
     fullNameLabel: "ชื่อ-นามสกุล",
     fullNamePlaceholder: "กรอกชื่อแรงงาน",
+    addNameButton: "เพิ่มรายชื่อแรงงาน",
     passportLabel: "เลขหนังสือเดินทาง",
     passportPlaceholder: "เช่น P1234567",
     nationalityLabel: "สัญชาติ",
@@ -109,6 +113,10 @@ const translations = {
     employmentTitle: "ข้อมูลนายจ้าง",
     companyLabel: "ชื่อนายจ้าง",
     companyPlaceholder: "ระบุชื่อนายจ้าง",
+    caseTypeLabel: "ประเภทการแจ้ง",
+    caseTypeChangeEmployer: "แจ้งเปลี่ยนนายจ้าง",
+    caseTypeRelocation: "แจ้งย้าย",
+    caseTypeOther: "อื่น ๆ",
     positionLabel: "ตำแหน่งงาน",
     positionPlaceholder: "เช่น พนักงานผลิต",
     workSiteLabel: "สถานที่ทำงาน",
@@ -170,6 +178,8 @@ const translations = {
     recordNameLabel: "ชื่อ",
     recordPassportLabel: "พาสปอร์ต",
     recordEmployerLabel: "นายจ้าง",
+    recordCaseTypeLabel: "ประเภทการแจ้ง",
+    recordNamesLabel: "รายชื่อแรงงาน",
     recordAttachmentsTitle: "เอกสารแนบ",
     recordFacePhotoLabel: "รูปหน้า",
     recordIdCardLabel: "บัตรประชาชน/บัตรชมพู",
@@ -209,6 +219,7 @@ const translations = {
     personalTitle: "Personal details",
     fullNameLabel: "Full name",
     fullNamePlaceholder: "Worker name",
+    addNameButton: "Add worker name",
     passportLabel: "Passport number",
     passportPlaceholder: "e.g. P1234567",
     nationalityLabel: "Nationality",
@@ -221,6 +232,10 @@ const translations = {
     employmentTitle: "Employer details",
     companyLabel: "Employer name",
     companyPlaceholder: "Employer name",
+    caseTypeLabel: "Case type",
+    caseTypeChangeEmployer: "Change employer",
+    caseTypeRelocation: "Relocation",
+    caseTypeOther: "Other",
     positionLabel: "Position",
     positionPlaceholder: "e.g. Operator",
     workSiteLabel: "Work site",
@@ -282,6 +297,8 @@ const translations = {
     recordNameLabel: "Name",
     recordPassportLabel: "Passport",
     recordEmployerLabel: "Employer",
+    recordCaseTypeLabel: "Case type",
+    recordNamesLabel: "Worker names",
     recordAttachmentsTitle: "Attachments",
     recordFacePhotoLabel: "Face photo",
     recordIdCardLabel: "ID/pink card",
@@ -532,15 +549,96 @@ const getFormTypeLabel = (value) => {
   return map[value] || value;
 };
 
+const getCaseTypeLabel = (value) => {
+  const map = {
+    changeEmployer: translations[currentLanguage].caseTypeChangeEmployer,
+    relocation: translations[currentLanguage].caseTypeRelocation,
+    other: translations[currentLanguage].caseTypeOther,
+  };
+  return map[value] || value || "-";
+};
+
+const getNameValues = () => {
+  if (!nameList) return [];
+  return Array.from(nameList.querySelectorAll("input"))
+    .map((input) => input.value.trim())
+    .filter(Boolean);
+};
+
+const renderNameInputs = (names) => {
+  if (!nameList) return;
+  const values = names && names.length ? names : [""];
+  nameList.innerHTML = "";
+  values.forEach((value, index) => {
+    const row = document.createElement("div");
+    row.className = "name-row";
+    const input = document.createElement("input");
+    input.type = "text";
+    input.placeholder = translations[currentLanguage].fullNamePlaceholder;
+    input.value = value;
+    const removeButton = document.createElement("button");
+    removeButton.type = "button";
+    removeButton.className = "secondary name-remove";
+    removeButton.setAttribute("aria-label", "ลบ");
+    removeButton.textContent = "✕";
+    removeButton.disabled = values.length === 1 && index === 0;
+    removeButton.addEventListener("click", () => {
+      row.remove();
+      const remaining = nameList.querySelectorAll(".name-row");
+      if (!remaining.length) {
+        renderNameInputs([""]);
+      } else if (remaining.length === 1) {
+        const button = remaining[0].querySelector(".name-remove");
+        if (button) button.disabled = true;
+      }
+    });
+    row.appendChild(input);
+    row.appendChild(removeButton);
+    nameList.appendChild(row);
+  });
+};
+
+const addNameInput = () => {
+  if (!nameList) return;
+  const row = document.createElement("div");
+  row.className = "name-row";
+  const input = document.createElement("input");
+  input.type = "text";
+  input.placeholder = translations[currentLanguage].fullNamePlaceholder;
+  const removeButton = document.createElement("button");
+  removeButton.type = "button";
+  removeButton.className = "secondary name-remove";
+  removeButton.setAttribute("aria-label", "ลบ");
+  removeButton.textContent = "✕";
+  removeButton.addEventListener("click", () => {
+    row.remove();
+    const remaining = nameList.querySelectorAll(".name-row");
+    if (!remaining.length) {
+      renderNameInputs([""]);
+    } else if (remaining.length === 1) {
+      const button = remaining[0].querySelector(".name-remove");
+      if (button) button.disabled = true;
+    }
+  });
+  const firstRemove = nameList.querySelector(".name-row .name-remove");
+  if (firstRemove) firstRemove.disabled = false;
+  row.appendChild(input);
+  row.appendChild(removeButton);
+  nameList.appendChild(row);
+};
+
 const collectFormData = () => {
+  const names = getNameValues();
   const formData = {
     formType: formType.value,
-    fullName: fullName.value.trim(),
+    fullName: names[0] || "",
+    names,
     passport: passportInput.value.trim(),
     nationality: nationality.value.trim(),
     dob: dob.value,
     gender: gender.value,
     company: company.value.trim(),
+    caseType: caseType?.value || "",
     position: position?.value?.trim() || "",
     workSite: workSite?.value?.trim() || "",
     startDate: startDate?.value || "",
@@ -565,6 +663,7 @@ const collectFormData = () => {
   };
   const hasAnyValue = Object.entries(formData).some(([key, value]) => {
     if (key === "formType" || key === "attachments") return false;
+    if (key === "names") return value.length > 0;
     return value;
   });
   return { formData, hasAnyValue };
@@ -580,7 +679,8 @@ const renderRecords = () => {
   const filtered = records.filter((record) => {
     const matchesFilter = filter === "all" || record.formType === filter;
     if (!query) return matchesFilter;
-    const searchable = `${record.formId} ${record.formTypeLabel} ${record.displayName}`.toLowerCase();
+    const names = Array.isArray(record.data.names) ? record.data.names.join(" ") : "";
+    const searchable = `${record.formId} ${record.formTypeLabel} ${record.displayName} ${names}`.toLowerCase();
     return matchesFilter && searchable.includes(query);
   });
   const scoped = filtered;
@@ -620,6 +720,21 @@ const renderRecords = () => {
         ? translations[currentLanguage].recordStatusFinal
         : translations[currentLanguage].recordStatusDraft;
     tags.appendChild(statusChip);
+    if (record.data.caseType) {
+      const caseChip = document.createElement("span");
+      caseChip.className = "record-chip";
+      caseChip.textContent = getCaseTypeLabel(record.data.caseType);
+      tags.appendChild(caseChip);
+    }
+    if (record.data.paymentStatus) {
+      const paymentChip = document.createElement("span");
+      paymentChip.className = "record-chip";
+      paymentChip.textContent =
+        record.data.paymentStatus === "paid"
+          ? translations[currentLanguage].paymentPaid
+          : translations[currentLanguage].paymentPending;
+      tags.appendChild(paymentChip);
+    }
     const verifyButton = document.createElement("button");
     verifyButton.type = "button";
     verifyButton.className = "secondary";
@@ -654,7 +769,8 @@ const openRecordModal = (record) => {
     title.textContent = translations[currentLanguage].recordDetailsTitle;
     const list = document.createElement("ul");
     const nameItem = document.createElement("li");
-    nameItem.textContent = `${translations[currentLanguage].recordNameLabel}: ${record.data.fullName || "-"}`;
+    const primaryName = record.data.fullName || record.data.names?.[0] || "-";
+    nameItem.textContent = `${translations[currentLanguage].recordNameLabel}: ${primaryName}`;
     const passportItem = document.createElement("li");
     passportItem.textContent = `${translations[currentLanguage].recordPassportLabel}: ${
       record.data.passport || "-"
@@ -663,6 +779,10 @@ const openRecordModal = (record) => {
     employerItem.textContent = `${translations[currentLanguage].recordEmployerLabel}: ${
       record.data.company || record.data.employerId || "-"
     }`;
+    const caseTypeItem = document.createElement("li");
+    caseTypeItem.textContent = `${translations[currentLanguage].recordCaseTypeLabel}: ${getCaseTypeLabel(
+      record.data.caseType
+    )}`;
     const typeItem = document.createElement("li");
     typeItem.textContent = `${translations[currentLanguage].recordFormTypeLabel}: ${record.formTypeLabel}`;
     const statusItem = document.createElement("li");
@@ -687,15 +807,24 @@ const openRecordModal = (record) => {
     recordedByItem.textContent = `${translations[currentLanguage].recordedByLabel}: ${
       record.data.recordedBy || "-"
     }`;
+    const namesList = record.data.names && record.data.names.length > 1 ? record.data.names.join(", ") : "";
     list.appendChild(nameItem);
     list.appendChild(passportItem);
     list.appendChild(employerItem);
+    if (record.data.caseType) {
+      list.appendChild(caseTypeItem);
+    }
     list.appendChild(typeItem);
     list.appendChild(statusItem);
     list.appendChild(expiryItem);
     list.appendChild(paymentItem);
     list.appendChild(paymentDateItem);
     list.appendChild(recordedByItem);
+    if (namesList) {
+      const namesItem = document.createElement("li");
+      namesItem.textContent = `${translations[currentLanguage].recordNamesLabel}: ${namesList}`;
+      list.appendChild(namesItem);
+    }
     recordModalBody.appendChild(title);
     recordModalBody.appendChild(list);
     const attachments = [];
@@ -779,7 +908,12 @@ const findRecordByQuery = (query) => {
     records.find((record) => record.data.passport?.toLowerCase() === normalized) ||
     records.find((record) => record.data.company?.toLowerCase().includes(normalized)) ||
     records.find((record) => record.data.employerId?.toLowerCase().includes(normalized)) ||
-    records.find((record) => record.data.fullName?.toLowerCase().includes(normalized))
+    records.find((record) => record.data.fullName?.toLowerCase().includes(normalized)) ||
+    records.find((record) =>
+      Array.isArray(record.data.names)
+        ? record.data.names.some((name) => name.toLowerCase().includes(normalized))
+        : false
+    )
   );
 };
 
@@ -822,12 +956,17 @@ const populateForm = (record) => {
   if (!record) return;
   if (formType) formType.value = record.formType;
   if (recordedBy) recordedBy.value = record.data.recordedBy || "";
-  if (fullName) fullName.value = record.data.fullName || "";
+  if (nameList) {
+    renderNameInputs(record.data.names && record.data.names.length ? record.data.names : [record.data.fullName || ""]);
+  } else if (fullName) {
+    fullName.value = record.data.fullName || "";
+  }
   if (passportInput) passportInput.value = record.data.passport || "";
   if (nationality) nationality.value = record.data.nationality || "";
   if (dob) dob.value = record.data.dob || "";
   if (gender) gender.value = record.data.gender || "";
   if (company) company.value = record.data.company || "";
+  if (caseType) caseType.value = record.data.caseType || "changeEmployer";
   if (position) position.value = record.data.position || "";
   if (workSite) workSite.value = record.data.workSite || "";
   if (startDate) startDate.value = record.data.startDate || "";
@@ -876,11 +1015,17 @@ if (employerCheckInput) {
 if (expiryInput) {
   expiryInput.addEventListener("change", updateExpiryStatus);
 }
+if (addNameButton) {
+  addNameButton.addEventListener("click", addNameInput);
+}
 uploadInputs.forEach((input) => input.addEventListener("change", updateUploadPreview));
 if (paymentSlipInput) {
   paymentSlipInput.addEventListener("change", updatePaymentSlipPreview);
 }
 updateSections();
+if (nameList) {
+  renderNameInputs(getNameValues());
+}
 updateUploadPreview();
 updatePaymentSlipPreview();
 renderRecords();
@@ -914,6 +1059,9 @@ const applyTranslations = (lang) => {
   });
   currentLanguage = lang;
   updateEmployerStatus();
+  if (nameList) {
+    renderNameInputs(getNameValues());
+  }
   if (passportCheckInput && passportStatus) {
     if (passportCheckInput.value) {
       validatePassport(passportCheckInput.value, passportStatus);
@@ -969,7 +1117,7 @@ if (employerCheckButton) {
 }
 if (verifyRecordButton) {
   verifyRecordButton.addEventListener("click", () => {
-    const query = passportInput?.value || fullName?.value || company?.value;
+    const query = passportInput?.value || getNameValues()[0] || company?.value;
     if (!query) {
       setStatus(formSaveStatus, translations[currentLanguage].recordNotFound, "warn");
       return;

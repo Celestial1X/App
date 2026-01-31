@@ -215,6 +215,34 @@ textarea {
   gap: 16px;
 }
 
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.name-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.name-row input {
+  flex: 1;
+}
+
+.name-remove {
+  padding: 0 10px;
+  min-width: 36px;
+  height: 40px;
+  line-height: 1;
+}
+
+.add-name {
+  margin-top: 8px;
+  align-self: flex-start;
+}
+
 .grid-3 {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

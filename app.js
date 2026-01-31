@@ -205,8 +205,15 @@ const translations = {
     recordsSubtitle: "บันทึกข้อมูลจากแบบฟอร์มและค้นหาด้วยเลขฟอร์มหรือหัวข้อ",
     recordsSearchLabel: "ค้นหาด้วยเลขฟอร์ม/หัวข้อ",
     recordsSearchPlaceholder: "เช่น FORM-2024-0001 หรือ ข้อมูลส่วนตัวแรงงาน",
-    recordsFilterLabel: "กรองตามหัวข้อ",
-    recordsFilterAll: "ทุกหัวข้อ",
+    recordsFilterLabel: "กรองตามประเภทข้อมูล",
+    recordsFilterAll: "ทั้งหมด",
+    filterRenewalPassport: "ต่ออายุบัตร/พาสปอร์ต",
+    filterRenewalVisa: "ต่ออายุวีซ่า",
+    filterRenewalPermit: "ต่ออายุใบอนุญาตทำงาน",
+    filterNationalityMmr: "สัญชาติ MMR",
+    filterNationalityLao: "สัญชาติ LAO",
+    filterNationalityKhm: "สัญชาติ KHM",
+    filterNationalityVnm: "สัญชาติ VNM",
     recordsStatus: "ยังไม่มีข้อมูลที่บันทึก",
     clearButton: "ลบข้อมูลทั้งหมด",
     saveDraftSuccess: "บันทึกข้อมูลเรียบร้อยแล้ว",
@@ -224,6 +231,11 @@ const translations = {
     statusChipCompleted: "สำเร็จแล้ว",
     statusChipPending: "รอการนัด/เอกสาร/ชำระเงิน/ใบอนุญาตใกล้หมดอายุ",
     statusChipAlert: "ใบอนุญาตหมดอายุ/ไม่จ่ายตามกำหนด",
+    workerDocStatusLabel: "สถานะเอกสาร",
+    workerDocStatusOk: "สำเร็จแล้ว",
+    workerDocStatusWarning: "ใกล้หมดอายุ",
+    workerDocStatusExpired: "หมดอายุแล้ว",
+    workerDocStatusPending: "กำลังดำเนินการ",
     recordModalTitle: "ผลการค้นหา",
     closeButton: "ปิดหน้าต่าง",
     recordNotFound: "ไม่พบข้อมูลที่ตรงกัน",
@@ -379,8 +391,15 @@ const translations = {
     recordsSubtitle: "Save form data and search by form ID or section.",
     recordsSearchLabel: "Search by form ID/section",
     recordsSearchPlaceholder: "e.g. FORM-2024-0001 or Personal details",
-    recordsFilterLabel: "Filter by section",
-    recordsFilterAll: "All sections",
+    recordsFilterLabel: "Filter by type",
+    recordsFilterAll: "All",
+    filterRenewalPassport: "Renew passport/card",
+    filterRenewalVisa: "Renew visa",
+    filterRenewalPermit: "Renew work permit",
+    filterNationalityMmr: "Nationality MMR",
+    filterNationalityLao: "Nationality LAO",
+    filterNationalityKhm: "Nationality KHM",
+    filterNationalityVnm: "Nationality VNM",
     recordsStatus: "No saved records yet.",
     clearButton: "Clear all records",
     saveDraftSuccess: "Record saved successfully.",
@@ -398,6 +417,11 @@ const translations = {
     statusChipCompleted: "Completed",
     statusChipPending: "Pending appointment/docs/payment/permit expiring",
     statusChipAlert: "Permit expired/unpaid",
+    workerDocStatusLabel: "Document status",
+    workerDocStatusOk: "Completed",
+    workerDocStatusWarning: "Expiring soon",
+    workerDocStatusExpired: "Expired",
+    workerDocStatusPending: "In progress",
     recordModalTitle: "Search results",
     closeButton: "Close",
     recordNotFound: "No matching records found.",
@@ -790,6 +814,31 @@ const updateWorkerCardTitle = (card, index) => {
 
 const getWorkerCards = () => (workerList ? Array.from(workerList.querySelectorAll(".worker-card")) : []);
 
+const normalizeNationality = (value = "") => {
+  const trimmed = value.trim().toLowerCase();
+  const map = {
+    "เมียนมา": "MMR",
+    "พม่า": "MMR",
+    "myanmar": "MMR",
+    "mm": "MMR",
+    "mmr": "MMR",
+    "ลาว": "LAO",
+    "lao": "LAO",
+    "la": "LAO",
+    "กัมพูชา": "KHM",
+    "เขมร": "KHM",
+    "cambodia": "KHM",
+    "kh": "KHM",
+    "khm": "KHM",
+    "เวียดนาม": "VNM",
+    "vietnam": "VNM",
+    "vn": "VNM",
+    "vnm": "VNM",
+  };
+  if (!trimmed) return "";
+  return map[trimmed] || value.toUpperCase();
+};
+
 const hasWorkerValue = (worker) =>
   Object.values(worker).some((value) => (Array.isArray(value) ? value.length > 0 : value));
 
@@ -809,7 +858,7 @@ const extractWorkerData = (card) => {
     ciNumber: getValue("ciNumber"),
     permitType: getValue("permitType") || "pink",
     permitNo: getValue("permitNo"),
-    nationality: getValue("nationality"),
+    nationality: normalizeNationality(getValue("nationality")),
     cardIssueDate: getValue("cardIssueDate"),
     cardExpiryDate: getValue("cardExpiryDate"),
     dob: getValue("dob"),
@@ -835,7 +884,7 @@ const normalizeWorkers = (data) => {
     ciNumber: data.ciNumber || "",
     permitType: data.permitType || "pink",
     permitNo: data.permitNo || "",
-    nationality: data.nationality || "",
+    nationality: normalizeNationality(data.nationality || ""),
     cardIssueDate: data.cardIssueDate || "",
     cardExpiryDate: data.cardExpiryDate || "",
     dob: data.dob || "",
@@ -934,6 +983,7 @@ const getWorkerSearchText = (workers) =>
         worker.ciNumber,
         worker.visaNumber,
         worker.permitNo,
+        worker.nationality,
       ]
         .filter(Boolean)
         .join(" ")
@@ -974,8 +1024,8 @@ const getRecordStatusSummary = (record) => {
   const hasPaymentPending = record.data.paymentStatus === "pending";
   return {
     hasCompleted,
-    hasPending: hasPendingSchedule || hasExpiryWarning || hasPaymentPending,
-    hasAlert: hasExpired,
+    hasPending: hasPendingSchedule || hasExpiryWarning,
+    hasAlert: hasExpired || hasPaymentPending,
   };
 };
 const collectFormData = () => {
@@ -1034,9 +1084,28 @@ const renderRecords = () => {
   const query = recordSearch.value.trim().toLowerCase();
   const filter = recordFilter.value;
   const filtered = records.filter((record) => {
-    const matchesFilter = filter === "all" || record.formType === filter;
-    if (!query) return matchesFilter;
+    const matchesFilter =
+      filter === "all" || record.formType === filter || filter.startsWith("renewal:") || filter.startsWith("passport:") || filter.startsWith("nationality:");
     const workers = normalizeWorkers(record.data);
+    if (filter.startsWith("renewal:")) {
+      const renewalValue = filter.split(":")[1];
+      if (record.data.renewalType !== renewalValue) {
+        return false;
+      }
+    }
+    if (filter.startsWith("passport:")) {
+      const passportValue = filter.split(":")[1];
+      if (!workers.some((worker) => worker.passportType === passportValue)) {
+        return false;
+      }
+    }
+    if (filter.startsWith("nationality:")) {
+      const nationalityValue = filter.split(":")[1];
+      if (!workers.some((worker) => worker.nationality === nationalityValue)) {
+        return false;
+      }
+    }
+    if (!query) return matchesFilter;
     const searchable = `${record.formId} ${record.formTypeLabel} ${record.displayName} ${record.data.company || ""} ${
       record.data.employerId || ""
     } ${getWorkerSearchText(workers)}`.toLowerCase();
@@ -1258,6 +1327,15 @@ const openRecordModal = (record) => {
         scheduleLocationItem.textContent = `${translations[currentLanguage].scheduleLocationLabel}: ${
           worker.scheduleLocation || "-"
         }`;
+        const docStatusItem = document.createElement("li");
+        const docStatusLabel = hasAlert
+          ? translations[currentLanguage].workerDocStatusExpired
+          : hasWarn
+            ? translations[currentLanguage].workerDocStatusWarning
+            : worker.scheduleStatus === "completed"
+              ? translations[currentLanguage].workerDocStatusOk
+              : translations[currentLanguage].workerDocStatusPending;
+        docStatusItem.textContent = `${translations[currentLanguage].workerDocStatusLabel}: ${docStatusLabel}`;
         const passportItem = document.createElement("li");
         passportItem.textContent = `${translations[currentLanguage].recordPassportLabel}: ${worker.passport || "-"}`;
         const passportTypeItem = document.createElement("li");
@@ -1290,6 +1368,7 @@ const openRecordModal = (record) => {
         workerList.appendChild(workerIdItem);
         workerList.appendChild(scheduleItem);
         workerList.appendChild(scheduleLocationItem);
+        workerList.appendChild(docStatusItem);
         workerList.appendChild(passportItem);
         workerList.appendChild(passportTypeItem);
         workerList.appendChild(ciItem);

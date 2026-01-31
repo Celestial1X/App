@@ -15,13 +15,7 @@
   <body>
     <header class="hero">
       <div class="hero__content">
-        <div class="hero__top">
-          <div class="loading-indicator" aria-hidden="true">
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
-        </div>
+        <div class="hero__top"></div>
         <h1 data-i18n="heroTitle">ระบบตรวจสอบข้อมูลแรงงานต่างด้าว</h1>
       </div>
     </header>
@@ -80,6 +74,27 @@
               >ยังไม่มีคำค้นหา</span
             >
           </div>
+        </div>
+        <div class="ai-panel">
+          <div class="ai-panel__header">
+            <h3 data-i18n="aiHelperTitle">ผู้ช่วย AI ค้นหาข้อมูล</h3>
+            <span class="ai-badge" data-i18n="aiHelperBadge">แนะนำ</span>
+          </div>
+          <p class="subtitle" data-i18n="aiHelperSubtitle">
+            พิมพ์คำค้นหา แล้วระบบจะสรุปข้อมูลที่พบในฐานข้อมูลบันทึก
+          </p>
+          <div class="inline-input">
+            <input
+              id="aiQuery"
+              type="text"
+              placeholder="เช่น ชื่อแรงงาน / เลขพาสปอร์ต / สัญชาติ"
+              data-i18n-placeholder="aiHelperPlaceholder"
+            />
+            <button type="button" class="primary" id="aiSearchButton" data-i18n="aiHelperButton">
+              ให้ AI ช่วยค้นหา
+            </button>
+          </div>
+          <div id="aiResponse" class="ai-response" aria-live="polite"></div>
         </div>
       </section>
     </main>

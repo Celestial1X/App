@@ -48,6 +48,9 @@ const clearRecordsButton = document.getElementById("clearRecords");
 const passportCheckButton = document.getElementById("passportCheckButton");
 const employerCheckButton = document.getElementById("employerCheckButton");
 const verifyRecordButton = document.getElementById("verifyRecord");
+const aiQueryInput = document.getElementById("aiQuery");
+const aiSearchButton = document.getElementById("aiSearchButton");
+const aiResponse = document.getElementById("aiResponse");
 const recordModal = document.getElementById("recordModal");
 const recordModalTitle = document.getElementById("recordModalTitle");
 const recordModalBody = document.getElementById("recordModalBody");
@@ -85,6 +88,14 @@ const translations = {
   th: {
     heroTitle: "ระบบตรวจสอบข้อมูลแรงงานต่างด้าว",
     sectionSelectTitle: "ค้นหาข้อมูลพื้นฐาน",
+    aiHelperTitle: "ผู้ช่วย AI ค้นหาข้อมูล",
+    aiHelperBadge: "แนะนำ",
+    aiHelperSubtitle: "พิมพ์คำค้นหา แล้วระบบจะสรุปข้อมูลที่พบในฐานข้อมูลบันทึก",
+    aiHelperPlaceholder: "เช่น ชื่อแรงงาน / เลขพาสปอร์ต / สัญชาติ",
+    aiHelperButton: "ให้ AI ช่วยค้นหา",
+    aiHelperEmpty: "กรุณาพิมพ์คำค้นหาเพื่อให้ AI ช่วยสรุป",
+    aiHelperNoResults: "ไม่พบข้อมูลที่ตรงกับคำค้นหา",
+    aiHelperResults: "ผลลัพธ์ที่พบ",
     passportCheckTitle: "ตรวจเลขพาสปอร์ต",
     passportCheckPlaceholder: "กรอกเลขพาสปอร์ตเพื่อเช็คข้อมูล",
     checkButton: "ตรวจสอบ",
@@ -271,6 +282,14 @@ const translations = {
   en: {
     heroTitle: "Foreign Worker Data Verification",
     sectionSelectTitle: "Quick lookup",
+    aiHelperTitle: "AI search helper",
+    aiHelperBadge: "Recommended",
+    aiHelperSubtitle: "Type a query and the helper will summarize matching records.",
+    aiHelperPlaceholder: "e.g. worker name / passport / nationality",
+    aiHelperButton: "Ask AI",
+    aiHelperEmpty: "Please enter a query for the AI helper.",
+    aiHelperNoResults: "No matching records found.",
+    aiHelperResults: "Matches",
     passportCheckTitle: "Passport number check",
     passportCheckPlaceholder: "Enter passport number to check",
     checkButton: "Check",
@@ -715,6 +734,43 @@ const loadRecords = () => {
 
 const saveRecords = (records) => {
   localStorage.setItem("workerRecords", JSON.stringify(records));
+};
+
+const searchRecordsForAI = (query) => {
+  const normalized = query.trim().toLowerCase();
+  if (!normalized) return [];
+  const records = loadRecords();
+  return records.filter((record) => {
+    const workers = normalizeWorkers(record.data);
+    const haystack = `${record.formId} ${record.formTypeLabel} ${record.displayName} ${record.data.company || ""} ${
+      record.data.employerId || ""
+    } ${getWorkerSearchText(workers)}`.toLowerCase();
+    return haystack.includes(normalized);
+  });
+};
+
+const renderAIResponse = (records) => {
+  if (!aiResponse) return;
+  aiResponse.innerHTML = "";
+  const header = document.createElement("p");
+  header.className = "ai-response__title";
+  header.textContent = `${translations[currentLanguage].aiHelperResults}: ${records.length}`;
+  aiResponse.appendChild(header);
+  const list = document.createElement("ul");
+  records.slice(0, 5).forEach((record) => {
+    const item = document.createElement("li");
+    item.className = "ai-response__item";
+    const workers = normalizeWorkers(record.data);
+    const workerNames = workers.map((worker) => worker.fullName).filter(Boolean).join(", ") || "-";
+    const nationality = workers.map((worker) => worker.nationality).filter(Boolean).join(", ") || "-";
+    item.textContent = `${record.displayName || record.formId} • ${translations[currentLanguage].workerCountSuffix}: ${
+      workers.length
+    } • ${translations[currentLanguage].recordEmployerLabel}: ${
+      record.data.company || record.data.employerId || "-"
+    } • ${translations[currentLanguage].recordNameLabel}: ${workerNames} • ${translations[currentLanguage].nationalityLabel}: ${nationality}`;
+    list.appendChild(item);
+  });
+  aiResponse.appendChild(list);
 };
 
 const buildFormId = () => {
@@ -1754,6 +1810,11 @@ const applyTranslations = (lang) => {
   updateUploadPreview();
   updatePaymentSlipPreview();
   renderRecords();
+  if (aiResponse && aiResponse.textContent) {
+    const currentText = aiResponse.textContent;
+    if (currentText === translations[currentLanguage].aiHelperEmpty) return;
+    if (currentText === translations[currentLanguage].aiHelperNoResults) return;
+  }
 };
 
 applyTranslations(currentLanguage);
@@ -1814,6 +1875,25 @@ if (verifyRecordButton) {
     localStorage.setItem(RECORD_SEARCH_KEY, query);
     showLoader();
     window.location.href = "records.html";
+  });
+}
+if (aiSearchButton) {
+  aiSearchButton.addEventListener("click", () => {
+    const query = aiQueryInput?.value || "";
+    if (!query.trim()) {
+      if (aiResponse) {
+        aiResponse.textContent = translations[currentLanguage].aiHelperEmpty;
+      }
+      return;
+    }
+    const matches = searchRecordsForAI(query);
+    if (!matches.length) {
+      if (aiResponse) {
+        aiResponse.textContent = translations[currentLanguage].aiHelperNoResults;
+      }
+      return;
+    }
+    renderAIResponse(matches);
   });
 }
 if (recordModalClose) {

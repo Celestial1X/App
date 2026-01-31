@@ -578,6 +578,11 @@ button {
   color: #b42318;
 }
 
+.record-chip.success {
+  background: #e7f6ee;
+  color: #0f8a4b;
+}
+
 .record-group-title {
   margin: 18px 0 8px;
   font-size: 1rem;

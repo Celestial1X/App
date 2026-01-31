@@ -200,6 +200,30 @@
                     </select>
                   </div>
                 </div>
+                <div class="grid-2">
+                  <div class="form-row">
+                    <label data-i18n="scheduleStatusLabel">กำหนดการ/สถานะติดตาม</label>
+                    <select data-field="scheduleStatus">
+                      <option value="pendingAppointment" data-i18n="scheduleStatusPendingAppointment">
+                        รอการนัด
+                      </option>
+                      <option value="scheduled" data-i18n="scheduleStatusScheduled">นัดแล้ว</option>
+                      <option value="pendingReview" data-i18n="scheduleStatusPendingReview">
+                        รอการตรวจสอบ
+                      </option>
+                      <option value="completed" data-i18n="scheduleStatusCompleted">สำเร็จแล้ว</option>
+                    </select>
+                  </div>
+                  <div class="form-row">
+                    <label data-i18n="scheduleLocationLabel">สถานที่นัดหมาย</label>
+                    <input
+                      type="text"
+                      data-field="scheduleLocation"
+                      placeholder="เช่น สำนักงานจัดหางาน"
+                      data-i18n-placeholder="scheduleLocationPlaceholder"
+                    />
+                  </div>
+                </div>
               </div>
             </template>
           </div>

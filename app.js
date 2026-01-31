@@ -116,6 +116,13 @@ const translations = {
     passportPlaceholder: "เช่น P1234567",
     workerIdLabel: "เลขต่างด้าว",
     workerIdPlaceholder: "เช่น FW-0001",
+    scheduleStatusLabel: "กำหนดการ/สถานะติดตาม",
+    scheduleStatusPendingAppointment: "รอการนัด",
+    scheduleStatusScheduled: "นัดแล้ว",
+    scheduleStatusPendingReview: "รอการตรวจสอบ",
+    scheduleStatusCompleted: "สำเร็จแล้ว",
+    scheduleLocationLabel: "สถานที่นัดหมาย",
+    scheduleLocationPlaceholder: "เช่น สำนักงานจัดหางาน",
     ciNumberLabel: "เลข CI",
     ciNumberPlaceholder: "เช่น CI-000123",
     cardIssueDateLabel: "วันทำบัตร",
@@ -214,6 +221,9 @@ const translations = {
     editButton: "แก้ไข",
     deleteButton: "ลบ",
     verifyButton: "ตรวจสอบข้อมูล",
+    statusChipCompleted: "สำเร็จแล้ว",
+    statusChipPending: "รอการนัด/เอกสาร/ชำระเงิน/ใบอนุญาตใกล้หมดอายุ",
+    statusChipAlert: "ใบอนุญาตหมดอายุ/ไม่จ่ายตามกำหนด",
     recordModalTitle: "ผลการค้นหา",
     closeButton: "ปิดหน้าต่าง",
     recordNotFound: "ไม่พบข้อมูลที่ตรงกัน",
@@ -280,6 +290,13 @@ const translations = {
     passportPlaceholder: "e.g. P1234567",
     workerIdLabel: "Worker ID",
     workerIdPlaceholder: "e.g. FW-0001",
+    scheduleStatusLabel: "Schedule status",
+    scheduleStatusPendingAppointment: "Awaiting appointment",
+    scheduleStatusScheduled: "Appointment set",
+    scheduleStatusPendingReview: "Pending review",
+    scheduleStatusCompleted: "Completed",
+    scheduleLocationLabel: "Appointment location",
+    scheduleLocationPlaceholder: "e.g. Labor office",
     ciNumberLabel: "CI number",
     ciNumberPlaceholder: "e.g. CI-000123",
     cardIssueDateLabel: "Card issue date",
@@ -378,6 +395,9 @@ const translations = {
     editButton: "Edit",
     deleteButton: "Delete",
     verifyButton: "Verify record",
+    statusChipCompleted: "Completed",
+    statusChipPending: "Pending appointment/docs/payment/permit expiring",
+    statusChipAlert: "Permit expired/unpaid",
     recordModalTitle: "Search results",
     closeButton: "Close",
     recordNotFound: "No matching records found.",
@@ -722,6 +742,16 @@ const getRenewalStatusLabel = (value) => {
   return map[value] || value || "-";
 };
 
+const getScheduleStatusLabel = (value) => {
+  const map = {
+    pendingAppointment: translations[currentLanguage].scheduleStatusPendingAppointment,
+    scheduled: translations[currentLanguage].scheduleStatusScheduled,
+    pendingReview: translations[currentLanguage].scheduleStatusPendingReview,
+    completed: translations[currentLanguage].scheduleStatusCompleted,
+  };
+  return map[value] || value || "-";
+};
+
 const updateExpiryStatusForInput = (input, statusElement) => {
   if (!input || !statusElement) {
     return;
@@ -760,6 +790,8 @@ const extractWorkerData = (card) => {
     passportType: getValue("passportType") || "ci",
     passport: getValue("passport"),
     workerId: getValue("workerId"),
+    scheduleStatus: getValue("scheduleStatus") || "pendingAppointment",
+    scheduleLocation: getValue("scheduleLocation"),
     ciNumber: getValue("ciNumber"),
     permitType: getValue("permitType") || "pink",
     permitNo: getValue("permitNo"),
@@ -784,6 +816,8 @@ const normalizeWorkers = (data) => {
     passportType: data.passportType || "ci",
     passport: data.passport || "",
     workerId: data.workerId || "",
+    scheduleStatus: data.scheduleStatus || "pendingAppointment",
+    scheduleLocation: data.scheduleLocation || "",
     ciNumber: data.ciNumber || "",
     permitType: data.permitType || "pink",
     permitNo: data.permitNo || "",
@@ -816,6 +850,8 @@ const createWorkerCard = (data = {}) => {
   setValue("passportType", data.passportType);
   setValue("passport", data.passport);
   setValue("workerId", data.workerId);
+  setValue("scheduleStatus", data.scheduleStatus);
+  setValue("scheduleLocation", data.scheduleLocation);
   setValue("ciNumber", data.ciNumber);
   setValue("permitType", data.permitType);
   setValue("permitNo", data.permitNo);
@@ -907,6 +943,26 @@ const getAggregatedExpiryState = (workers, field) => {
     return { state: "warning", days: warningDays };
   }
   return { state: "ok", days: null };
+};
+
+const getRecordStatusSummary = (record) => {
+  const workers = normalizeWorkers(record.data);
+  const hasCompleted = workers.some((worker) => worker.scheduleStatus === "completed");
+  const hasPendingSchedule = workers.some((worker) => worker.scheduleStatus !== "completed");
+  const hasExpiryWarning =
+    getAggregatedExpiryState(workers, "cardExpiryDate").state === "warning" ||
+    getAggregatedExpiryState(workers, "visaExpiryDate").state === "warning" ||
+    getAggregatedExpiryState(workers, "expiry").state === "warning";
+  const hasExpired =
+    getAggregatedExpiryState(workers, "cardExpiryDate").state === "expired" ||
+    getAggregatedExpiryState(workers, "visaExpiryDate").state === "expired" ||
+    getAggregatedExpiryState(workers, "expiry").state === "expired";
+  const hasPaymentOverdue = record.data.paymentStatus === "pending";
+  return {
+    hasCompleted,
+    hasPending: hasPendingSchedule || hasExpiryWarning,
+    hasAlert: hasExpired || hasPaymentOverdue,
+  };
 };
 const collectFormData = () => {
   const receivedDocs = [];
@@ -1067,26 +1123,24 @@ const renderRecords = () => {
     card.appendChild(editButton);
     card.appendChild(verifyButton);
     card.appendChild(deleteButton);
-      const workers = normalizeWorkers(record.data);
-      const cardExpiryState = getAggregatedExpiryState(workers, "cardExpiryDate");
-      if (cardExpiryState.state === "expired" || cardExpiryState.state === "warning") {
-        const expiryChip = document.createElement("span");
-        expiryChip.className = `record-chip ${cardExpiryState.state === "expired" ? "alert" : "warn"}`;
-        expiryChip.textContent =
-          cardExpiryState.state === "expired"
-            ? translations[currentLanguage].expiryExpired
-            : translations[currentLanguage].expiryWarning.replace("{days}", cardExpiryState.days);
-        tags.appendChild(expiryChip);
+      const statusSummary = getRecordStatusSummary(record);
+      if (statusSummary.hasCompleted) {
+        const completedChip = document.createElement("span");
+        completedChip.className = "record-chip success";
+        completedChip.textContent = translations[currentLanguage].statusChipCompleted;
+        tags.appendChild(completedChip);
       }
-      const visaExpiryState = getAggregatedExpiryState(workers, "visaExpiryDate");
-      if (visaExpiryState.state === "expired" || visaExpiryState.state === "warning") {
-        const visaChip = document.createElement("span");
-        visaChip.className = `record-chip ${visaExpiryState.state === "expired" ? "alert" : "warn"}`;
-        visaChip.textContent =
-          visaExpiryState.state === "expired"
-            ? translations[currentLanguage].expiryExpired
-            : translations[currentLanguage].expiryWarning.replace("{days}", visaExpiryState.days);
-        tags.appendChild(visaChip);
+      if (statusSummary.hasPending) {
+        const pendingChip = document.createElement("span");
+        pendingChip.className = "record-chip warn";
+        pendingChip.textContent = translations[currentLanguage].statusChipPending;
+        tags.appendChild(pendingChip);
+      }
+      if (statusSummary.hasAlert) {
+        const alertChip = document.createElement("span");
+        alertChip.className = "record-chip alert";
+        alertChip.textContent = translations[currentLanguage].statusChipAlert;
+        tags.appendChild(alertChip);
       }
       recordsList.appendChild(card);
     });
@@ -1170,6 +1224,14 @@ const openRecordModal = (record) => {
         const workerList = document.createElement("ul");
         const workerIdItem = document.createElement("li");
         workerIdItem.textContent = `${translations[currentLanguage].workerIdLabel}: ${worker.workerId || "-"}`;
+        const scheduleItem = document.createElement("li");
+        scheduleItem.textContent = `${translations[currentLanguage].scheduleStatusLabel}: ${getScheduleStatusLabel(
+          worker.scheduleStatus
+        )}`;
+        const scheduleLocationItem = document.createElement("li");
+        scheduleLocationItem.textContent = `${translations[currentLanguage].scheduleLocationLabel}: ${
+          worker.scheduleLocation || "-"
+        }`;
         const passportItem = document.createElement("li");
         passportItem.textContent = `${translations[currentLanguage].recordPassportLabel}: ${worker.passport || "-"}`;
         const passportTypeItem = document.createElement("li");
@@ -1207,6 +1269,8 @@ const openRecordModal = (record) => {
           : "-";
         visaExpiryItem.textContent = `${translations[currentLanguage].visaExpiryDateLabel}: ${visaExpiryLabel}`;
         workerList.appendChild(workerIdItem);
+        workerList.appendChild(scheduleItem);
+        workerList.appendChild(scheduleLocationItem);
         workerList.appendChild(passportItem);
         workerList.appendChild(passportTypeItem);
         workerList.appendChild(ciItem);

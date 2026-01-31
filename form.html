@@ -51,21 +51,13 @@
             <h3 data-i18n="personalTitle">ข้อมูลส่วนตัวแรงงาน</h3>
             <div class="grid-2">
               <div class="form-row">
-                <label data-i18n="fullNameLabel">ชื่อ-นามสกุล</label>
-                <div class="stack" id="nameList">
-                  <div class="name-row">
-                    <input
-                      id="fullName"
-                      type="text"
-                      placeholder="กรอกชื่อแรงงาน"
-                      data-i18n-placeholder="fullNamePlaceholder"
-                    />
-                    <button type="button" class="secondary name-remove" aria-label="ลบ">✕</button>
-                  </div>
-                </div>
-                <button type="button" class="secondary add-name" id="addName" data-i18n="addNameButton">
-                  เพิ่มรายชื่อแรงงาน
-                </button>
+                <label for="fullName" data-i18n="fullNameLabel">ชื่อ-นามสกุล</label>
+                <input
+                  id="fullName"
+                  type="text"
+                  placeholder="กรอกชื่อแรงงาน"
+                  data-i18n-placeholder="fullNamePlaceholder"
+                />
               </div>
               <div class="form-row">
                 <label for="passportType" data-i18n="passportTypeLabel">ประเภทพาสปอร์ต</label>

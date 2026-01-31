@@ -5,8 +5,6 @@ const passportCheckInput = document.getElementById("passportCheck");
 const passportStatus = document.getElementById("passportStatus");
 const passportInlineStatus = document.getElementById("passportInlineStatus");
 const fullName = document.getElementById("fullName");
-const nameList = document.getElementById("nameList");
-const addNameButton = document.getElementById("addName");
 const passportType = document.getElementById("passportType");
 const nationality = document.getElementById("nationality");
 const dob = document.getElementById("dob");
@@ -118,7 +116,6 @@ const translations = {
     personalTitle: "ข้อมูลส่วนตัวแรงงาน",
     fullNameLabel: "ชื่อ-นามสกุล",
     fullNamePlaceholder: "กรอกชื่อแรงงาน",
-    addNameButton: "เพิ่มรายชื่อแรงงาน",
     passportTypeLabel: "ประเภทพาสปอร์ต",
     passportTypeCi: "CI",
     passportTypePv: "PV",
@@ -232,7 +229,6 @@ const translations = {
     recordPassportLabel: "พาสปอร์ต",
     recordEmployerLabel: "นายจ้าง",
     recordCaseTypeLabel: "ประเภทการแจ้ง",
-    recordNamesLabel: "รายชื่อแรงงาน",
     recordAttachmentsTitle: "เอกสารแนบ",
     recordFacePhotoLabel: "รูปหน้า",
     recordIdCardLabel: "บัตรประชาชน/บัตรชมพู",
@@ -272,7 +268,6 @@ const translations = {
     personalTitle: "Personal details",
     fullNameLabel: "Full name",
     fullNamePlaceholder: "Worker name",
-    addNameButton: "Add worker name",
     passportTypeLabel: "Passport type",
     passportTypeCi: "CI",
     passportTypePv: "PV",
@@ -386,7 +381,6 @@ const translations = {
     recordPassportLabel: "Passport",
     recordEmployerLabel: "Employer",
     recordCaseTypeLabel: "Case type",
-    recordNamesLabel: "Worker names",
     recordAttachmentsTitle: "Attachments",
     recordFacePhotoLabel: "Face photo",
     recordIdCardLabel: "ID/pink card",
@@ -730,77 +724,7 @@ const getRenewalStatusLabel = (value) => {
   return map[value] || value || "-";
 };
 
-const getNameValues = () => {
-  if (!nameList) return [];
-  return Array.from(nameList.querySelectorAll("input"))
-    .map((input) => input.value.trim())
-    .filter(Boolean);
-};
-
-const renderNameInputs = (names) => {
-  if (!nameList) return;
-  const values = names && names.length ? names : [""];
-  nameList.innerHTML = "";
-  values.forEach((value, index) => {
-    const row = document.createElement("div");
-    row.className = "name-row";
-    const input = document.createElement("input");
-    input.type = "text";
-    input.placeholder = translations[currentLanguage].fullNamePlaceholder;
-    input.value = value;
-    const removeButton = document.createElement("button");
-    removeButton.type = "button";
-    removeButton.className = "secondary name-remove";
-    removeButton.setAttribute("aria-label", "ลบ");
-    removeButton.textContent = "✕";
-    removeButton.disabled = values.length === 1 && index === 0;
-    removeButton.addEventListener("click", () => {
-      row.remove();
-      const remaining = nameList.querySelectorAll(".name-row");
-      if (!remaining.length) {
-        renderNameInputs([""]);
-      } else if (remaining.length === 1) {
-        const button = remaining[0].querySelector(".name-remove");
-        if (button) button.disabled = true;
-      }
-    });
-    row.appendChild(input);
-    row.appendChild(removeButton);
-    nameList.appendChild(row);
-  });
-};
-
-const addNameInput = () => {
-  if (!nameList) return;
-  const row = document.createElement("div");
-  row.className = "name-row";
-  const input = document.createElement("input");
-  input.type = "text";
-  input.placeholder = translations[currentLanguage].fullNamePlaceholder;
-  const removeButton = document.createElement("button");
-  removeButton.type = "button";
-  removeButton.className = "secondary name-remove";
-  removeButton.setAttribute("aria-label", "ลบ");
-  removeButton.textContent = "✕";
-  removeButton.addEventListener("click", () => {
-    row.remove();
-    const remaining = nameList.querySelectorAll(".name-row");
-    if (!remaining.length) {
-      renderNameInputs([""]);
-    } else if (remaining.length === 1) {
-      const button = remaining[0].querySelector(".name-remove");
-      if (button) button.disabled = true;
-    }
-  });
-  const firstRemove = nameList.querySelector(".name-row .name-remove");
-  if (firstRemove) firstRemove.disabled = false;
-  row.appendChild(input);
-  row.appendChild(removeButton);
-  nameList.appendChild(row);
-};
-
 const collectFormData = () => {
-  const names = getNameValues();
   const receivedDocs = [];
   if (receivedFacePhoto?.checked) receivedDocs.push("facePhoto");
   if (receivedIdCard?.checked) receivedDocs.push("idCard");
@@ -811,8 +735,7 @@ const collectFormData = () => {
     .map((item) => item.value);
   const formData = {
     formType: formType.value,
-    fullName: names[0] || "",
-    names,
+    fullName: fullName.value.trim(),
     passportType: passportType?.value || "",
     passport: passportInput.value.trim(),
     ciNumber: ciNumber?.value?.trim() || "",
@@ -856,7 +779,6 @@ const collectFormData = () => {
   };
   const hasAnyValue = Object.entries(formData).some(([key, value]) => {
     if (key === "formType" || key === "attachments") return false;
-    if (key === "names") return value.length > 0;
     if (Array.isArray(value)) return value.length > 0;
     return value;
   });
@@ -873,8 +795,7 @@ const renderRecords = () => {
   const filtered = records.filter((record) => {
     const matchesFilter = filter === "all" || record.formType === filter;
     if (!query) return matchesFilter;
-    const names = Array.isArray(record.data.names) ? record.data.names.join(" ") : "";
-    const searchable = `${record.formId} ${record.formTypeLabel} ${record.displayName} ${names} ${
+    const searchable = `${record.formId} ${record.formTypeLabel} ${record.displayName} ${
       record.data.passport || ""
     } ${record.data.ciNumber || ""} ${record.data.visaNumber || ""}`.toLowerCase();
     return matchesFilter && searchable.includes(query);
@@ -997,8 +918,7 @@ const openRecordModal = (record) => {
     title.textContent = translations[currentLanguage].recordDetailsTitle;
     const list = document.createElement("ul");
     const nameItem = document.createElement("li");
-    const primaryName = record.data.fullName || record.data.names?.[0] || "-";
-    nameItem.textContent = `${translations[currentLanguage].recordNameLabel}: ${primaryName}`;
+    nameItem.textContent = `${translations[currentLanguage].recordNameLabel}: ${record.data.fullName || "-"}`;
     const passportItem = document.createElement("li");
     passportItem.textContent = `${translations[currentLanguage].recordPassportLabel}: ${
       record.data.passport || "-"
@@ -1063,7 +983,6 @@ const openRecordModal = (record) => {
     recordedByItem.textContent = `${translations[currentLanguage].recordedByLabel}: ${
       record.data.recordedBy || "-"
     }`;
-    const namesList = record.data.names && record.data.names.length > 1 ? record.data.names.join(", ") : "";
     list.appendChild(nameItem);
     list.appendChild(passportItem);
     list.appendChild(passportTypeItem);
@@ -1085,11 +1004,6 @@ const openRecordModal = (record) => {
     list.appendChild(recordedByItem);
     list.appendChild(renewalTypeItem);
     list.appendChild(renewalStatusItem);
-    if (namesList) {
-      const namesItem = document.createElement("li");
-      namesItem.textContent = `${translations[currentLanguage].recordNamesLabel}: ${namesList}`;
-      list.appendChild(namesItem);
-    }
     recordModalBody.appendChild(title);
     recordModalBody.appendChild(list);
     if (record.data.receivedDocs?.length || record.data.requiredRenewalDocs?.length) {
@@ -1219,12 +1133,7 @@ const findRecordByQuery = (query) => {
     records.find((record) => record.data.visaNumber?.toLowerCase() === normalized) ||
     records.find((record) => record.data.company?.toLowerCase().includes(normalized)) ||
     records.find((record) => record.data.employerId?.toLowerCase().includes(normalized)) ||
-    records.find((record) => record.data.fullName?.toLowerCase().includes(normalized)) ||
-    records.find((record) =>
-      Array.isArray(record.data.names)
-        ? record.data.names.some((name) => name.toLowerCase().includes(normalized))
-        : false
-    )
+    records.find((record) => record.data.fullName?.toLowerCase().includes(normalized))
   );
 };
 
@@ -1273,9 +1182,7 @@ const populateForm = (record) => {
   if (!record) return;
   if (formType) formType.value = record.formType;
   if (recordedBy) recordedBy.value = record.data.recordedBy || "";
-  if (nameList) {
-    renderNameInputs(record.data.names && record.data.names.length ? record.data.names : [record.data.fullName || ""]);
-  } else if (fullName) {
+  if (fullName) {
     fullName.value = record.data.fullName || "";
   }
   if (passportType) passportType.value = record.data.passportType || "ci";
@@ -1360,17 +1267,11 @@ if (cardExpiryDate) {
 if (visaExpiryDate) {
   visaExpiryDate.addEventListener("change", updateVisaExpiryStatus);
 }
-if (addNameButton) {
-  addNameButton.addEventListener("click", addNameInput);
-}
 uploadInputs.forEach((input) => input.addEventListener("change", updateUploadPreview));
 if (paymentSlipInput) {
   paymentSlipInput.addEventListener("change", updatePaymentSlipPreview);
 }
 updateSections();
-if (nameList) {
-  renderNameInputs(getNameValues());
-}
 updateUploadPreview();
 updatePaymentSlipPreview();
 renderRecords();
@@ -1404,9 +1305,6 @@ const applyTranslations = (lang) => {
   });
   currentLanguage = lang;
   updateEmployerStatus();
-  if (nameList) {
-    renderNameInputs(getNameValues());
-  }
   updateCardExpiryStatus();
   updateVisaExpiryStatus();
   if (passportCheckInput && passportStatus) {
@@ -1464,7 +1362,7 @@ if (employerCheckButton) {
 }
 if (verifyRecordButton) {
   verifyRecordButton.addEventListener("click", () => {
-    const query = passportInput?.value || getNameValues()[0] || company?.value;
+    const query = passportInput?.value || fullName?.value || company?.value;
     if (!query) {
       setStatus(formSaveStatus, translations[currentLanguage].recordNotFound, "warn");
       return;

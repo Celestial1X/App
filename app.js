@@ -26,6 +26,7 @@ const paymentDate = document.getElementById("paymentDate");
 const paymentNotes = document.getElementById("paymentNotes");
 const employerCheckInput = document.getElementById("employerCheck");
 const employerStatus = document.getElementById("employerStatus");
+const pageLoader = document.getElementById("pageLoader");
 const facePhotoInput = document.getElementById("facePhoto");
 const idCardInput = document.getElementById("idCard");
 const houseDocInput = document.getElementById("houseDoc");
@@ -103,6 +104,7 @@ const translations = {
     workerCardTitle: "แรงงานคนที่",
     removeWorkerButton: "ลบรายชื่อ",
     workerDetailsTitle: "รายชื่อแรงงาน",
+    loadingText: "กำลังโหลด...",
     fullNameLabel: "ชื่อ-นามสกุล",
     fullNamePlaceholder: "กรอกชื่อแรงงาน",
     passportTypeLabel: "ประเภทพาสปอร์ต",
@@ -263,6 +265,7 @@ const translations = {
     workerCardTitle: "Worker",
     removeWorkerButton: "Remove",
     workerDetailsTitle: "Worker details",
+    loadingText: "Loading...",
     fullNameLabel: "Full name",
     fullNamePlaceholder: "Worker name",
     passportTypeLabel: "Passport type",
@@ -412,6 +415,18 @@ const setStatus = (element, message, type = "") => {
   if (type) {
     element.classList.add(type);
   }
+};
+
+const showLoader = () => {
+  if (!pageLoader) return;
+  pageLoader.classList.add("is-active");
+  pageLoader.setAttribute("aria-hidden", "false");
+};
+
+const hideLoader = () => {
+  if (!pageLoader) return;
+  pageLoader.classList.remove("is-active");
+  pageLoader.setAttribute("aria-hidden", "true");
 };
 
 const getExpiryState = (dateValue) => {
@@ -1025,6 +1040,7 @@ const renderRecords = () => {
     editButton.textContent = translations[currentLanguage].editButton;
     editButton.addEventListener("click", () => {
       localStorage.setItem(EDIT_KEY, record.formId);
+      showLoader();
       window.location.href = "form.html";
     });
     card.appendChild(title);
@@ -1374,6 +1390,7 @@ const saveRecord = (status = "draft") => {
     setStatus(formSaveStatus, translations[currentLanguage].saveDraftEmpty, "warn");
     return;
   }
+  showLoader();
   const cardExpiryState = getAggregatedExpiryState(formData.workers || [], "cardExpiryDate");
   if (cardExpiryState.state === "expired") {
     setStatus(formSaveStatus, translations[currentLanguage].expiryExpired, "error");
@@ -1505,6 +1522,17 @@ ensureWorkerCards();
 updateUploadPreview();
 updatePaymentSlipPreview();
 renderRecords();
+document.querySelectorAll("a.tab-btn").forEach((link) => {
+  link.addEventListener("click", () => {
+    showLoader();
+  });
+});
+if (pageLoader) {
+  showLoader();
+  window.addEventListener("load", () => {
+    setTimeout(hideLoader, 350);
+  });
+}
 if (recordSearch) {
   const storedQuery = localStorage.getItem(RECORD_SEARCH_KEY);
   if (storedQuery) {
@@ -1601,6 +1629,7 @@ if (verifyRecordButton) {
       return;
     }
     localStorage.setItem(RECORD_SEARCH_KEY, query);
+    showLoader();
     window.location.href = "records.html";
   });
 }

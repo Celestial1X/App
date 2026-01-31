@@ -7,6 +7,7 @@ const passportInlineStatus = document.getElementById("passportInlineStatus");
 const fullName = document.getElementById("fullName");
 const nameList = document.getElementById("nameList");
 const addNameButton = document.getElementById("addName");
+const passportType = document.getElementById("passportType");
 const nationality = document.getElementById("nationality");
 const dob = document.getElementById("dob");
 const gender = document.getElementById("gender");
@@ -15,9 +16,12 @@ const caseType = document.getElementById("caseType");
 const position = document.getElementById("position");
 const workSite = document.getElementById("workSite");
 const startDate = document.getElementById("startDate");
+const ciNumber = document.getElementById("ciNumber");
 const employerId = document.getElementById("employerId");
 const permitType = document.getElementById("permitType");
 const permitNo = document.getElementById("permitNo");
+const visaNumber = document.getElementById("visaNumber");
+const issueDate = document.getElementById("issueDate");
 const verification = document.getElementById("verification");
 const paymentStatus = document.getElementById("paymentStatus");
 const paymentDate = document.getElementById("paymentDate");
@@ -101,8 +105,15 @@ const translations = {
     fullNameLabel: "ชื่อ-นามสกุล",
     fullNamePlaceholder: "กรอกชื่อแรงงาน",
     addNameButton: "เพิ่มรายชื่อแรงงาน",
+    passportTypeLabel: "ประเภทพาสปอร์ต",
+    passportTypeCi: "CI",
+    passportTypePv: "PV",
+    passportTypePj: "PJ",
+    passportTypeInternational: "พาสปอร์ตอินเตอร์",
     passportLabel: "เลขหนังสือเดินทาง",
     passportPlaceholder: "เช่น P1234567",
+    ciNumberLabel: "เลข CI",
+    ciNumberPlaceholder: "เช่น CI-000123",
     nationalityLabel: "สัญชาติ",
     nationalityPlaceholder: "เมียนมา / ลาว / กัมพูชา",
     dobLabel: "วันเดือนปีเกิด",
@@ -131,6 +142,9 @@ const translations = {
     permitTypeMou: "MOU",
     permitNoLabel: "เลขที่ใบอนุญาต",
     permitNoPlaceholder: "ระบุเลขที่",
+    visaNumberLabel: "เลขวีซ่า",
+    visaNumberPlaceholder: "ระบุเลขวีซ่า",
+    issueDateLabel: "วันทำ",
     expiryLabel: "วันหมดอายุ",
     verificationLabel: "สถานะตรวจสอบ",
     verificationPending: "รอตรวจสอบ",
@@ -220,8 +234,15 @@ const translations = {
     fullNameLabel: "Full name",
     fullNamePlaceholder: "Worker name",
     addNameButton: "Add worker name",
+    passportTypeLabel: "Passport type",
+    passportTypeCi: "CI",
+    passportTypePv: "PV",
+    passportTypePj: "PJ",
+    passportTypeInternational: "International passport",
     passportLabel: "Passport number",
     passportPlaceholder: "e.g. P1234567",
+    ciNumberLabel: "CI number",
+    ciNumberPlaceholder: "e.g. CI-000123",
     nationalityLabel: "Nationality",
     nationalityPlaceholder: "Myanmar / Laos / Cambodia",
     dobLabel: "Date of birth",
@@ -250,6 +271,9 @@ const translations = {
     permitTypeMou: "MOU",
     permitNoLabel: "Permit number",
     permitNoPlaceholder: "Enter permit number",
+    visaNumberLabel: "Visa number",
+    visaNumberPlaceholder: "Enter visa number",
+    issueDateLabel: "Issue date",
     expiryLabel: "Expiry date",
     verificationLabel: "Verification status",
     verificationPending: "Pending",
@@ -558,6 +582,16 @@ const getCaseTypeLabel = (value) => {
   return map[value] || value || "-";
 };
 
+const getPassportTypeLabel = (value) => {
+  const map = {
+    ci: translations[currentLanguage].passportTypeCi,
+    pv: translations[currentLanguage].passportTypePv,
+    pj: translations[currentLanguage].passportTypePj,
+    international: translations[currentLanguage].passportTypeInternational,
+  };
+  return map[value] || value || "-";
+};
+
 const getNameValues = () => {
   if (!nameList) return [];
   return Array.from(nameList.querySelectorAll("input"))
@@ -633,7 +667,9 @@ const collectFormData = () => {
     formType: formType.value,
     fullName: names[0] || "",
     names,
+    passportType: passportType?.value || "",
     passport: passportInput.value.trim(),
+    ciNumber: ciNumber?.value?.trim() || "",
     nationality: nationality.value.trim(),
     dob: dob.value,
     gender: gender.value,
@@ -645,6 +681,8 @@ const collectFormData = () => {
     employerId: employerId.value.trim(),
     permitType: permitType.value,
     permitNo: permitNo.value.trim(),
+    visaNumber: visaNumber?.value?.trim() || "",
+    issueDate: issueDate?.value || "",
     expiry: expiryInput.value,
     verification: verification.value,
     paymentStatus: paymentStatus.value,
@@ -680,7 +718,9 @@ const renderRecords = () => {
     const matchesFilter = filter === "all" || record.formType === filter;
     if (!query) return matchesFilter;
     const names = Array.isArray(record.data.names) ? record.data.names.join(" ") : "";
-    const searchable = `${record.formId} ${record.formTypeLabel} ${record.displayName} ${names}`.toLowerCase();
+    const searchable = `${record.formId} ${record.formTypeLabel} ${record.displayName} ${names} ${
+      record.data.passport || ""
+    } ${record.data.ciNumber || ""}`.toLowerCase();
     return matchesFilter && searchable.includes(query);
   });
   const scoped = filtered;
@@ -775,6 +815,12 @@ const openRecordModal = (record) => {
     passportItem.textContent = `${translations[currentLanguage].recordPassportLabel}: ${
       record.data.passport || "-"
     }`;
+    const passportTypeItem = document.createElement("li");
+    passportTypeItem.textContent = `${translations[currentLanguage].passportTypeLabel}: ${getPassportTypeLabel(
+      record.data.passportType
+    )}`;
+    const ciItem = document.createElement("li");
+    ciItem.textContent = `${translations[currentLanguage].ciNumberLabel}: ${record.data.ciNumber || "-"}`;
     const employerItem = document.createElement("li");
     employerItem.textContent = `${translations[currentLanguage].recordEmployerLabel}: ${
       record.data.company || record.data.employerId || "-"
@@ -793,6 +839,10 @@ const openRecordModal = (record) => {
     }`;
     const expiryItem = document.createElement("li");
     expiryItem.textContent = `${translations[currentLanguage].expiryLabel}: ${record.data.expiry || "-"}`;
+    const issueDateItem = document.createElement("li");
+    issueDateItem.textContent = `${translations[currentLanguage].issueDateLabel}: ${record.data.issueDate || "-"}`;
+    const visaItem = document.createElement("li");
+    visaItem.textContent = `${translations[currentLanguage].visaNumberLabel}: ${record.data.visaNumber || "-"}`;
     const paymentItem = document.createElement("li");
     paymentItem.textContent = `${translations[currentLanguage].paymentStatusLabel}: ${
       record.data.paymentStatus === "paid"
@@ -810,13 +860,17 @@ const openRecordModal = (record) => {
     const namesList = record.data.names && record.data.names.length > 1 ? record.data.names.join(", ") : "";
     list.appendChild(nameItem);
     list.appendChild(passportItem);
+    list.appendChild(passportTypeItem);
+    list.appendChild(ciItem);
     list.appendChild(employerItem);
     if (record.data.caseType) {
       list.appendChild(caseTypeItem);
     }
     list.appendChild(typeItem);
     list.appendChild(statusItem);
+    list.appendChild(issueDateItem);
     list.appendChild(expiryItem);
+    list.appendChild(visaItem);
     list.appendChild(paymentItem);
     list.appendChild(paymentDateItem);
     list.appendChild(recordedByItem);
@@ -906,6 +960,7 @@ const findRecordByQuery = (query) => {
   return (
     records.find((record) => record.formId.toLowerCase() === normalized) ||
     records.find((record) => record.data.passport?.toLowerCase() === normalized) ||
+    records.find((record) => record.data.ciNumber?.toLowerCase() === normalized) ||
     records.find((record) => record.data.company?.toLowerCase().includes(normalized)) ||
     records.find((record) => record.data.employerId?.toLowerCase().includes(normalized)) ||
     records.find((record) => record.data.fullName?.toLowerCase().includes(normalized)) ||
@@ -961,7 +1016,9 @@ const populateForm = (record) => {
   } else if (fullName) {
     fullName.value = record.data.fullName || "";
   }
+  if (passportType) passportType.value = record.data.passportType || "ci";
   if (passportInput) passportInput.value = record.data.passport || "";
+  if (ciNumber) ciNumber.value = record.data.ciNumber || "";
   if (nationality) nationality.value = record.data.nationality || "";
   if (dob) dob.value = record.data.dob || "";
   if (gender) gender.value = record.data.gender || "";
@@ -973,6 +1030,8 @@ const populateForm = (record) => {
   if (employerId) employerId.value = record.data.employerId || "";
   if (permitType) permitType.value = record.data.permitType || "";
   if (permitNo) permitNo.value = record.data.permitNo || "";
+  if (visaNumber) visaNumber.value = record.data.visaNumber || "";
+  if (issueDate) issueDate.value = record.data.issueDate || "";
   if (expiryInput) expiryInput.value = record.data.expiry || "";
   if (verification) verification.value = record.data.verification || "";
   if (paymentStatus) paymentStatus.value = record.data.paymentStatus || "pending";

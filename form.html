@@ -68,6 +68,17 @@
                 </button>
               </div>
               <div class="form-row">
+                <label for="passportType" data-i18n="passportTypeLabel">ประเภทพาสปอร์ต</label>
+                <select id="passportType">
+                  <option value="ci" data-i18n="passportTypeCi">CI</option>
+                  <option value="pv" data-i18n="passportTypePv">PV</option>
+                  <option value="pj" data-i18n="passportTypePj">PJ</option>
+                  <option value="international" data-i18n="passportTypeInternational">พาสปอร์ตอินเตอร์</option>
+                </select>
+              </div>
+            </div>
+            <div class="grid-2">
+              <div class="form-row">
                 <label for="passport" data-i18n="passportLabel">เลขหนังสือเดินทาง</label>
                 <input
                   id="passport"
@@ -76,6 +87,15 @@
                   data-i18n-placeholder="passportPlaceholder"
                 />
                 <span id="passportInlineStatus" class="status-text"></span>
+              </div>
+              <div class="form-row">
+                <label for="ciNumber" data-i18n="ciNumberLabel">เลข CI</label>
+                <input
+                  id="ciNumber"
+                  type="text"
+                  placeholder="เช่น CI-000123"
+                  data-i18n-placeholder="ciNumberPlaceholder"
+                />
               </div>
             </div>
             <div class="grid-3">
@@ -152,6 +172,21 @@
                   placeholder="ระบุเลขที่"
                   data-i18n-placeholder="permitNoPlaceholder"
                 />
+              </div>
+            </div>
+            <div class="grid-2">
+              <div class="form-row">
+                <label for="visaNumber" data-i18n="visaNumberLabel">เลขวีซ่า</label>
+                <input
+                  id="visaNumber"
+                  type="text"
+                  placeholder="ระบุเลขวีซ่า"
+                  data-i18n-placeholder="visaNumberPlaceholder"
+                />
+              </div>
+              <div class="form-row">
+                <label for="issueDate" data-i18n="issueDateLabel">วันทำ</label>
+                <input id="issueDate" type="date" />
               </div>
             </div>
             <div class="grid-2">

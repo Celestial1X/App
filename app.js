@@ -20,6 +20,8 @@ const receivedPaymentSlip = document.getElementById("receivedPaymentSlip");
 const requiredRenewalDocs = document.querySelectorAll(".required-renewal-doc");
 const receivedDocsNote = document.getElementById("receivedDocsNote");
 const renewalDocsNote = document.getElementById("renewalDocsNote");
+const notificationItems = document.querySelectorAll(".notification-item");
+const supportingDocs = document.querySelectorAll(".supporting-doc");
 const verification = document.getElementById("verification");
 const paymentStatus = document.getElementById("paymentStatus");
 const paymentDate = document.getElementById("paymentDate");
@@ -180,6 +182,19 @@ const translations = {
     renewalStatusSubmitted: "ยื่นแล้ว",
     renewalStatusCompleted: "ต่ออายุแล้ว",
     receivedDocsLabel: "เอกสารที่ได้รับ",
+    notificationTitle: "รายการแจ้ง/สถานะเพิ่มเติม",
+    notificationResidence: "การแจ้งที่พัก",
+    notificationExit: "แจ้งออก",
+    notificationEmployerOverdue: "นายจ้างเกิน 90 วัน",
+    notificationLaosMouVisaRun: "ลาว MOU ใส่ Visa/Visa run",
+    notificationLaosMouTwoYears: "ลาว MOU 2 ปี หลัง",
+    notificationRenew90Days: "ต่อ 90 วัน",
+    notificationRenewOneYearCabinet: "ต่ออายุ 1 ปี มติครม",
+    notificationRenewTwoYearCabinetLaos: "ต่ออายุ 2 ปี มติครมเปลี่ยนเล่มลาว",
+    supportingDocsTitle: "เอกสารประกอบเพิ่มเติม",
+    supportingDocEmployerCard: "นายจ้าง บัตร",
+    supportingDocCard50: "บัตร 50",
+    supportingDocReceipt: "ใบเสร็จ",
     requiredRenewalDocsLabel: "เอกสารที่ต้องใช้ต่ออายุ",
     renewalDocPassport: "พาสปอร์ต",
     renewalDocVisa: "วีซ่า",
@@ -378,6 +393,19 @@ const translations = {
     renewalStatusSubmitted: "Submitted",
     renewalStatusCompleted: "Renewed",
     receivedDocsLabel: "Received documents",
+    notificationTitle: "Notifications & statuses",
+    notificationResidence: "Residence notification",
+    notificationExit: "Exit notification",
+    notificationEmployerOverdue: "Employer over 90 days",
+    notificationLaosMouVisaRun: "Laos MOU with visa/visa run",
+    notificationLaosMouTwoYears: "Laos MOU 2-year follow-up",
+    notificationRenew90Days: "90-day renewal",
+    notificationRenewOneYearCabinet: "1-year renewal (Cabinet resolution)",
+    notificationRenewTwoYearCabinetLaos: "2-year renewal (Cabinet resolution, Laos book change)",
+    supportingDocsTitle: "Additional supporting documents",
+    supportingDocEmployerCard: "Employer card",
+    supportingDocCard50: "Card 50",
+    supportingDocReceipt: "Receipt",
     requiredRenewalDocsLabel: "Renewal required documents",
     renewalDocPassport: "Passport",
     renewalDocVisa: "Visa",
@@ -1092,6 +1120,12 @@ const collectFormData = () => {
   if (receivedIdCard?.checked) receivedDocs.push("idCard");
   if (receivedHouseDoc?.checked) receivedDocs.push("houseDoc");
   if (receivedPaymentSlip?.checked) receivedDocs.push("paymentSlip");
+  const notifications = Array.from(notificationItems)
+    .filter((item) => item.checked)
+    .map((item) => item.value);
+  const supportingDocsList = Array.from(supportingDocs)
+    .filter((item) => item.checked)
+    .map((item) => item.value);
   const requiredDocs = Array.from(requiredRenewalDocs)
     .filter((item) => item.checked)
     .map((item) => item.value);
@@ -1113,6 +1147,8 @@ const collectFormData = () => {
     renewalType: renewalType?.value || "",
     renewalStatus: renewalStatus?.value || "",
     receivedDocs,
+    notifications,
+    supportingDocs: supportingDocsList,
     requiredRenewalDocs: requiredDocs,
     receivedDocsNote: receivedDocsNote?.value?.trim() || "",
     renewalDocsNote: renewalDocsNote?.value?.trim() || "",
@@ -1514,10 +1550,25 @@ const openRecordModal = (record) => {
         recordModalBody.appendChild(workerCard);
       });
     }
-    if (record.data.receivedDocs?.length || record.data.requiredRenewalDocs?.length) {
+    if (record.data.notifications?.length || record.data.supportingDocs?.length || record.data.receivedDocs?.length || record.data.requiredRenewalDocs?.length) {
       const docTitle = document.createElement("h5");
       docTitle.textContent = translations[currentLanguage].receivedDocsLabel;
       const docList = document.createElement("ul");
+      const notificationLabels = {
+        residence: translations[currentLanguage].notificationResidence,
+        exit: translations[currentLanguage].notificationExit,
+        employerOverdue: translations[currentLanguage].notificationEmployerOverdue,
+        laosMouVisaRun: translations[currentLanguage].notificationLaosMouVisaRun,
+        laosMouTwoYears: translations[currentLanguage].notificationLaosMouTwoYears,
+        renew90Days: translations[currentLanguage].notificationRenew90Days,
+        renewOneYearCabinet: translations[currentLanguage].notificationRenewOneYearCabinet,
+        renewTwoYearCabinetLaos: translations[currentLanguage].notificationRenewTwoYearCabinetLaos,
+      };
+      const supportingLabels = {
+        employerCard: translations[currentLanguage].supportingDocEmployerCard,
+        card50: translations[currentLanguage].supportingDocCard50,
+        receipt: translations[currentLanguage].supportingDocReceipt,
+      };
       const receivedLabels = {
         facePhoto: translations[currentLanguage].recordFacePhotoLabel,
         idCard: translations[currentLanguage].recordIdCardLabel,
@@ -1531,6 +1582,22 @@ const openRecordModal = (record) => {
         photo: translations[currentLanguage].renewalDocPhoto,
         employerLetter: translations[currentLanguage].renewalDocEmployerLetter,
       };
+      if (record.data.notifications?.length) {
+        const notificationItem = document.createElement("li");
+        const notificationText = record.data.notifications
+          .map((item) => notificationLabels[item] || item)
+          .join(", ");
+        notificationItem.textContent = `${translations[currentLanguage].notificationTitle}: ${notificationText}`;
+        docList.appendChild(notificationItem);
+      }
+      if (record.data.supportingDocs?.length) {
+        const supportingItem = document.createElement("li");
+        const supportingText = record.data.supportingDocs
+          .map((item) => supportingLabels[item] || item)
+          .join(", ");
+        supportingItem.textContent = `${translations[currentLanguage].supportingDocsTitle}: ${supportingText}`;
+        docList.appendChild(supportingItem);
+      }
       if (record.data.receivedDocs?.length) {
         const receivedItem = document.createElement("li");
         const receivedText = record.data.receivedDocs.map((item) => receivedLabels[item] || item).join(", ");
@@ -1769,6 +1836,16 @@ const populateForm = (record) => {
   if (receivedIdCard) receivedIdCard.checked = record.data.receivedDocs?.includes("idCard") || false;
   if (receivedHouseDoc) receivedHouseDoc.checked = record.data.receivedDocs?.includes("houseDoc") || false;
   if (receivedPaymentSlip) receivedPaymentSlip.checked = record.data.receivedDocs?.includes("paymentSlip") || false;
+  if (notificationItems?.length) {
+    notificationItems.forEach((checkbox) => {
+      checkbox.checked = record.data.notifications?.includes(checkbox.value) || false;
+    });
+  }
+  if (supportingDocs?.length) {
+    supportingDocs.forEach((checkbox) => {
+      checkbox.checked = record.data.supportingDocs?.includes(checkbox.value) || false;
+    });
+  }
   if (requiredRenewalDocs?.length) {
     requiredRenewalDocs.forEach((checkbox) => {
       checkbox.checked = record.data.requiredRenewalDocs?.includes(checkbox.value) || false;

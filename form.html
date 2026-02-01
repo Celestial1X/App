@@ -218,6 +218,37 @@
                     />
                   </div>
                 </div>
+                <div class="form-row">
+                  <label data-i18n="healthSectionTitle">การตรวจสุขภาพ</label>
+                  <div class="checkbox-grid">
+                    <label class="checkbox-item">
+                      <input type="checkbox" data-field="healthRegistered" />
+                      <span data-i18n="healthRegisteredLabel">ลงระบบแล้ว</span>
+                    </label>
+                    <label class="checkbox-item">
+                      <input type="checkbox" data-field="healthChecked" />
+                      <span data-i18n="healthCheckedLabel">ตรวจสุขภาพ</span>
+                    </label>
+                    <label class="checkbox-item">
+                      <input type="checkbox" data-field="healthIdentity" />
+                      <span data-i18n="healthIdentityLabel">อัตลักษณ์</span>
+                    </label>
+                    <label class="checkbox-item">
+                      <input type="checkbox" data-field="healthPending" />
+                      <span data-i18n="healthPendingLabel">รอตรวจสุขภาพ</span>
+                    </label>
+                  </div>
+                </div>
+                <div class="grid-2">
+                  <div class="form-row">
+                    <label data-i18n="healthCheckDateLabel">วันที่ตรวจ</label>
+                    <input data-field="healthCheckDate" type="date" />
+                  </div>
+                  <div class="form-row">
+                    <label data-i18n="healthPendingDateLabel">วันที่รอตรวจ</label>
+                    <input data-field="healthPendingDate" type="date" />
+                  </div>
+                </div>
               </div>
             </template>
           </div>

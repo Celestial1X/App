@@ -147,6 +147,15 @@ const translations = {
     scheduleStatusCompleted: "สำเร็จแล้ว",
     scheduleLocationLabel: "สถานที่นัดหมาย",
     scheduleLocationPlaceholder: "เช่น สำนักงานจัดหางาน",
+    healthSectionTitle: "การตรวจสุขภาพ",
+    healthRegisteredLabel: "ลงระบบแล้ว",
+    healthCheckedLabel: "ตรวจสุขภาพ",
+    healthIdentityLabel: "อัตลักษณ์",
+    healthPendingLabel: "รอตรวจสุขภาพ",
+    healthCheckDateLabel: "วันที่ตรวจ",
+    healthPendingDateLabel: "วันที่รอตรวจ",
+    healthStatusYes: "มี",
+    healthStatusNo: "ไม่มี",
     ciNumberLabel: "เลข CI",
     ciNumberPlaceholder: "เช่น CI-000123",
     cardIssueDateLabel: "วันทำบัตร (CI/PV/PJ)",
@@ -351,6 +360,15 @@ const translations = {
     scheduleStatusCompleted: "Completed",
     scheduleLocationLabel: "Appointment location",
     scheduleLocationPlaceholder: "e.g. Labor office",
+    healthSectionTitle: "Health check",
+    healthRegisteredLabel: "Registered in system",
+    healthCheckedLabel: "Health check",
+    healthIdentityLabel: "Identity check",
+    healthPendingLabel: "Waiting for health check",
+    healthCheckDateLabel: "Check date",
+    healthPendingDateLabel: "Waiting date",
+    healthStatusYes: "Yes",
+    healthStatusNo: "No",
     ciNumberLabel: "CI number",
     ciNumberPlaceholder: "e.g. CI-000123",
     cardIssueDateLabel: "Card issue date (CI/PV/PJ)",
@@ -986,6 +1004,10 @@ const extractWorkerData = (card) => {
     if (!input) return "";
     return input.value?.trim?.() || input.value || "";
   };
+  const getChecked = (field) => {
+    const input = card.querySelector(`[data-field="${field}"]`);
+    return Boolean(input?.checked);
+  };
   return {
     fullName: getValue("fullName"),
     passportType: getValue("passportType") || "ci",
@@ -993,6 +1015,12 @@ const extractWorkerData = (card) => {
     workerId: getValue("workerId"),
     scheduleStatus: getValue("scheduleStatus") || "pendingAppointment",
     scheduleLocation: getValue("scheduleLocation"),
+    healthRegistered: getChecked("healthRegistered"),
+    healthChecked: getChecked("healthChecked"),
+    healthIdentity: getChecked("healthIdentity"),
+    healthPending: getChecked("healthPending"),
+    healthCheckDate: getValue("healthCheckDate"),
+    healthPendingDate: getValue("healthPendingDate"),
     ciNumber: getValue("ciNumber"),
     permitType: getValue("permitType") || "pink",
     permitNo: getValue("permitNo"),
@@ -1019,6 +1047,12 @@ const normalizeWorkers = (data) => {
     workerId: data.workerId || "",
     scheduleStatus: data.scheduleStatus || "pendingAppointment",
     scheduleLocation: data.scheduleLocation || "",
+    healthRegistered: Boolean(data.healthRegistered),
+    healthChecked: Boolean(data.healthChecked),
+    healthIdentity: Boolean(data.healthIdentity),
+    healthPending: Boolean(data.healthPending),
+    healthCheckDate: data.healthCheckDate || "",
+    healthPendingDate: data.healthPendingDate || "",
     ciNumber: data.ciNumber || "",
     permitType: data.permitType || "pink",
     permitNo: data.permitNo || "",
@@ -1047,12 +1081,24 @@ const createWorkerCard = (data = {}) => {
       input.value = value || "";
     }
   };
+  const setChecked = (field, value) => {
+    const input = fragment.querySelector(`[data-field="${field}"]`);
+    if (input) {
+      input.checked = Boolean(value);
+    }
+  };
   setValue("fullName", data.fullName);
   setValue("passportType", data.passportType);
   setValue("passport", data.passport);
   setValue("workerId", data.workerId);
   setValue("scheduleStatus", data.scheduleStatus);
   setValue("scheduleLocation", data.scheduleLocation);
+  setChecked("healthRegistered", data.healthRegistered);
+  setChecked("healthChecked", data.healthChecked);
+  setChecked("healthIdentity", data.healthIdentity);
+  setChecked("healthPending", data.healthPending);
+  setValue("healthCheckDate", data.healthCheckDate);
+  setValue("healthPendingDate", data.healthPendingDate);
   setValue("ciNumber", data.ciNumber);
   setValue("permitType", data.permitType);
   setValue("permitNo", data.permitNo);
@@ -1465,6 +1511,32 @@ const openRecordModal = (record) => {
         scheduleLocationItem.textContent = `${translations[currentLanguage].scheduleLocationLabel}: ${
           worker.scheduleLocation || "-"
         }`;
+        const healthRegisteredItem = document.createElement("li");
+        const healthCheckedItem = document.createElement("li");
+        const healthIdentityItem = document.createElement("li");
+        const healthPendingItem = document.createElement("li");
+        const healthCheckDateItem = document.createElement("li");
+        const healthPendingDateItem = document.createElement("li");
+        const yesLabel = translations[currentLanguage].healthStatusYes;
+        const noLabel = translations[currentLanguage].healthStatusNo;
+        healthRegisteredItem.textContent = `${translations[currentLanguage].healthRegisteredLabel}: ${
+          worker.healthRegistered ? yesLabel : noLabel
+        }`;
+        healthCheckedItem.textContent = `${translations[currentLanguage].healthCheckedLabel}: ${
+          worker.healthChecked ? yesLabel : noLabel
+        }`;
+        healthIdentityItem.textContent = `${translations[currentLanguage].healthIdentityLabel}: ${
+          worker.healthIdentity ? yesLabel : noLabel
+        }`;
+        healthPendingItem.textContent = `${translations[currentLanguage].healthPendingLabel}: ${
+          worker.healthPending ? yesLabel : noLabel
+        }`;
+        healthCheckDateItem.textContent = `${translations[currentLanguage].healthCheckDateLabel}: ${
+          worker.healthCheckDate || "-"
+        }`;
+        healthPendingDateItem.textContent = `${translations[currentLanguage].healthPendingDateLabel}: ${
+          worker.healthPendingDate || "-"
+        }`;
         const docStatusItem = document.createElement("li");
         const docStatusLabel = hasAlert
           ? translations[currentLanguage].workerDocStatusExpired
@@ -1506,6 +1578,12 @@ const openRecordModal = (record) => {
         workerList.appendChild(workerIdItem);
         workerList.appendChild(scheduleItem);
         workerList.appendChild(scheduleLocationItem);
+        workerList.appendChild(healthRegisteredItem);
+        workerList.appendChild(healthCheckedItem);
+        workerList.appendChild(healthIdentityItem);
+        workerList.appendChild(healthPendingItem);
+        workerList.appendChild(healthCheckDateItem);
+        workerList.appendChild(healthPendingDateItem);
         workerList.appendChild(docStatusItem);
         workerList.appendChild(passportItem);
         workerList.appendChild(passportTypeItem);

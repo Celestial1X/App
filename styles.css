@@ -187,6 +187,45 @@ h1 {
   box-shadow: 0 24px 50px rgba(16, 24, 40, 0.12);
 }
 
+.timeline {
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 16px;
+}
+
+.timeline-item {
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  padding: 16px 18px;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+  position: relative;
+}
+
+.timeline-item h3 {
+  margin: 10px 0 6px;
+  font-size: 1.05rem;
+}
+
+.timeline-item p {
+  margin: 0;
+  color: #4b5563;
+}
+
+.timeline-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: linear-gradient(135deg, #1f5eff, #7a63ff);
+  color: #fff;
+  box-shadow: 0 8px 16px rgba(31, 94, 255, 0.2);
+}
+
 .subtitle {
   margin-top: 4px;
   color: #4f5a71;

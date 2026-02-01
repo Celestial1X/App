@@ -60,9 +60,11 @@ const recordModalBody = document.getElementById("recordModalBody");
 const recordModalClose = document.getElementById("recordModalClose");
 const recordModalCloseButton = document.getElementById("recordModalCloseButton");
 const draftButton = document.getElementById("draftButton");
+const clearFormDraftButton = document.getElementById("clearFormDraft");
 const recordedBy = document.getElementById("recordedBy");
 const EDIT_KEY = "editRecordId";
 const RECORD_SEARCH_KEY = "recordSearchQuery";
+const FORM_DRAFT_KEY = "workerFormDraft";
 let currentEditId = null;
 const uploadCache = {
   facePhoto: { name: "", dataUrl: "" },
@@ -223,6 +225,9 @@ const translations = {
     uploadHouse: "ทะเบียนบ้าน",
     reportTitle: "ยืนยันการชำระเงิน",
     draftButton: "บันทึกฉบับร่าง",
+    clearFormButton: "ล้างข้อมูลแบบฟอร์ม",
+    confirmClearFormDraft: "ยืนยันการล้างข้อมูลแบบฟอร์มทั้งหมดหรือไม่?",
+    formDraftCleared: "ล้างข้อมูลแบบฟอร์มแล้ว",
     submitButton: "บันทึกข้อมูล",
     passportEmpty: "กรุณากรอกเลขพาสปอร์ต",
     passportValid: "รูปแบบเลขพาสปอร์ตถูกต้อง (ตัวอย่าง)",
@@ -436,6 +441,9 @@ const translations = {
     uploadHouse: "House registration",
     reportTitle: "Payment confirmation",
     draftButton: "Save draft",
+    clearFormButton: "Clear form",
+    confirmClearFormDraft: "Clear all form entries?",
+    formDraftCleared: "Form cleared",
     submitButton: "Save record",
     passportEmpty: "Please enter a passport number.",
     passportValid: "Passport format looks valid (sample).",
@@ -738,6 +746,7 @@ const updateUploadPreview = () => {
     }
     updateUploadPreview();
   });
+  saveFormDraft();
 };
 
 const updatePaymentSlipPreview = () => {
@@ -766,6 +775,7 @@ const updatePaymentSlipPreview = () => {
     uploadCache.paymentSlip = { name: "", dataUrl: "" };
     updatePaymentSlipPreview();
   });
+  saveFormDraft();
 };
 
 const loadRecords = () => {
@@ -1118,6 +1128,7 @@ const createWorkerCard = (data = {}) => {
       ensureWorkerCards();
       getWorkerCards().forEach(updateWorkerCardTitle);
       refreshWorkerStatuses();
+      saveFormDraft();
     });
   }
   const passportInput = fragment.querySelector('[data-field="passport"]');
@@ -1259,6 +1270,45 @@ const collectFormData = () => {
   });
   return { formData, hasAnyValue };
 };
+
+function saveFormDraft() {
+  if (!workerForm) return;
+  const { formData, hasAnyValue } = collectFormData();
+  if (!hasAnyValue) {
+    localStorage.removeItem(FORM_DRAFT_KEY);
+    return;
+  }
+  localStorage.setItem(FORM_DRAFT_KEY, JSON.stringify(formData));
+}
+
+function loadFormDraft() {
+  if (!workerForm || currentEditId) return;
+  const stored = localStorage.getItem(FORM_DRAFT_KEY);
+  if (!stored) return;
+  const formData = JSON.parse(stored);
+  populateForm({ formType: formData.formType || "personal", data: formData });
+}
+
+function clearFormDraft() {
+  if (!workerForm) return;
+  const shouldClear = window.confirm(translations[currentLanguage].confirmClearFormDraft);
+  if (!shouldClear) return;
+  localStorage.removeItem(FORM_DRAFT_KEY);
+  workerForm.reset();
+  if (workerList) {
+    workerList.innerHTML = "";
+  }
+  uploadCache.facePhoto = { name: "", dataUrl: "" };
+  uploadCache.idCard = { name: "", dataUrl: "" };
+  uploadCache.houseDoc = { name: "", dataUrl: "" };
+  uploadCache.paymentSlip = { name: "", dataUrl: "" };
+  ensureWorkerCards();
+  updateSections();
+  updateUploadPreview();
+  updatePaymentSlipPreview();
+  refreshWorkerStatuses();
+  setStatus(formSaveStatus, translations[currentLanguage].formDraftCleared, "ok");
+}
 
 const renderRecords = () => {
   if (!recordsList || !recordsStatus || !recordSearch || !recordFilter) {
@@ -1817,6 +1867,7 @@ const saveRecord = (status = "draft") => {
     records.unshift(record);
   }
   saveRecords(records);
+  localStorage.removeItem(FORM_DRAFT_KEY);
   setStatus(formSaveStatus, `${translations[currentLanguage].saveDraftSuccess}: ${formId}`, "ok");
   currentEditId = null;
   localStorage.removeItem(EDIT_KEY);
@@ -1904,6 +1955,7 @@ if (addWorkerButton) {
       getWorkerCards().forEach(updateWorkerCardTitle);
       refreshWorkerStatuses();
       applyTranslations(currentLanguage);
+      saveFormDraft();
     }
   });
 }
@@ -1915,6 +1967,7 @@ updateSections();
 ensureWorkerCards();
 updateUploadPreview();
 updatePaymentSlipPreview();
+loadFormDraft();
 renderRecords();
 document.querySelectorAll("a.tab-btn").forEach((link) => {
   link.addEventListener("click", () => {
@@ -1988,10 +2041,15 @@ if (workerForm) {
     event.preventDefault();
     saveRecord("final");
   });
+  workerForm.addEventListener("input", saveFormDraft);
+  workerForm.addEventListener("change", saveFormDraft);
 }
 
 if (draftButton) {
   draftButton.addEventListener("click", () => saveRecord("draft"));
+}
+if (clearFormDraftButton) {
+  clearFormDraftButton.addEventListener("click", clearFormDraft);
 }
 if (recordSearch) {
   recordSearch.addEventListener("input", renderRecords);

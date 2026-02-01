@@ -51,6 +51,9 @@ const verifyRecordButton = document.getElementById("verifyRecord");
 const aiQueryInput = document.getElementById("aiQuery");
 const aiSearchButton = document.getElementById("aiSearchButton");
 const aiResponse = document.getElementById("aiResponse");
+const aiChatInput = document.getElementById("aiChatInput");
+const aiChatSend = document.getElementById("aiChatSend");
+const aiChatMessages = document.getElementById("aiChatMessages");
 const recordModal = document.getElementById("recordModal");
 const recordModalTitle = document.getElementById("recordModalTitle");
 const recordModalBody = document.getElementById("recordModalBody");
@@ -96,6 +99,16 @@ const translations = {
     aiHelperEmpty: "กรุณาพิมพ์คำค้นหาเพื่อให้ AI ช่วยสรุป",
     aiHelperNoResults: "ไม่พบข้อมูลที่ตรงกับคำค้นหา",
     aiHelperResults: "ผลลัพธ์ที่พบ",
+    aiChatTitle: "ผู้ช่วย AI สนทนา",
+    aiChatBadge: "โต้ตอบ",
+    aiChatSubtitle: "ถามได้ทุกเรื่องเกี่ยวกับข้อมูลที่บันทึก ระบบจะค้นหาและสรุปให้แบบสนทนา",
+    aiChatPlaceholder: "เช่น ค้นหาแรงงานที่บัตรใกล้หมดอายุ",
+    aiChatButton: "ส่งข้อความ",
+    aiChatWelcome: "สวัสดีครับ! บอกชื่อแรงงาน เลขพาสปอร์ต หรือชื่อนายจ้าง แล้วผมจะช่วยค้นหาให้ครับ",
+    aiChatEmpty: "พิมพ์คำถามหรือคำค้นหาเพื่อให้ AI ช่วยตอบได้เลยครับ",
+    aiChatNoResults: "ยังไม่พบข้อมูลที่ตรงกับคำค้นหานี้ ลองเปลี่ยนคำค้นหาใหม่ได้เลยครับ",
+    aiChatResultsIntro: "พบข้อมูลที่ใกล้เคียงดังนี้",
+    aiChatHint: "ถ้าต้องการดูรายละเอียด ให้พิมพ์ชื่อ/เลขแรงงาน หรือเลขฟอร์มอีกครั้งครับ",
     passportCheckTitle: "ตรวจเลขพาสปอร์ต",
     passportCheckPlaceholder: "กรอกเลขพาสปอร์ตเพื่อเช็คข้อมูล",
     checkButton: "ตรวจสอบ",
@@ -290,6 +303,16 @@ const translations = {
     aiHelperEmpty: "Please enter a query for the AI helper.",
     aiHelperNoResults: "No matching records found.",
     aiHelperResults: "Matches",
+    aiChatTitle: "AI chat assistant",
+    aiChatBadge: "Interactive",
+    aiChatSubtitle: "Ask questions about saved data and the assistant will search and summarize.",
+    aiChatPlaceholder: "e.g. Find workers with expiring cards",
+    aiChatButton: "Send message",
+    aiChatWelcome: "Hi! Share a worker name, passport number, or employer and I'll look it up.",
+    aiChatEmpty: "Type a question or query so I can help.",
+    aiChatNoResults: "No records found for that query yet. Try a different keyword.",
+    aiChatResultsIntro: "Here are the closest matches",
+    aiChatHint: "If you need more detail, reply with a name, worker ID, or form ID.",
     passportCheckTitle: "Passport number check",
     passportCheckPlaceholder: "Enter passport number to check",
     checkButton: "Check",
@@ -771,6 +794,65 @@ const renderAIResponse = (records) => {
     list.appendChild(item);
   });
   aiResponse.appendChild(list);
+};
+
+const buildAIChatItems = (records) =>
+  records.slice(0, 3).map((record) => {
+    const workers = normalizeWorkers(record.data);
+    const workerNames = workers.map((worker) => worker.fullName).filter(Boolean).join(", ") || "-";
+    const primaryWorker = workers[0] || {};
+    const expirySource = primaryWorker.cardExpiryDate || primaryWorker.visaExpiryDate || "";
+    let expiryLabel = "-";
+    if (expirySource) {
+      const { state, days } = getExpiryState(expirySource);
+      expiryLabel = formatExpiryLabel(state, days);
+    }
+    const employer = record.data.company || record.data.employerId || "-";
+    return `${record.displayName || record.formId} • ${translations[currentLanguage].recordEmployerLabel}: ${employer} • ${
+      translations[currentLanguage].recordNameLabel
+    }: ${workerNames} • ${translations[currentLanguage].cardExpiryDateLabel}: ${expiryLabel}`;
+  });
+
+const appendAIChatMessage = (role, text, items = [], hint = "") => {
+  if (!aiChatMessages) return;
+  const bubble = document.createElement("div");
+  bubble.className = `ai-chat__bubble ai-chat__bubble--${role}`;
+  const messageText = document.createElement("p");
+  messageText.textContent = text;
+  bubble.appendChild(messageText);
+  if (items.length) {
+    const list = document.createElement("ul");
+    items.forEach((item) => {
+      const listItem = document.createElement("li");
+      listItem.textContent = item;
+      list.appendChild(listItem);
+    });
+    bubble.appendChild(list);
+  }
+  if (hint) {
+    const hintText = document.createElement("p");
+    hintText.className = "subtitle";
+    hintText.textContent = hint;
+    bubble.appendChild(hintText);
+  }
+  aiChatMessages.appendChild(bubble);
+  aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
+};
+
+const buildAIChatResponse = (message) => {
+  const normalized = message.trim();
+  if (!normalized) {
+    return { text: translations[currentLanguage].aiChatEmpty };
+  }
+  const records = searchRecordsForAI(normalized);
+  if (!records.length) {
+    return { text: translations[currentLanguage].aiChatNoResults };
+  }
+  return {
+    text: translations[currentLanguage].aiChatResultsIntro,
+    items: buildAIChatItems(records),
+    hint: translations[currentLanguage].aiChatHint,
+  };
 };
 
 const buildFormId = () => {
@@ -1819,6 +1901,10 @@ const applyTranslations = (lang) => {
 
 applyTranslations(currentLanguage);
 
+if (aiChatMessages && aiChatMessages.children.length === 0) {
+  appendAIChatMessage("assistant", translations[currentLanguage].aiChatWelcome);
+}
+
 if (workerForm) {
   workerForm.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -1894,6 +1980,30 @@ if (aiSearchButton) {
       return;
     }
     renderAIResponse(matches);
+  });
+}
+
+const handleAIChatSubmit = () => {
+  const message = aiChatInput?.value || "";
+  if (!message.trim()) {
+    appendAIChatMessage("assistant", translations[currentLanguage].aiChatEmpty);
+    return;
+  }
+  appendAIChatMessage("user", message.trim());
+  const response = buildAIChatResponse(message);
+  appendAIChatMessage("assistant", response.text, response.items || [], response.hint || "");
+  if (aiChatInput) aiChatInput.value = "";
+};
+
+if (aiChatSend) {
+  aiChatSend.addEventListener("click", handleAIChatSubmit);
+}
+if (aiChatInput) {
+  aiChatInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      handleAIChatSubmit();
+    }
   });
 }
 if (recordModalClose) {

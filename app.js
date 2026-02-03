@@ -49,6 +49,9 @@ const recordsList = document.getElementById("recordsList");
 const clearRecordsButton = document.getElementById("clearRecords");
 const passportCheckButton = document.getElementById("passportCheckButton");
 const employerCheckButton = document.getElementById("employerCheckButton");
+const generalSearchInput = document.getElementById("generalSearch");
+const generalSearchButton = document.getElementById("generalSearchButton");
+const generalSearchStatus = document.getElementById("generalSearchStatus");
 const verifyRecordButton = document.getElementById("verifyRecord");
 const recordModal = document.getElementById("recordModal");
 const recordModalTitle = document.getElementById("recordModalTitle");
@@ -97,6 +100,10 @@ const translations = {
     employerSearchPlaceholder: "กรอกเลขแรงงาน หรือชื่อนายจ้าง",
     searchButton: "ค้นหา",
     employerSearchHint: "ยังไม่มีคำค้นหา",
+    generalSearchTitle: "ค้นหาแบบครอบคลุม",
+    generalSearchPlaceholder: "เช่น เลขฟอร์ม / ชื่อแรงงาน / เลขต่างด้าว / นายจ้าง",
+    generalSearchHint: "พิมพ์คำค้นหาเพื่อค้นหาข้อมูล",
+    generalSearchNotFound: "ไม่พบข้อมูลที่ตรงกัน",
     formTypeLabel: "หัวข้อแบบฟอร์ม",
     formTypePersonal: "ข้อมูลส่วนตัวแรงงาน",
     formTypeEmployment: "ข้อมูลนายจ้าง/การจ้างงาน",
@@ -308,6 +315,10 @@ const translations = {
     employerSearchPlaceholder: "Enter worker ID or employer name",
     searchButton: "Search",
     employerSearchHint: "No search query yet.",
+    generalSearchTitle: "Comprehensive search",
+    generalSearchPlaceholder: "e.g. form ID / worker name / worker ID / employer",
+    generalSearchHint: "Enter a query to search records.",
+    generalSearchNotFound: "No matching records found.",
     formTypeLabel: "Form type",
     formTypePersonal: "Personal details",
     formTypeEmployment: "Employer & employment",
@@ -2013,6 +2024,22 @@ if (employerCheckButton) {
       return;
     }
     openEmployerModal(query);
+  });
+}
+if (generalSearchButton) {
+  generalSearchButton.addEventListener("click", () => {
+    const query = generalSearchInput?.value?.trim() || "";
+    if (!query) {
+      setStatus(generalSearchStatus, translations[currentLanguage].generalSearchHint, "warn");
+      return;
+    }
+    const record = findRecordByQuery(query);
+    if (!record) {
+      setStatus(generalSearchStatus, translations[currentLanguage].generalSearchNotFound, "warn");
+      return;
+    }
+    setStatus(generalSearchStatus, `${translations[currentLanguage].employerChecking} ${query}`, "ok");
+    openRecordModal(record);
   });
 }
 if (verifyRecordButton) {

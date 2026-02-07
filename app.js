@@ -60,10 +60,12 @@ const recordModalClose = document.getElementById("recordModalClose");
 const recordModalCloseButton = document.getElementById("recordModalCloseButton");
 const draftButton = document.getElementById("draftButton");
 const clearFormDraftButton = document.getElementById("clearFormDraft");
+const themeToggle = document.getElementById("themeToggle");
 const recordedBy = document.getElementById("recordedBy");
 const EDIT_KEY = "editRecordId";
 const RECORD_SEARCH_KEY = "recordSearchQuery";
 const FORM_DRAFT_KEY = "workerFormDraft";
+const THEME_KEY = "uiTheme";
 let currentEditId = null;
 const uploadCache = {
   facePhoto: { name: "", dataUrl: "" },
@@ -104,6 +106,7 @@ const translations = {
     generalSearchPlaceholder: "เช่น เลขฟอร์ม / ชื่อแรงงาน / เลขต่างด้าว / นายจ้าง",
     generalSearchHint: "พิมพ์คำค้นหาเพื่อค้นหาข้อมูล",
     generalSearchNotFound: "ไม่พบข้อมูลที่ตรงกัน",
+    themeToggleLabel: "โหมดมืด",
     formTypeLabel: "หัวข้อแบบฟอร์ม",
     formTypePersonal: "ข้อมูลส่วนตัวแรงงาน",
     formTypeEmployment: "ข้อมูลนายจ้าง/การจ้างงาน",
@@ -319,6 +322,7 @@ const translations = {
     generalSearchPlaceholder: "e.g. form ID / worker name / worker ID / employer",
     generalSearchHint: "Enter a query to search records.",
     generalSearchNotFound: "No matching records found.",
+    themeToggleLabel: "Dark mode",
     formTypeLabel: "Form type",
     formTypePersonal: "Personal details",
     formTypeEmployment: "Employer & employment",
@@ -1220,6 +1224,20 @@ function clearFormDraft() {
   setStatus(formSaveStatus, translations[currentLanguage].formDraftCleared, "ok");
 }
 
+const applyTheme = (theme) => {
+  document.body.classList.toggle("theme-dark", theme === "dark");
+  localStorage.setItem(THEME_KEY, theme);
+};
+
+const initTheme = () => {
+  const storedTheme = localStorage.getItem(THEME_KEY);
+  if (storedTheme) {
+    applyTheme(storedTheme);
+    return;
+  }
+  applyTheme("light");
+};
+
 const renderRecords = () => {
   if (!recordsList || !recordsStatus || !recordSearch || !recordFilter) {
     return;
@@ -1919,6 +1937,7 @@ ensureWorkerCards();
 updateUploadPreview();
 updatePaymentSlipPreview();
 loadFormDraft();
+initTheme();
 renderRecords();
 document.querySelectorAll("a.tab-btn").forEach((link) => {
   link.addEventListener("click", () => {
@@ -1992,6 +2011,12 @@ if (draftButton) {
 }
 if (clearFormDraftButton) {
   clearFormDraftButton.addEventListener("click", clearFormDraft);
+}
+if (themeToggle) {
+  themeToggle.addEventListener("click", () => {
+    const nextTheme = document.body.classList.contains("theme-dark") ? "light" : "dark";
+    applyTheme(nextTheme);
+  });
 }
 if (recordSearch) {
   recordSearch.addEventListener("input", renderRecords);

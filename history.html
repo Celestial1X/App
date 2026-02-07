@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ประวัติการอัปเดต - ระบบตรวจสอบข้อมูลแรงงานต่างด้าว</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero__content">
+        <div class="hero__top"></div>
+        <h1>ประวัติการอัปเดต</h1>
+      </div>
+    </header>
+
+    <main class="container">
+      <nav class="page-tabs">
+        <a class="tab-btn" href="index.html">ค้นหาข้อมูล</a>
+        <a class="tab-btn" href="records.html">ข้อมูลบันทึก</a>
+        <a class="tab-btn" href="form.html">กรอกแบบฟอร์ม</a>
+        <a class="tab-btn is-active" href="history.html">ประวัติการอัปเดต</a>
+        <button type="button" class="tab-btn theme-toggle" id="themeToggle" data-i18n="themeToggleLabel">
+          โหมดมืด
+        </button>
+      </nav>
+
+      <section class="panel">
+        <h2>ประวัติการอัปเดตเว็บไซต์</h2>
+        <p class="subtitle">บันทึกการพัฒนาเว็บไซต์ตั้งแต่เริ่มต้น (เวอร์ชันต้นแบบ → ปัจจุบัน)</p>
+        <ol class="timeline">
+          <li class="timeline-item">
+            <div class="timeline-tag">เริ่มต้น</div>
+            <h3>เว็บต้นแบบหน้าเดียว</h3>
+            <p>สร้างหน้าเว็บภาษาไทยแบบ responsive พร้อมฟอร์มเลือกหัวข้อและคำอธิบายเป้าหมายระบบ</p>
+          </li>
+          <li class="timeline-item">
+            <div class="timeline-tag">ฟอร์ม</div>
+            <h3>ตรวจเลขพาสปอร์ต + อัปโหลดเอกสาร</h3>
+            <p>เพิ่มการตรวจเลขพาสปอร์ต, วันหมดอายุ, ค้นหานายจ้าง และอัปโหลดเอกสารประกอบ</p>
+          </li>
+          <li class="timeline-item">
+            <div class="timeline-tag">ดีไซน์</div>
+            <h3>ปรับตัวหนังสือ + UI สบายตา</h3>
+            <p>ปรับฟอนต์, spacing, สี และเพิ่มปุ่มเปลี่ยนภาษา (ภายหลังถูกลบออกตามคำขอ)</p>
+          </li>
+          <li class="timeline-item">
+            <div class="timeline-tag">หลายหน้า</div>
+            <h3>แยกหน้าเป็นหลายเพจ</h3>
+            <p>แยกหน้าเป็น ค้นหา / บันทึกข้อมูล / แบบฟอร์ม เพื่อใช้งานง่ายขึ้น</p>
+          </li>
+          <li class="timeline-item">
+            <div class="timeline-tag">ฟีเจอร์</div>
+            <h3>ระบบบันทึกข้อมูล + ค้นหา</h3>
+            <p>บันทึกลง localStorage พร้อมค้นหาจากหน้า records และตรวจสอบข้อมูลที่ตรงกัน</p>
+          </li>
+          <li class="timeline-item">
+            <div class="timeline-tag">หลายคน</div>
+            <h3>รองรับนายจ้างที่มีหลายแรงงาน</h3>
+            <p>ปรับฟอร์มให้เพิ่มแรงงานหลายคนในชุดเดียว พร้อมข้อมูลส่วนตัวแยกต่อคน</p>
+          </li>
+          <li class="timeline-item">
+            <div class="timeline-tag">สถานะ</div>
+            <h3>แจ้งเตือนสถานะและการหมดอายุ</h3>
+            <p>เพิ่มชิปสถานะสีเขียว/ส้ม/แดง พร้อมแจ้งเตือนบัตรใกล้หมดอายุ</p>
+          </li>
+          <li class="timeline-item">
+            <div class="timeline-tag">AI</div>
+            <h3>ผู้ช่วย AI ค้นหา + สนทนา</h3>
+            <p>เพิ่มแผงผู้ช่วย AI สำหรับสรุปข้อมูลที่ค้นหา และแชตช่วยค้นหาข้อมูลในระบบ</p>
+          </li>
+          <li class="timeline-item">
+            <div class="timeline-tag">ล่าสุด</div>
+            <h3>การตรวจสุขภาพในข้อมูลแรงงาน</h3>
+            <p>เพิ่มหัวข้อการตรวจสุขภาพ พร้อมติ๊กสถานะและวันที่ตรวจในฟอร์มแรงงาน</p>
+          </li>
+        </ol>
+      </section>
+
+      <section class="panel">
+        <h2>ประวัติการอัปเดตข้อมูลที่บันทึก</h2>
+        <p class="subtitle">บันทึกหัวข้อข้อมูลที่เพิ่มเข้าระบบตั้งแต่เริ่มต้น</p>
+        <ol class="timeline">
+          <li class="timeline-item">
+            <div class="timeline-tag">ข้อมูลหลัก</div>
+            <h3>ข้อมูลส่วนตัวแรงงาน + นายจ้าง</h3>
+            <p>ชื่อ-นามสกุล, เลขต่างด้าว, ชื่อนายจ้าง, เลขประจำตัวนายจ้าง</p>
+          </li>
+          <li class="timeline-item">
+            <div class="timeline-tag">เอกสาร</div>
+            <h3>พาสปอร์ต/CI/PV/PJ + วีซ่า</h3>
+            <p>เลขพาสปอร์ต, เลข CI, วันทำ/หมดอายุบัตร, เลขวีซ่า และวันหมดอายุวีซ่า</p>
+          </li>
+          <li class="timeline-item">
+            <div class="timeline-tag">การต่ออายุ</div>
+            <h3>ประเภทการต่ออายุ + เอกสารที่ใช้</h3>
+            <p>ประเภทการต่ออายุ, สถานะต่ออายุ, เอกสารที่ได้รับ/ต้องใช้ และหมายเหตุ</p>
+          </li>
+          <li class="timeline-item">
+            <div class="timeline-tag">การชำระเงิน</div>
+            <h3>สถานะการชำระเงิน</h3>
+            <p>บันทึกสถานะจ่ายเงิน, วันที่จ่าย และหมายเหตุประกอบ</p>
+          </li>
+          <li class="timeline-item">
+            <div class="timeline-tag">ติดตามงาน</div>
+            <h3>กำหนดการนัดหมาย</h3>
+            <p>สถานะกำหนดการ, สถานที่นัดหมาย และสรุปสถานะงานของแต่ละคน</p>
+          </li>
+          <li class="timeline-item">
+            <div class="timeline-tag">สุขภาพ</div>
+            <h3>การตรวจสุขภาพ</h3>
+            <p>ลงระบบแล้ว, ตรวจสุขภาพ, อัตลักษณ์, รอตรวจสุขภาพ พร้อมวันที่ตรวจ/วันที่รอ</p>
+          </li>
+        </ol>
+      </section>
+    </main>
+  </body>
+</html>

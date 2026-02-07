@@ -107,11 +107,9 @@ const updateSections = () => {
     return;
   }
   const selected = formType.value;
-  const sectionKeys = Array.from(sections).map((section) => section.dataset.section);
-  const hasMatch = sectionKeys.includes(selected);
   sections.forEach((section) => {
     const sectionKey = section.dataset.section;
-    const shouldShow = hasMatch ? sectionKey === selected : true;
+    const shouldShow = sectionKey === "all" || sectionKey === selected;
     section.style.display = shouldShow ? "block" : "none";
   });
 };

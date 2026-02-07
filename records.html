@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ข้อมูลบันทึก - ระบบตรวจสอบข้อมูลแรงงานต่างด้าว</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero__content">
+        <div class="hero__top"></div>
+        <h1 data-i18n="heroTitle">ระบบตรวจสอบข้อมูลแรงงานต่างด้าว</h1>
+      </div>
+    </header>
+
+    <main class="container">
+      <nav class="page-tabs">
+        <a class="tab-btn" href="index.html" data-i18n="tabLookup">ค้นหาข้อมูล</a>
+        <a class="tab-btn is-active" href="records.html" data-i18n="tabRecords">ข้อมูลบันทึก</a>
+        <a class="tab-btn" href="form.html" data-i18n="tabForm">กรอกแบบฟอร์ม</a>
+        <a class="tab-btn" href="history.html">ประวัติการอัปเดต</a>
+        <button type="button" class="tab-btn theme-toggle" id="themeToggle" data-i18n="themeToggleLabel">
+          โหมดมืด
+        </button>
+      </nav>
+
+      <section class="panel">
+        <h2 data-i18n="recordsTitle">ค้นหา/บันทึกข้อมูลในระบบ</h2>
+        <p class="subtitle" data-i18n="recordsSubtitle">
+          บันทึกข้อมูลจากแบบฟอร์มและค้นหาด้วยเลขฟอร์มหรือหัวข้อ
+        </p>
+        <div class="grid-2">
+          <div class="form-row">
+            <label for="recordSearch" data-i18n="recordsSearchLabel">ค้นหาด้วยเลขฟอร์ม/หัวข้อ</label>
+            <input
+              id="recordSearch"
+              type="text"
+              placeholder="เช่น FORM-2024-0001 หรือ ข้อมูลส่วนตัวแรงงาน"
+              data-i18n-placeholder="recordsSearchPlaceholder"
+            />
+          </div>
+          <div class="form-row">
+            <label for="recordFilter" data-i18n="recordsFilterLabel">กรองตามประเภทข้อมูล</label>
+            <select id="recordFilter">
+              <option value="all" data-i18n="recordsFilterAll">ทั้งหมด</option>
+              <option value="renewal:passport" data-i18n="filterRenewalPassport">ต่ออายุบัตร/พาสปอร์ต</option>
+              <option value="renewal:visa" data-i18n="filterRenewalVisa">ต่ออายุวีซ่า</option>
+              <option value="renewal:permit" data-i18n="filterRenewalPermit">ต่ออายุใบอนุญาตทำงาน</option>
+              <option value="passport:ci" data-i18n="passportTypeCi">CI</option>
+              <option value="passport:pv" data-i18n="passportTypePv">PV</option>
+              <option value="passport:pj" data-i18n="passportTypePj">PJ</option>
+              <option value="passport:international" data-i18n="passportTypeInternational">พาสปอร์ตอินเตอร์</option>
+              <option value="nationality:MMR" data-i18n="filterNationalityMmr">สัญชาติ MMR</option>
+              <option value="nationality:LAO" data-i18n="filterNationalityLao">สัญชาติ LAO</option>
+              <option value="nationality:KHM" data-i18n="filterNationalityKhm">สัญชาติ KHM</option>
+              <option value="nationality:VNM" data-i18n="filterNationalityVnm">สัญชาติ VNM</option>
+            </select>
+          </div>
+        </div>
+        <div class="records-toolbar">
+          <span class="status-text" id="recordsStatus" data-i18n="recordsStatus">ยังไม่มีข้อมูลที่บันทึก</span>
+          <button type="button" class="secondary" id="clearRecords" data-i18n="clearButton">
+            ลบข้อมูลทั้งหมด
+          </button>
+        </div>
+        <div id="recordsList" class="records-list"></div>
+      </section>
+    </main>
+
+    <div class="page-loader is-active" id="pageLoader" aria-hidden="true">
+      <div class="page-loader__content">
+        <div class="page-loader__dots" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <p data-i18n="loadingText">กำลังโหลด...</p>
+      </div>
+    </div>
+
+    <div class="modal" id="recordModal" aria-hidden="true">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="recordModalTitle" data-i18n="recordModalTitle">ผลการค้นหา</h3>
+          <button type="button" class="modal-close" id="recordModalClose" aria-label="ปิด">
+            ✕
+          </button>
+        </div>
+        <div id="recordModalBody" class="modal-body"></div>
+        <div class="modal-actions">
+          <button type="button" class="secondary" id="recordModalCloseButton" data-i18n="closeButton">
+            ปิดหน้าต่าง
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

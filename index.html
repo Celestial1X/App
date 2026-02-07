@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ระบบตรวจสอบข้อมูลแรงงานต่างด้าว</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero__content">
+        <div class="hero__top"></div>
+        <h1 data-i18n="heroTitle">ระบบตรวจสอบข้อมูลแรงงานต่างด้าว</h1>
+      </div>
+    </header>
+
+    <main class="container">
+      <nav class="page-tabs">
+        <a class="tab-btn is-active" href="index.html" data-i18n="tabLookup">ค้นหาข้อมูล</a>
+        <a class="tab-btn" href="records.html" data-i18n="tabRecords">ข้อมูลบันทึก</a>
+        <a class="tab-btn" href="form.html" data-i18n="tabForm">กรอกแบบฟอร์ม</a>
+        <a class="tab-btn" href="history.html">ประวัติการอัปเดต</a>
+        <button type="button" class="tab-btn theme-toggle" id="themeToggle" data-i18n="themeToggleLabel">
+          โหมดมืด
+        </button>
+      </nav>
+
+      <section class="panel">
+        <h2 data-i18n="sectionSelectTitle">ค้นหาข้อมูลพื้นฐาน</h2>
+        <div class="status-grid">
+          <div class="status-box">
+            <p class="status-title" data-i18n="generalSearchTitle">ค้นหาข้อมูล</p>
+            <div class="inline-input">
+              <input
+                id="generalSearch"
+                type="text"
+                placeholder="เช่น เลขฟอร์ม / ชื่อแรงงาน / เลขต่างด้าว / นายจ้าง"
+                data-i18n-placeholder="generalSearchPlaceholder"
+              />
+              <button
+                type="button"
+                class="secondary"
+                id="generalSearchButton"
+                data-i18n="searchButton"
+              >
+                ค้นหา
+              </button>
+            </div>
+            <span id="generalSearchStatus" class="status-text" data-i18n="generalSearchHint"
+              >พิมพ์คำค้นหาเพื่อค้นหาข้อมูล</span
+            >
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div class="page-loader is-active" id="pageLoader" aria-hidden="true">
+      <div class="page-loader__content">
+        <div class="page-loader__dots" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <p data-i18n="loadingText">กำลังโหลด...</p>
+      </div>
+    </div>
+
+    <div class="modal" id="recordModal" aria-hidden="true">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="recordModalTitle" data-i18n="recordModalTitle">ผลการค้นหา</h3>
+          <button type="button" class="modal-close" id="recordModalClose" aria-label="ปิด">
+            ✕
+          </button>
+        </div>
+        <div id="recordModalBody" class="modal-body"></div>
+        <div class="modal-actions">
+          <button type="button" class="secondary" id="recordModalCloseButton" data-i18n="closeButton">
+            ปิดหน้าต่าง
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

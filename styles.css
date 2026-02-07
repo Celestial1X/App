@@ -1,6 +1,6 @@
 :root {
   color-scheme: light;
-  font-family: "Noto Sans Thai", "Inter", system-ui, sans-serif;
+  font-family: "Sarabun", system-ui, sans-serif;
   background: #f5f7fb;
   color: #1c2230;
 }
@@ -747,6 +747,24 @@ button {
   gap: 8px;
   font-size: 0.9rem;
   color: #3b465b;
+}
+
+.radio-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.radio-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: #3b465b;
+}
+
+.is-hidden {
+  display: none;
 }
 
 .modal {

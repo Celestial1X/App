@@ -131,7 +131,7 @@ const translations = {
     generalSearchHint: "พิมพ์คำค้นหาเพื่อค้นหาข้อมูล",
     generalSearchNotFound: "ไม่พบข้อมูลที่ตรงกัน",
     themeToggleLabel: "โหมดมืด",
-    formTypeLabel: "หัวข้อแบบฟอร์ม",
+    formTypeLabel: "ประเภทแบบฟอร์ม",
     formTypePersonal: "เปลี่ยนนายจ้าง",
     formTypeEmployment: "แจ้งที่พัก 37",
     formTypeDocuments: "แจ้งที่พัก 38",
@@ -384,7 +384,7 @@ const translations = {
     generalSearchHint: "Enter a query to search records.",
     generalSearchNotFound: "No matching records found.",
     themeToggleLabel: "Dark mode",
-    formTypeLabel: "Form heading",
+    formTypeLabel: "Form category",
     formTypePersonal: "Change employer",
     formTypeEmployment: "Residence notice 37",
     formTypeDocuments: "Residence notice 38",
@@ -1357,9 +1357,11 @@ function clearFormDraft() {
   setStatus(formSaveStatus, translations[currentLanguage].formDraftCleared, "ok");
 }
 
-const applyTheme = (theme) => {
+const applyTheme = (theme, { persist = true } = {}) => {
   document.body.classList.toggle("theme-dark", theme === "dark");
-  localStorage.setItem(THEME_KEY, theme);
+  if (persist) {
+    localStorage.setItem(THEME_KEY, theme);
+  }
 };
 
 const initTheme = () => {
@@ -1368,7 +1370,14 @@ const initTheme = () => {
     applyTheme(storedTheme);
     return;
   }
-  applyTheme("light");
+  const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+  applyTheme(mediaQuery.matches ? "dark" : "light", { persist: false });
+  mediaQuery.addEventListener("change", (event) => {
+    if (localStorage.getItem(THEME_KEY)) {
+      return;
+    }
+    applyTheme(event.matches ? "dark" : "light", { persist: false });
+  });
 };
 
 const renderRecords = () => {

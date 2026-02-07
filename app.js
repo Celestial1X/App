@@ -107,9 +107,11 @@ const updateSections = () => {
     return;
   }
   const selected = formType.value;
+  const sectionKeys = Array.from(sections).map((section) => section.dataset.section);
+  const hasMatch = sectionKeys.includes(selected);
   sections.forEach((section) => {
     const sectionKey = section.dataset.section;
-    const shouldShow = sectionKey === "all" || sectionKey === selected;
+    const shouldShow = hasMatch ? sectionKey === selected : true;
     section.style.display = shouldShow ? "block" : "none";
   });
 };
@@ -131,7 +133,7 @@ const translations = {
     generalSearchHint: "พิมพ์คำค้นหาเพื่อค้นหาข้อมูล",
     generalSearchNotFound: "ไม่พบข้อมูลที่ตรงกัน",
     themeToggleLabel: "โหมดมืด",
-    formTypeLabel: "หัวข้อแบบฟอร์ม",
+    formTypeLabel: "ประเภทแบบฟอร์ม",
     formTypePersonal: "เปลี่ยนนายจ้าง",
     formTypeEmployment: "แจ้งที่พัก 37",
     formTypeDocuments: "แจ้งที่พัก 38",
@@ -384,7 +386,7 @@ const translations = {
     generalSearchHint: "Enter a query to search records.",
     generalSearchNotFound: "No matching records found.",
     themeToggleLabel: "Dark mode",
-    formTypeLabel: "Form type",
+    formTypeLabel: "Form category",
     formTypePersonal: "Change employer",
     formTypeEmployment: "Residence notice 37",
     formTypeDocuments: "Residence notice 38",

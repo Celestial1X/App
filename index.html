@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>กรอกแบบฟอร์ม - ระบบตรวจสอบข้อมูลแรงงานต่างด้าว</title>
+    <title>ระบบตรวจสอบข้อมูลแรงงานต่างด้าว</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -22,477 +22,41 @@
 
     <main class="container">
       <nav class="page-tabs">
-        <a class="tab-btn" href="index.html" data-i18n="tabLookup">ค้นหาข้อมูล</a>
+        <a class="tab-btn is-active" href="index.html" data-i18n="tabLookup">ค้นหาข้อมูล</a>
         <a class="tab-btn" href="records.html" data-i18n="tabRecords">ข้อมูลบันทึก</a>
-        <a class="tab-btn is-active" href="form.html" data-i18n="tabForm">กรอกแบบฟอร์ม</a>
+        <a class="tab-btn" href="form.html" data-i18n="tabForm">กรอกแบบฟอร์ม</a>
         <a class="tab-btn" href="history.html">ประวัติการอัปเดต</a>
         <button type="button" class="tab-btn theme-toggle" id="themeToggle" data-i18n="themeToggleLabel">
           โหมดมืด
         </button>
       </nav>
 
-      <section class="panel" id="formPanel">
-        <form class="form-grid" id="workerForm">
-          <div class="form-row">
-            <label for="formType" data-i18n="formTypeLabel">หัวข้อแบบฟอร์ม</label>
-            <select id="formType">
-              <option value="personal" data-i18n="formTypePersonal">ข้อมูลส่วนตัวแรงงาน</option>
-              <option value="employment" data-i18n="formTypeEmployment">ข้อมูลนายจ้าง/การจ้างงาน</option>
-              <option value="documents" data-i18n="formTypeDocuments">ข้อมูลเอกสารและใบอนุญาต</option>
-              <option value="report" data-i18n="formTypeReport">ยืนยันการชำระเงิน</option>
-            </select>
-          </div>
-          <div class="form-row">
-            <label for="recordedBy" data-i18n="recordedByLabel">ชื่อผู้บันทึก</label>
-            <input
-              id="recordedBy"
-              type="text"
-              placeholder="กรอกชื่อผู้บันทึก"
-              data-i18n-placeholder="recordedByPlaceholder"
-            />
-          </div>
-          <div class="form-section" data-section="personal">
-            <div class="section-header">
-              <h3 data-i18n="personalTitle">ข้อมูลส่วนตัวแรงงาน</h3>
-              <button type="button" class="secondary add-worker" id="addWorker" data-i18n="addWorkerButton">
-                เพิ่มรายชื่อ
+      <section class="panel">
+        <h2 data-i18n="sectionSelectTitle">ค้นหาข้อมูลพื้นฐาน</h2>
+        <div class="status-grid">
+          <div class="status-box">
+            <p class="status-title" data-i18n="generalSearchTitle">ค้นหาข้อมูล</p>
+            <div class="inline-input">
+              <input
+                id="generalSearch"
+                type="text"
+                placeholder="เช่น เลขฟอร์ม / ชื่อแรงงาน / เลขต่างด้าว / นายจ้าง"
+                data-i18n-placeholder="generalSearchPlaceholder"
+              />
+              <button
+                type="button"
+                class="secondary"
+                id="generalSearchButton"
+                data-i18n="searchButton"
+              >
+                ค้นหา
               </button>
             </div>
-            <p class="helper-text" data-i18n="workerListHelper">
-              เพิ่มรายชื่อแรงงานหลายคนต่อ 1 นายจ้าง โดยแต่ละคนมีชุดข้อมูลของตัวเอง
-            </p>
-            <div id="workerList" class="worker-list"></div>
-            <template id="workerTemplate">
-              <div class="worker-card">
-                <div class="worker-card__header">
-                  <h4 class="worker-card__title" data-i18n="workerCardTitle">แรงงานคนที่</h4>
-                  <button type="button" class="ghost remove-worker" data-i18n="removeWorkerButton">ลบ</button>
-                </div>
-                <div class="grid-2">
-                  <div class="form-row">
-                    <label data-i18n="fullNameLabel">ชื่อ-นามสกุล</label>
-                    <input
-                      type="text"
-                      data-field="fullName"
-                      placeholder="กรอกชื่อแรงงาน"
-                      data-i18n-placeholder="fullNamePlaceholder"
-                    />
-                  </div>
-                  <div class="form-row">
-                    <label data-i18n="passportTypeLabel">ประเภทพาสปอร์ต</label>
-                    <select data-field="passportType">
-                      <option value="ci" data-i18n="passportTypeCi">CI</option>
-                      <option value="pv" data-i18n="passportTypePv">PV</option>
-                      <option value="pj" data-i18n="passportTypePj">PJ</option>
-                      <option value="international" data-i18n="passportTypeInternational">พาสปอร์ตอินเตอร์</option>
-                      <option value="international" data-i18n="passportTypeInternational">RDPLAO</option>
-                    </select>
-                  </div>
-                </div>
-                <div class="grid-2">
-                  <div class="form-row">
-                    <label data-i18n="passportLabel">เลขหนังสือเดินทาง</label>
-                    <input
-                      type="text"
-                      data-field="passport"
-                      placeholder="เช่น P1234567"
-                      data-i18n-placeholder="passportPlaceholder"
-                    />
-                    <span class="status-text" data-field-status="passport"></span>
-                  </div>
-                  <div class="form-row">
-                    <label data-i18n="workerIdLabel">เลขต่างด้าว</label>
-                    <input
-                      type="text"
-                      data-field="workerId"
-                      placeholder="เช่น FW-0001"
-                      data-i18n-placeholder="workerIdPlaceholder"
-                    />
-                  </div>
-                </div>
-                <div class="grid-2">
-                  <div class="form-row">
-                    <label data-i18n="ciNumberLabel">เลข CI</label>
-                    <input
-                      type="text"
-                      data-field="ciNumber"
-                      placeholder="เช่น CI-000123"
-                      data-i18n-placeholder="ciNumberPlaceholder"
-                    />
-                  </div>
-                  <div class="form-row">
-                    <label data-i18n="permitNoLabel">เลขที่ใบอนุญาต</label>
-                    <input
-                      type="text"
-                      data-field="permitNo"
-                      placeholder="ระบุเลขที่"
-                      data-i18n-placeholder="permitNoPlaceholder"
-                    />
-                  </div>
-                </div>
-                <div class="grid-2">
-                  <div class="form-row">
-                    <label data-i18n="permitTypeLabel">ประเภทใบอนุญาต</label>
-                    <select data-field="permitType">
-                      <option value="pink" data-i18n="permitTypePink">บัตรชมพู</option>
-                      <option value="visa" data-i18n="permitTypeVisa">วีซ่าแรงงาน</option>
-                      <option value="mou" data-i18n="permitTypeMou">MOU</option>
-                    </select>
-                  </div>
-                  <div class="form-row">
-                    <label data-i18n="nationalityLabel">สัญชาติ</label>
-                    <input
-                      type="text"
-                      data-field="nationality"
-                      placeholder="เมียนมา / ลาว / กัมพูชา"
-                      data-i18n-placeholder="nationalityPlaceholder"
-                    />
-                  </div>
-                </div>
-                <div class="grid-3">
-                  <div class="form-row">
-                    <label data-i18n="cardIssueDateLabel">วันทำบัตร (CI/PV/PJ)</label>
-                    <input data-field="cardIssueDate" type="date" />
-                  </div>
-                  <div class="form-row">
-                    <label data-i18n="cardExpiryDateLabel">วันหมดอายุบัตร (CI/PV/PJ)</label>
-                    <input data-field="cardExpiryDate" type="date" />
-                    <span class="status-text" data-field-status="cardExpiry"></span>
-                  </div>
-                  <div class="form-row">
-                    <label data-i18n="dobLabel">วันเดือนปีเกิด</label>
-                    <input data-field="dob" type="date" />
-                  </div>
-                </div>
-                <div class="grid-3">
-                  <div class="form-row">
-                    <label data-i18n="visaNumberLabel">เลขวีซ่า</label>
-                    <input
-                      type="text"
-                      data-field="visaNumber"
-                      placeholder="ระบุเลขวีซ่า"
-                      data-i18n-placeholder="visaNumberPlaceholder"
-                    />
-                  </div>
-                  <div class="form-row">
-                    <label data-i18n="visaIssueDateLabel">วันทำวีซ่า</label>
-                    <input data-field="visaIssueDate" type="date" />
-                  </div>
-                  <div class="form-row">
-                    <label data-i18n="visaExpiryDateLabel">วันหมดอายุวีซ่า</label>
-                    <input data-field="visaExpiryDate" type="date" />
-                    <span class="status-text" data-field-status="visaExpiry"></span>
-                  </div>
-                </div>
-                <div class="grid-2">
-                  <div class="form-row">
-                    <label data-i18n="expiryLabel">วันหมดอายุใบอนุญาตอื่น ๆ</label>
-                    <input data-field="expiry" type="date" />
-                    <span class="status-text" data-field-status="expiry"></span>
-                  </div>
-                  <div class="form-row">
-                    <label data-i18n="genderLabel">เพศ</label>
-                    <select data-field="gender">
-                      <option data-i18n="genderMale">ชาย</option>
-                      <option data-i18n="genderFemale">หญิง</option>
-                      <option data-i18n="genderOther">อื่น ๆ</option>
-                    </select>
-                  </div>
-                </div>
-                <div class="grid-2">
-                  <div class="form-row">
-                    <label data-i18n="scheduleStatusLabel">กำหนดการ/สถานะติดตาม</label>
-                    <select data-field="scheduleStatus">
-                      <option value="pendingAppointment" data-i18n="scheduleStatusPendingAppointment">
-                        รอการนัด
-                      </option>
-                      <option value="scheduled" data-i18n="scheduleStatusScheduled">นัดแล้ว</option>
-                      <option value="pendingReview" data-i18n="scheduleStatusPendingReview">
-                        รอการตรวจสอบ
-                      </option>
-                      <option value="completed" data-i18n="scheduleStatusCompleted">สำเร็จแล้ว</option>
-                    </select>
-                  </div>
-                  <div class="form-row">
-                    <label data-i18n="scheduleLocationLabel">สถานที่นัดหมาย</label>
-                    <input
-                      type="text"
-                      data-field="scheduleLocation"
-                      placeholder="เช่น สำนักงานจัดหางาน"
-                      data-i18n-placeholder="scheduleLocationPlaceholder"
-                    />
-                  </div>
-                </div>
-                <div class="form-row">
-                  <label data-i18n="healthSectionTitle">การตรวจสุขภาพ</label>
-                  <div class="checkbox-grid">
-                    <label class="checkbox-item">
-                      <input type="checkbox" data-field="healthRegistered" />
-                      <span data-i18n="healthRegisteredLabel">ลงระบบแล้ว</span>
-                    </label>
-                    <label class="checkbox-item">
-                      <input type="checkbox" data-field="healthChecked" />
-                      <span data-i18n="healthCheckedLabel">ตรวจสุขภาพ</span>
-                    </label>
-                    <label class="checkbox-item">
-                      <input type="checkbox" data-field="healthIdentity" />
-                      <span data-i18n="healthIdentityLabel">อัตลักษณ์</span>
-                    </label>
-                    <label class="checkbox-item">
-                      <input type="checkbox" data-field="healthPending" />
-                      <span data-i18n="healthPendingLabel">รอตรวจสุขภาพ</span>
-                    </label>
-                  </div>
-                </div>
-                <div class="grid-2">
-                  <div class="form-row">
-                    <label data-i18n="healthCheckDateLabel">วันที่ตรวจ</label>
-                    <input data-field="healthCheckDate" type="date" />
-                  </div>
-                  <div class="form-row">
-                    <label data-i18n="healthPendingDateLabel">วันที่รอตรวจ</label>
-                    <input data-field="healthPendingDate" type="date" />
-                  </div>
-                </div>
-              </div>
-            </template>
+            <span id="generalSearchStatus" class="status-text" data-i18n="generalSearchHint"
+              >พิมพ์คำค้นหาเพื่อค้นหาข้อมูล</span
+            >
           </div>
-
-          <div class="form-section" data-section="employment">
-            <h3 data-i18n="employmentTitle">ข้อมูลนายจ้าง</h3>
-            <div class="form-row">
-              <label for="company" data-i18n="companyLabel">ชื่อนายจ้าง</label>
-              <input
-                id="company"
-                type="text"
-                placeholder="ระบุชื่อนายจ้าง"
-                data-i18n-placeholder="companyPlaceholder"
-              />
-            </div>
-            <div class="form-row">
-              <label for="caseType" data-i18n="caseTypeLabel">ประเภทการแจ้ง</label>
-              <select id="caseType">
-                <option value="changeEmployer" data-i18n="caseTypeChangeEmployer">แจ้งเปลี่ยนนายจ้าง</option>
-                <option value="relocation" data-i18n="caseTypeRelocation">แจ้งย้าย</option>
-                <option value="other" data-i18n="caseTypeOther">อื่น ๆ</option>
-              </select>
-            </div>
-            <div class="form-row">
-              <label for="employerId" data-i18n="employerIdLabel">เลขประจำตัวนายจ้าง</label>
-              <input
-                id="employerId"
-                type="text"
-                placeholder="เช่น EMP-00123"
-                data-i18n-placeholder="employerIdPlaceholder"
-              />
-            </div>
-          </div>
-
-          <div class="form-section" data-section="documents">
-            <h3 data-i18n="documentsTitle">ข้อมูลเอกสารและใบอนุญาต</h3>
-            <div class="grid-2">
-              <div class="form-row">
-                <label for="renewalType" data-i18n="renewalTypeLabel">ประเภทการต่ออายุ</label>
-                <select id="renewalType">
-                  <option value="passport" data-i18n="renewalTypePassport">บัตร/พาสปอร์ต</option>
-                  <option value="visa" data-i18n="renewalTypeVisa">วีซ่า</option>
-                  <option value="permit" data-i18n="renewalTypePermit">ใบอนุญาตทำงาน</option>
-                </select>
-              </div>
-              <div class="form-row">
-                <label for="renewalStatus" data-i18n="renewalStatusLabel">สถานะต่ออายุ</label>
-                <select id="renewalStatus">
-                  <option value="none" data-i18n="renewalStatusNone">ยังไม่ดำเนินการ</option>
-                  <option value="pending" data-i18n="renewalStatusPending">กำลังเตรียมเอกสาร</option>
-                  <option value="submitted" data-i18n="renewalStatusSubmitted">ยื่นแล้ว</option>
-                  <option value="completed" data-i18n="renewalStatusCompleted">ต่ออายุแล้ว</option>
-                </select>
-              </div>
-            </div>
-            <div class="grid-2">
-              <div class="form-row">
-                <label data-i18n="receivedDocsLabel">เอกสารที่ได้รับ</label>
-                <div class="checkbox-grid">
-                  <label class="checkbox-item">
-                    <input type="checkbox" id="receivedFacePhoto" />
-                    <span data-i18n="uploadFace">รูปหน้าคน</span>
-                  </label>
-                  <label class="checkbox-item">
-                    <input type="checkbox" id="receivedIdCard" />
-                    <span data-i18n="uploadId">บัตรประชาชน/บัตรชมพู</span>
-                  </label>
-                  <label class="checkbox-item">
-                    <input type="checkbox" id="receivedHouseDoc" />
-                    <span data-i18n="uploadHouse">ทะเบียนบ้าน</span>
-                  </label>
-                  <label class="checkbox-item">
-                    <input type="checkbox" id="receivedPaymentSlip" />
-                    <span data-i18n="paymentSlipLabel">แนบสลิปการชำระเงิน</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-            <div class="form-row">
-              <label data-i18n="notificationTitle">รายการแจ้ง/สถานะเพิ่มเติม</label>
-              <div class="checkbox-grid">
-                <label class="checkbox-item">
-                  <input type="checkbox" value="residence" class="notification-item" />
-                  <span data-i18n="notificationResidence">การแจ้งที่พัก</span>
-                </label>
-                <label class="checkbox-item">
-                  <input type="checkbox" value="exit" class="notification-item" />
-                  <span data-i18n="notificationExit">แจ้งออก</span>
-                </label>
-                <label class="checkbox-item">
-                  <input type="checkbox" value="employerOverdue" class="notification-item" />
-                  <span data-i18n="notificationEmployerOverdue">นายจ้างเกิน 90 วัน</span>
-                </label>
-                <label class="checkbox-item">
-                  <input type="checkbox" value="laosMouVisaRun" class="notification-item" />
-                  <span data-i18n="notificationLaosMouVisaRun">ลาว MOU ใส่ Visa/Visa run</span>
-                </label>
-                <label class="checkbox-item">
-                  <input type="checkbox" value="laosMouTwoYears" class="notification-item" />
-                  <span data-i18n="notificationLaosMouTwoYears">ลาว MOU 2 ปี หลัง</span>
-                </label>
-                <label class="checkbox-item">
-                  <input type="checkbox" value="renew90Days" class="notification-item" />
-                  <span data-i18n="notificationRenew90Days">ต่อ 90 วัน</span>
-                </label>
-                <label class="checkbox-item">
-                  <input type="checkbox" value="renewOneYearCabinet" class="notification-item" />
-                  <span data-i18n="notificationRenewOneYearCabinet">ต่ออายุ 1 ปี มติครม</span>
-                </label>
-                <label class="checkbox-item">
-                  <input type="checkbox" value="renewTwoYearCabinetLaos" class="notification-item" />
-                  <span data-i18n="notificationRenewTwoYearCabinetLaos">ต่ออายุ 2 ปี มติครมเปลี่ยนเล่มลาว</span>
-                </label>
-              </div>
-            </div>
-            <div class="form-row">
-              <label data-i18n="supportingDocsTitle">เอกสารประกอบเพิ่มเติม</label>
-              <div class="checkbox-grid">
-                <label class="checkbox-item">
-                  <input type="checkbox" value="employerCard" class="supporting-doc" />
-                  <span data-i18n="supportingDocEmployerCard">นายจ้าง บัตร</span>
-                </label>
-                <label class="checkbox-item">
-                  <input type="checkbox" value="card50" class="supporting-doc" />
-                  <span data-i18n="supportingDocCard50">บัตร 50</span>
-                </label>
-                <label class="checkbox-item">
-                  <input type="checkbox" value="receipt" class="supporting-doc" />
-                  <span data-i18n="supportingDocReceipt">ใบเสร็จ</span>
-                </label>
-              </div>
-            </div>
-            <div class="form-row">
-              <label data-i18n="requiredRenewalDocsLabel">เอกสารที่ต้องใช้ต่ออายุ</label>
-              <div class="checkbox-grid">
-                <label class="checkbox-item">
-                  <input type="checkbox" value="passport" class="required-renewal-doc" />
-                  <span data-i18n="renewalDocPassport">สำเนาพาสปอร์ต</span>
-                </label>
-                <label class="checkbox-item">
-                  <input type="checkbox" value="visa" class="required-renewal-doc" />
-                  <span data-i18n="renewalDocVisa">สำเนาวีซ่า</span>
-                </label>
-                <label class="checkbox-item">
-                  <input type="checkbox" value="permit" class="required-renewal-doc" />
-                  <span data-i18n="renewalDocPermit">ใบอนุญาตทำงาน</span>
-                </label>
-                <label class="checkbox-item">
-                  <input type="checkbox" value="photo" class="required-renewal-doc" />
-                  <span data-i18n="renewalDocPhoto">รูปถ่าย</span>
-                </label>
-                <label class="checkbox-item">
-                  <input type="checkbox" value="employerLetter" class="required-renewal-doc" />
-                  <span data-i18n="renewalDocEmployerLetter">หนังสือรับรองนายจ้าง</span>
-                </label>
-              </div>
-            </div>
-            <div class="grid-2">
-              <div class="form-row">
-                <label for="receivedDocsNote" data-i18n="receivedDocsNoteLabel">หมายเหตุเอกสารที่ได้รับ</label>
-                <textarea
-                  id="receivedDocsNote"
-                  rows="3"
-                  placeholder="ระบุเอกสารที่ได้รับเพิ่มเติม"
-                  data-i18n-placeholder="receivedDocsNotePlaceholder"
-                ></textarea>
-              </div>
-              <div class="form-row">
-                <label for="renewalDocsNote" data-i18n="renewalDocsNoteLabel">หมายเหตุเอกสารที่ต้องใช้ต่อ</label>
-                <textarea
-                  id="renewalDocsNote"
-                  rows="3"
-                  placeholder="ระบุเอกสารเพิ่มเติมที่ต้องใช้ต่ออายุ"
-                  data-i18n-placeholder="renewalDocsNotePlaceholder"
-                ></textarea>
-              </div>
-            </div>
-            <div class="form-row">
-              <label for="verification" data-i18n="verificationLabel">สถานะตรวจสอบ</label>
-              <select id="verification">
-                <option data-i18n="verificationPending">รอตรวจสอบ</option>
-                <option data-i18n="verificationPass">ผ่านการตรวจสอบ</option>
-                <option data-i18n="verificationFix">ต้องแก้ไข</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-section" data-section="report">
-            <h3 data-i18n="paymentTitle">ยืนยันการชำระเงิน</h3>
-            <div class="grid-2">
-              <div class="form-row">
-                <label for="paymentStatus" data-i18n="paymentStatusLabel">สถานะการชำระเงิน</label>
-                <select id="paymentStatus">
-                  <option value="pending" data-i18n="paymentPending">ยังไม่ชำระ</option>
-                  <option value="paid" data-i18n="paymentPaid">ชำระแล้ว</option>
-                </select>
-              </div>
-              <div class="form-row">
-                <label for="paymentDate" data-i18n="paymentDateLabel">วันที่ชำระเงิน</label>
-                <input id="paymentDate" type="date" />
-              </div>
-            </div>
-            <div class="form-row">
-              <label data-i18n="paymentSlipLabel">แนบสลิปการชำระเงิน</label>
-              <div class="upload-grid single-upload">
-                <label class="upload-card" data-upload="paymentSlip">
-                  <span class="upload-title" data-i18n="paymentSlipUpload">อัปโหลดสลิป</span>
-                  <img class="upload-thumb" alt="" />
-                  <span class="upload-filename"></span>
-                  <input id="paymentSlip" type="file" accept="image/*,.pdf" />
-                </label>
-              </div>
-              <div class="upload-preview" id="paymentSlipPreview"></div>
-            </div>
-            <div class="form-row">
-              <label for="paymentNotes" data-i18n="paymentNotesLabel">หมายเหตุ</label>
-              <textarea
-                id="paymentNotes"
-                rows="3"
-                placeholder="รายละเอียดเพิ่มเติม"
-                data-i18n-placeholder="paymentNotesPlaceholder"
-              ></textarea>
-            </div>
-          </div>
-
-          <div class="form-actions">
-            <span class="status-text" id="formSaveStatus"></span>
-            <button type="button" class="secondary" id="clearFormDraft" data-i18n="clearFormButton">
-              ล้างข้อมูลแบบฟอร์ม
-            </button>
-            <button type="button" class="secondary" id="draftButton" data-i18n="draftButton">
-              บันทึกฉบับร่าง
-            </button>
-            <button type="submit" class="primary" data-i18n="submitButton">บันทึกข้อมูล</button>
-            <button type="button" class="secondary" id="verifyRecord" data-i18n="verifyButton">
-              ตรวจสอบข้อมูล
-            </button>
-          </div>
-        </form>
+        </div>
       </section>
     </main>
 
@@ -504,6 +68,23 @@
           <span></span>
         </div>
         <p data-i18n="loadingText">กำลังโหลด...</p>
+      </div>
+    </div>
+
+    <div class="modal" id="recordModal" aria-hidden="true">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="recordModalTitle" data-i18n="recordModalTitle">ผลการค้นหา</h3>
+          <button type="button" class="modal-close" id="recordModalClose" aria-label="ปิด">
+            ✕
+          </button>
+        </div>
+        <div id="recordModalBody" class="modal-body"></div>
+        <div class="modal-actions">
+          <button type="button" class="secondary" id="recordModalCloseButton" data-i18n="closeButton">
+            ปิดหน้าต่าง
+          </button>
+        </div>
       </div>
     </div>
 

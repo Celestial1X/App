@@ -4,6 +4,7 @@ const formTypeOtherDetail = document.getElementById("formTypeOtherDetail");
 const caseStatusInputs = document.querySelectorAll('input[name="caseStatus"]');
 const appointmentDateRow = document.getElementById("appointmentDateRow");
 const appointmentDate = document.getElementById("appointmentDate");
+const appointmentNote = document.getElementById("appointmentNote");
 const sections = document.querySelectorAll(".form-section");
 const passportCheckInput = document.getElementById("passportCheck");
 const passportStatus = document.getElementById("passportStatus");
@@ -31,6 +32,13 @@ const verification = document.getElementById("verification");
 const workerFullName = document.getElementById("workerFullName");
 const workerGender = document.getElementById("workerGender");
 const workerNationality = document.getElementById("workerNationality");
+const workerEmail = document.getElementById("workerEmail");
+const workerCode = document.getElementById("workerCode");
+const workerAlienId = document.getElementById("workerAlienId");
+const workPermitExpiry = document.getElementById("workPermitExpiry");
+const passNumber = document.getElementById("passNumber");
+const passIssueDate = document.getElementById("passIssueDate");
+const passExpiryDate = document.getElementById("passExpiryDate");
 const businessType = document.getElementById("businessType");
 const employerName = document.getElementById("employerName");
 const documentSender = document.getElementById("documentSender");
@@ -89,6 +97,10 @@ const draftButton = document.getElementById("draftButton");
 const clearFormDraftButton = document.getElementById("clearFormDraft");
 const themeToggle = document.getElementById("themeToggle");
 const recordedBy = document.getElementById("recordedBy");
+const formSteps = document.querySelectorAll(".form-step");
+const nextStepButton = document.getElementById("nextStepButton");
+const nextStepLink = document.getElementById("nextStepLink");
+const prevStepButton = document.getElementById("prevStepButton");
 const EDIT_KEY = "editRecordId";
 const RECORD_SEARCH_KEY = "recordSearchQuery";
 const FORM_DRAFT_KEY = "workerFormDraft";
@@ -124,7 +136,7 @@ const updateSections = () => {
   const selected = getSelectedFormType();
   sections.forEach((section) => {
     const sectionKey = section.dataset.section;
-    const shouldShow = sectionKey === "all" || sectionKey === selected;
+    const shouldShow = !sectionKey || sectionKey === "all" || sectionKey === selected;
     section.style.display = shouldShow ? "block" : "none";
   });
 };
@@ -144,6 +156,9 @@ const updateAppointmentVisibility = () => {
   appointmentDateRow.classList.toggle("is-hidden", !isAppointment);
   if (!isAppointment && appointmentDate) {
     appointmentDate.value = "";
+  }
+  if (!isAppointment && appointmentNote) {
+    appointmentNote.value = "";
   }
 };
 
@@ -412,7 +427,7 @@ const translations = {
     paymentNotesPlaceholder: "รายละเอียดเพิ่มเติม",
     tabLookup: "การค้นหาข้อมูล",
     tabRecords: "รายการบันทึก",
-    tabForm: "บันทึกแบบฟอร์ม",
+    tabForm: "หน้าทำรายการต่างๆ",
     recordedByLabel: "ผู้บันทึกข้อมูล",
     recordedByPlaceholder: "กรอกชื่อผู้บันทึกข้อมูล",
     workerCountSuffix: "คน",
@@ -683,7 +698,7 @@ const translations = {
     paymentNotesPlaceholder: "Additional details",
     tabLookup: "Lookup",
     tabRecords: "Records",
-    tabForm: "Form entry",
+    tabForm: "Task page",
     recordedByLabel: "Recorded by",
     recordedByPlaceholder: "Enter recorder name",
     workerCountSuffix: "workers",
@@ -693,6 +708,8 @@ const translations = {
 };
 
 let currentLanguage = "th";
+const isNextFormPage = window.location.pathname.endsWith("/nextform.html") || window.location.pathname.endsWith("nextform.html");
+let currentFormStep = isNextFormPage ? 2 : 1;
 
 const setStatus = (element, message, type = "") => {
   if (!element) return;
@@ -946,9 +963,30 @@ const updatePaymentSlipPreview = () => {
   saveFormDraft();
 };
 
+const readJsonStorage = (key, fallback) => {
+  const raw = localStorage.getItem(key);
+  if (!raw) return fallback;
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed ?? fallback;
+  } catch (_error) {
+    localStorage.removeItem(key);
+    return fallback;
+  }
+};
+
 const loadRecords = () => {
-  const stored = localStorage.getItem("workerRecords");
-  return stored ? JSON.parse(stored) : [];
+  const records = readJsonStorage("workerRecords", []);
+  if (!Array.isArray(records)) {
+    localStorage.removeItem("workerRecords");
+    return [];
+  }
+  return records
+    .filter((record) => record && typeof record === "object")
+    .map((record) => ({
+      ...record,
+      data: record.data && typeof record.data === "object" ? record.data : {},
+    }));
 };
 
 const saveRecords = (records) => {
@@ -1319,6 +1357,20 @@ const getRecordStatusSummary = (record) => {
     hasAlert: hasExpired || hasPaymentPending,
   };
 };
+
+const hasMeaningfulValue = (value) => {
+  if (Array.isArray(value)) {
+    return value.some((item) => hasMeaningfulValue(item));
+  }
+  if (value && typeof value === "object") {
+    return Object.values(value).some((item) => hasMeaningfulValue(item));
+  }
+  if (typeof value === "string") {
+    return value.trim().length > 0;
+  }
+  return Boolean(value);
+};
+
 const collectFormData = () => {
   const receivedDocs = [];
   if (receivedFacePhoto?.checked) receivedDocs.push("facePhoto");
@@ -1356,6 +1408,13 @@ const collectFormData = () => {
       fullName: workerFullName?.value?.trim() || "",
       gender: workerGender?.value || "",
       nationality: workerNationality?.value?.trim() || "",
+      email: workerEmail?.value?.trim() || "",
+      code: workerCode?.value?.trim() || "",
+      alienId: workerAlienId?.value?.trim() || "",
+      workPermitExpiry: workPermitExpiry?.value || "",
+      passNumber: passNumber?.value?.trim() || "",
+      passIssueDate: passIssueDate?.value || "",
+      passExpiryDate: passExpiryDate?.value || "",
       businessType: businessType?.value?.trim() || "",
       employerName: employerName?.value?.trim() || "",
       documentSender: documentSender?.value?.trim() || "",
@@ -1381,6 +1440,7 @@ const collectFormData = () => {
     caseStatus: {
       status: getSelectedCaseStatus(),
       appointmentDate: appointmentDate?.value || "",
+      appointmentNote: appointmentNote?.value?.trim() || "",
     },
     receivedDocs,
     notifications,
@@ -1399,9 +1459,10 @@ const collectFormData = () => {
     paymentSlipData: uploadCache.paymentSlip.dataUrl || "",
   };
   const hasAnyValue = Object.entries(formData).some(([key, value]) => {
-    if (key === "formType" || key === "attachments") return false;
-    if (Array.isArray(value)) return value.length > 0;
-    return value;
+    if (key === "formType" || key === "attachments") {
+      return false;
+    }
+    return hasMeaningfulValue(value);
   });
   return { formData, hasAnyValue };
 };
@@ -1418,9 +1479,11 @@ function saveFormDraft() {
 
 function loadFormDraft() {
   if (!workerForm || currentEditId) return;
-  const stored = localStorage.getItem(FORM_DRAFT_KEY);
-  if (!stored) return;
-  const formData = JSON.parse(stored);
+  const formData = readJsonStorage(FORM_DRAFT_KEY, null);
+  if (!formData || typeof formData !== "object") {
+    localStorage.removeItem(FORM_DRAFT_KEY);
+    return;
+  }
   populateForm({ formType: formData.formType || "changeEmployer", data: formData });
 }
 
@@ -1442,6 +1505,8 @@ function clearFormDraft() {
   updateUploadPreview();
   updatePaymentSlipPreview();
   refreshWorkerStatuses();
+  currentFormStep = 1;
+  updateFormStepVisibility();
   setStatus(formSaveStatus, translations[currentLanguage].formDraftCleared, "ok");
 }
 
@@ -1675,6 +1740,21 @@ const openRecordModal = (record) => {
       const nationalityItem = document.createElement("li");
       nationalityItem.textContent = `${translations[currentLanguage].workerNationalityLabel}: ${personalInfo.nationality}`;
       list.appendChild(nationalityItem);
+    }
+    if (personalInfo.email) {
+      const emailItem = document.createElement("li");
+      emailItem.textContent = `Email: ${personalInfo.email}`;
+      list.appendChild(emailItem);
+    }
+    if (personalInfo.alienId) {
+      const alienIdItem = document.createElement("li");
+      alienIdItem.textContent = `เลขประจำตัวต่างด้าว: ${personalInfo.alienId}`;
+      list.appendChild(alienIdItem);
+    }
+    if (personalInfo.passNumber) {
+      const passItem = document.createElement("li");
+      passItem.textContent = `เลข Pass: ${personalInfo.passNumber}`;
+      list.appendChild(passItem);
     }
     if (personalInfo.businessType) {
       const businessItem = document.createElement("li");
@@ -2048,10 +2128,13 @@ const findRecordByQuery = (query) => {
   if (!query) return null;
   const records = loadRecords();
   const normalized = query.trim().toLowerCase();
+  const containsQuery = (value) => String(value || "").toLowerCase().includes(normalized);
   return (
-    records.find((record) => record.formId.toLowerCase() === normalized) ||
-    records.find((record) => record.data.company?.toLowerCase().includes(normalized)) ||
-    records.find((record) => record.data.employerId?.toLowerCase().includes(normalized)) ||
+    records.find((record) => String(record.formId || "").toLowerCase() === normalized) ||
+    records.find((record) => containsQuery(record.data.company)) ||
+    records.find((record) => containsQuery(record.data.employerId)) ||
+    records.find((record) => containsQuery(record.data.personalInfo?.alienId)) ||
+    records.find((record) => containsQuery(record.data.personalInfo?.passNumber)) ||
     records.find((record) =>
       normalizeWorkers(record.data).some((worker) =>
         [
@@ -2062,7 +2145,7 @@ const findRecordByQuery = (query) => {
           worker.fullName,
         ]
           .filter(Boolean)
-          .some((value) => value.toLowerCase().includes(normalized))
+          .some((value) => containsQuery(value))
       )
     )
   );
@@ -2112,7 +2195,7 @@ const saveRecord = (status = "draft") => {
   currentEditId = null;
   localStorage.removeItem(EDIT_KEY);
   renderRecords();
-  if (workerForm) {
+if (workerForm) {
     localStorage.setItem(RECORD_SEARCH_KEY, formId);
     window.location.href = "records.html";
   }
@@ -2120,7 +2203,7 @@ const saveRecord = (status = "draft") => {
 
 const populateForm = (record) => {
   if (!record) return;
-  if (formTypeInputs?.length) {
+if (formTypeInputs?.length) {
     formTypeInputs.forEach((input) => {
       input.checked = input.value === record.formType;
     });
@@ -2130,6 +2213,13 @@ const populateForm = (record) => {
   if (workerFullName) workerFullName.value = record.data.personalInfo?.fullName || "";
   if (workerGender) workerGender.value = record.data.personalInfo?.gender || "";
   if (workerNationality) workerNationality.value = record.data.personalInfo?.nationality || "";
+  if (workerEmail) workerEmail.value = record.data.personalInfo?.email || "";
+  if (workerCode) workerCode.value = record.data.personalInfo?.code || "";
+  if (workerAlienId) workerAlienId.value = record.data.personalInfo?.alienId || "";
+  if (workPermitExpiry) workPermitExpiry.value = record.data.personalInfo?.workPermitExpiry || "";
+  if (passNumber) passNumber.value = record.data.personalInfo?.passNumber || "";
+  if (passIssueDate) passIssueDate.value = record.data.personalInfo?.passIssueDate || "";
+  if (passExpiryDate) passExpiryDate.value = record.data.personalInfo?.passExpiryDate || "";
   if (businessType) businessType.value = record.data.personalInfo?.businessType || "";
   if (employerName) employerName.value = record.data.personalInfo?.employerName || "";
   if (documentSender) documentSender.value = record.data.personalInfo?.documentSender || "";
@@ -2155,6 +2245,7 @@ const populateForm = (record) => {
     });
   }
   if (appointmentDate) appointmentDate.value = record.data.caseStatus?.appointmentDate || "";
+  if (appointmentNote) appointmentNote.value = record.data.caseStatus?.appointmentNote || "";
   updateFormTypeOtherVisibility();
   updateAppointmentVisibility();
   if (workerList) {
@@ -2222,6 +2313,48 @@ const populateForm = (record) => {
   updateUploadPreview();
   updatePaymentSlipPreview();
 };
+
+const updateFormStepVisibility = () => {
+  if (!formSteps?.length) return;
+  formSteps.forEach((step) => {
+    const stepNo = Number(step.dataset.step || 1);
+    step.classList.toggle("is-hidden", stepNo !== currentFormStep);
+  });
+};
+
+updateFormStepVisibility();
+
+if (nextStepLink) {
+  nextStepLink.addEventListener("click", () => {
+    saveFormDraft();
+    showLoader();
+  });
+} else if (nextStepButton) {
+  nextStepButton.addEventListener("click", () => {
+    saveFormDraft();
+    if (!isNextFormPage && workerForm) {
+      showLoader();
+      setTimeout(() => {
+        window.location.href = "nextform.html";
+      }, 0);
+      return;
+    }
+    currentFormStep = 2;
+    updateFormStepVisibility();
+  });
+}
+if (prevStepButton) {
+  prevStepButton.addEventListener("click", () => {
+    if (isNextFormPage) {
+      saveFormDraft();
+      showLoader();
+      window.location.href = "form.html";
+      return;
+    }
+    currentFormStep = 1;
+    updateFormStepVisibility();
+  });
+}
 
 if (formTypeInputs?.length) {
   formTypeInputs.forEach((input) => {
@@ -2400,7 +2533,7 @@ if (verifyRecordButton) {
     const firstWorker = getWorkerCards()[0];
     const workerPassport = firstWorker?.querySelector('[data-field="passport"]')?.value || "";
     const workerName = firstWorker?.querySelector('[data-field="fullName"]')?.value || "";
-    const query = workerPassport || workerName || company?.value || "";
+    const query = workerPassport || workerName || passNumber?.value || workerFullName?.value || employerName?.value || company?.value || "";
     if (!query) {
       setStatus(formSaveStatus, translations[currentLanguage].recordNotFound, "warn");
       return;

@@ -961,9 +961,21 @@ const updatePaymentSlipPreview = () => {
   saveFormDraft();
 };
 
+const readJsonStorage = (key, fallback) => {
+  const raw = localStorage.getItem(key);
+  if (!raw) return fallback;
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed ?? fallback;
+  } catch (_error) {
+    localStorage.removeItem(key);
+    return fallback;
+  }
+};
+
 const loadRecords = () => {
-  const stored = localStorage.getItem("workerRecords");
-  return stored ? JSON.parse(stored) : [];
+  const records = readJsonStorage("workerRecords", []);
+  return Array.isArray(records) ? records : [];
 };
 
 const saveRecords = (records) => {
@@ -1456,9 +1468,8 @@ function saveFormDraft() {
 
 function loadFormDraft() {
   if (!workerForm || currentEditId) return;
-  const stored = localStorage.getItem(FORM_DRAFT_KEY);
-  if (!stored) return;
-  const formData = JSON.parse(stored);
+  const formData = readJsonStorage(FORM_DRAFT_KEY, null);
+  if (!formData || typeof formData !== "object") return;
   populateForm({ formType: formData.formType || "changeEmployer", data: formData });
 }
 

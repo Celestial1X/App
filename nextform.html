@@ -26,82 +26,6 @@
         <a class="tab-btn" href="records.html" data-i18n="tabRecords">ข้อมูลบันทึก</a>
         <a class="tab-btn is-active" href="form.html" data-i18n="tabForm">หน้าทำรายการต่างๆ</a>
       </nav>
-
-      <section class="panel" id="formPanel">
-        <h2>หน้าทำรายการต่างๆ (ถัดไป)</h2>
-        <form class="form-grid" id="workerForm">
-          <div class="form-step" data-step="1">
-            <div class="form-section">
-              <h3>แบบฟอร์มข้อมูลส่วนตัวของต่างด้าว</h3>
-              <div class="grid-3">
-                <div class="form-row">
-                  <label for="workerFullName">ชื่อต่างด้าว</label>
-                  <input id="workerFullName" type="text" placeholder="กรอกชื่อต่างด้าว" />
-                </div>
-                <div class="form-row">
-                  <label for="workerGender">เพศ</label>
-                  <select id="workerGender">
-                    <option value="">เลือกเพศ</option>
-                    <option value="male">ชาย</option>
-                    <option value="female">หญิง</option>
-                    <option value="other">อื่น ๆ</option>
-                  </select>
-                </div>
-                <div class="form-row">
-                  <label for="workerNationality">สัญชาติ (Eng)</label>
-                  <input id="workerNationality" type="text" placeholder="เช่น Myanmar, Lao, Cambodia" />
-                </div>
-              </div>
-              <div class="grid-3">
-                <div class="form-row">
-                  <label for="workerEmail">Email ต่างด้าว</label>
-                  <input id="workerEmail" type="email" placeholder="example@email.com" />
-                </div>
-                <div class="form-row">
-                  <label for="workerCode">รหัส</label>
-                  <input id="workerCode" type="text" placeholder="กรอกรหัส" />
-                </div>
-                <div class="form-row">
-                  <label for="workerAlienId">เลขประจำตัวต่างด้าว</label>
-                  <input id="workerAlienId" type="text" placeholder="กรอกเลขประจำตัวต่างด้าว" />
-                </div>
-              </div>
-              <div class="grid-3">
-                <div class="form-row">
-                  <label for="workPermitExpiry">วันหมดอายุใบทำงาน</label>
-                  <input id="workPermitExpiry" type="date" />
-                </div>
-                <div class="form-row">
-                  <label for="passNumber">เลข Pass (ถ้ามี)</label>
-                  <input id="passNumber" type="text" placeholder="กรอกเลข Pass" />
-                </div>
-                <div class="form-row">
-                  <label for="passIssueDate">วันทำ Pass</label>
-                  <input id="passIssueDate" type="date" />
-                </div>
-              </div>
-              <div class="grid-3">
-                <div class="form-row">
-                  <label for="passExpiryDate">วันหมด Pass</label>
-                  <input id="passExpiryDate" type="date" />
-                </div>
-                <div class="form-row">
-                  <label for="businessType">ประเภทกิจการ</label>
-                  <input id="businessType" type="text" placeholder="เช่น ก่อสร้าง เกษตรกร" />
-                </div>
-                <div class="form-row">
-                  <label for="employerName">ชื่อนายจ้าง</label>
-                  <input id="employerName" type="text" placeholder="กรอกชื่อนายจ้าง" />
-                </div>
-              </div>
-            </div>
-            <div class="form-actions">
-              <button type="button" class="secondary" id="nextStepButton">ถัดไป</button>
-            </div>
-          </div>
-
-          <div class="form-step is-hidden" data-step="2">
-            <div class="form-row">
               <label>ประเภทงาน</label>
               <div class="radio-grid">
                 <label class="radio-item"><input type="radio" name="formType" value="changeEmployer" checked /><span>เปลี่ยนนายจ้าง</span></label>
@@ -199,18 +123,6 @@
         </form>
       </section>
     </main>
-
-    <div class="page-loader is-active" id="pageLoader" aria-hidden="true">
-      <div class="page-loader__content">
-        <div class="page-loader__dots" aria-hidden="true">
-          <span></span>
-          <span></span>
-          <span></span>
-        </div>
-        <p data-i18n="loadingText">กำลังโหลด...</p>
-      </div>
-    </div>
-
     <script src="app.js"></script>
   </body>
 </html>

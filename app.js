@@ -81,12 +81,17 @@ const recordSearch = document.getElementById("recordSearch");
 const recordFilter = document.getElementById("recordFilter");
 const recordsStatus = document.getElementById("recordsStatus");
 const recordsList = document.getElementById("recordsList");
+const summaryTodayCount = document.getElementById("summaryTodayCount");
+const summaryYesterdayCount = document.getElementById("summaryYesterdayCount");
+const summaryMonthCount = document.getElementById("summaryMonthCount");
 const clearRecordsButton = document.getElementById("clearRecords");
 const passportCheckButton = document.getElementById("passportCheckButton");
 const employerCheckButton = document.getElementById("employerCheckButton");
 const generalSearchInput = document.getElementById("generalSearch");
 const generalSearchButton = document.getElementById("generalSearchButton");
 const generalSearchStatus = document.getElementById("generalSearchStatus");
+const latestRecordTitle = document.getElementById("latestRecordTitle");
+const latestRecordMeta = document.getElementById("latestRecordMeta");
 const verifyRecordButton = document.getElementById("verifyRecord");
 const recordModal = document.getElementById("recordModal");
 const recordModalTitle = document.getElementById("recordModalTitle");
@@ -1033,6 +1038,73 @@ const formatDateTime = (value) => {
   return date.toLocaleString(currentLanguage === "th" ? "th-TH" : "en-US");
 };
 
+const toDateOnlyKey = (value) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+  date.setHours(0, 0, 0, 0);
+  return date.toISOString().slice(0, 10);
+};
+
+const renderRecordsSummary = (records) => {
+  if (!summaryTodayCount || !summaryYesterdayCount || !summaryMonthCount) {
+    return;
+  }
+  const now = new Date();
+  const today = new Date(now);
+  today.setHours(0, 0, 0, 0);
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const month = today.getMonth();
+  const year = today.getFullYear();
+
+  const todayKey = toDateOnlyKey(today);
+  const yesterdayKey = toDateOnlyKey(yesterday);
+
+  let todayCount = 0;
+  let yesterdayCount = 0;
+  let monthCount = 0;
+
+  records.forEach((record) => {
+    const recordDate = new Date(record.updatedAt);
+    if (Number.isNaN(recordDate.getTime())) {
+      return;
+    }
+    const key = toDateOnlyKey(recordDate);
+    if (key === todayKey) {
+      todayCount += 1;
+    }
+    if (key === yesterdayKey) {
+      yesterdayCount += 1;
+    }
+    if (recordDate.getFullYear() === year && recordDate.getMonth() === month) {
+      monthCount += 1;
+    }
+  });
+
+  summaryTodayCount.textContent = String(todayCount);
+  summaryYesterdayCount.textContent = String(yesterdayCount);
+  summaryMonthCount.textContent = String(monthCount);
+};
+
+const renderLatestRecordCard = () => {
+  if (!latestRecordTitle || !latestRecordMeta) {
+    return;
+  }
+  const records = loadRecords();
+  if (!records.length) {
+    latestRecordTitle.textContent = "-";
+    latestRecordMeta.textContent = "ยังไม่มีข้อมูล";
+    return;
+  }
+  const latest = [...records].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))[0];
+  latestRecordTitle.textContent = `${latest.formId} • ${latest.formTypeLabel || "-"}`;
+  latestRecordMeta.textContent = `${formatDateTime(latest.updatedAt)} • ${
+    latest.data?.personalInfo?.fullName || latest.data?.personalInfo?.employerName || latest.displayName || "-"
+  }`;
+};
+
 const getFormTypeLabel = (value) => {
   const map = {
     changeEmployer: translations[currentLanguage].formTypeChangeEmployer,
@@ -1602,6 +1674,7 @@ const renderRecords = () => {
     return matchesFilter && searchable.includes(query);
   });
   const scoped = filtered;
+  renderRecordsSummary(scoped);
 
   recordsList.innerHTML = "";
   if (!records.length) {
@@ -1687,43 +1760,19 @@ const openRecordModal = (record) => {
   } else {
     const title = document.createElement("h4");
     title.textContent = translations[currentLanguage].recordDetailsTitle;
-    const list = document.createElement("ul");
-    const employerItem = document.createElement("li");
-    employerItem.textContent = `${translations[currentLanguage].recordEmployerLabel}: ${
-      record.data.personalInfo?.employerName || record.data.company || record.data.employerId || "-"
-    }`;
-    const caseTypeItem = document.createElement("li");
-    caseTypeItem.textContent = `${translations[currentLanguage].recordCaseTypeLabel}: ${getCaseTypeLabel(
-      record.data.caseType
-    )}`;
-    const typeItem = document.createElement("li");
-    typeItem.textContent = `${translations[currentLanguage].recordFormTypeLabel}: ${record.formTypeLabel}`;
-    const statusItem = document.createElement("li");
-    statusItem.textContent = `${translations[currentLanguage].statusTitle}: ${getCaseStatusDisplay(
-      record.data.caseStatus || {}
-    )}`;
-    const renewalTypeItem = document.createElement("li");
-    renewalTypeItem.textContent = `${translations[currentLanguage].renewalTypeLabel}: ${getRenewalTypeLabel(
-      record.data.renewalType
-    )}`;
-    const renewalStatusItem = document.createElement("li");
-    renewalStatusItem.textContent = `${translations[currentLanguage].renewalStatusLabel}: ${getRenewalStatusLabel(
-      record.data.renewalStatus
-    )}`;
-    const paymentItem = document.createElement("li");
-    paymentItem.textContent = `${translations[currentLanguage].paymentStatusLabel}: ${
-      record.data.paymentStatus === "paid"
-        ? translations[currentLanguage].paymentPaid
-        : translations[currentLanguage].paymentPending
-    }`;
-    const paymentDateItem = document.createElement("li");
-    paymentDateItem.textContent = `${translations[currentLanguage].paymentDateLabel}: ${
-      record.data.paymentDate || "-"
-    }`;
-    const recordedByItem = document.createElement("li");
-    recordedByItem.textContent = `${translations[currentLanguage].recordedByLabel}: ${
-      record.data.recordedBy || "-"
-    }`;
+    const table = document.createElement("table");
+    table.className = "result-grid-table";
+    const body = document.createElement("tbody");
+    const addRow = (label, value) => {
+      const row = document.createElement("tr");
+      const th = document.createElement("th");
+      const td = document.createElement("td");
+      th.textContent = label;
+      td.textContent = value || "-";
+      row.appendChild(th);
+      row.appendChild(td);
+      body.appendChild(row);
+    };
     const personalInfo = record.data.personalInfo || {};
     const documents = record.data.documents || {};
     const caseStatus = record.data.caseStatus || {};
@@ -1739,21 +1788,26 @@ const openRecordModal = (record) => {
     if (documents.houseReg) documentParts.push(translations[currentLanguage].documentHouseReg);
     if (documents.employerIdCard) documentParts.push(translations[currentLanguage].documentEmployerIdCard);
     if (documents.companyCert) documentParts.push(translations[currentLanguage].documentCompanyCert);
-    list.appendChild(employerItem);
+    addRow(translations[currentLanguage].recordFormId, record.formId);
+    addRow(translations[currentLanguage].recordFormTypeLabel, record.formTypeLabel);
+    addRow(
+      translations[currentLanguage].recordEmployerLabel,
+      record.data.personalInfo?.employerName || record.data.company || record.data.employerId || "-"
+    );
+    addRow(translations[currentLanguage].statusTitle, getCaseStatusDisplay(record.data.caseStatus || {}));
+    addRow(
+      translations[currentLanguage].paymentStatusLabel,
+      record.data.paymentStatus === "paid" ? translations[currentLanguage].paymentPaid : translations[currentLanguage].paymentPending
+    );
+    addRow(translations[currentLanguage].paymentDateLabel, record.data.paymentDate || "-");
+    addRow(translations[currentLanguage].recordedByLabel, record.data.recordedBy || "-");
+    addRow(translations[currentLanguage].renewalTypeLabel, getRenewalTypeLabel(record.data.renewalType));
+    addRow(translations[currentLanguage].renewalStatusLabel, getRenewalStatusLabel(record.data.renewalStatus));
     if (record.data.caseType) {
-      list.appendChild(caseTypeItem);
+      addRow(translations[currentLanguage].recordCaseTypeLabel, getCaseTypeLabel(record.data.caseType));
     }
-    list.appendChild(typeItem);
-    list.appendChild(statusItem);
-    list.appendChild(paymentItem);
-    list.appendChild(paymentDateItem);
-    list.appendChild(recordedByItem);
-    list.appendChild(renewalTypeItem);
-    list.appendChild(renewalStatusItem);
     if (personalInfo.fullName) {
-      const workerNameItem = document.createElement("li");
-      workerNameItem.textContent = `${translations[currentLanguage].workerFullNameLabel}: ${personalInfo.fullName}`;
-      list.appendChild(workerNameItem);
+      addRow(translations[currentLanguage].workerFullNameLabel, personalInfo.fullName);
     }
     if (personalInfo.gender) {
       const genderMap = {
@@ -1761,91 +1815,56 @@ const openRecordModal = (record) => {
         female: translations[currentLanguage].workerGenderFemale,
         other: translations[currentLanguage].workerGenderOther,
       };
-      const genderItem = document.createElement("li");
-      genderItem.textContent = `${translations[currentLanguage].workerGenderLabel}: ${
-        genderMap[personalInfo.gender] || personalInfo.gender
-      }`;
-      list.appendChild(genderItem);
+      addRow(translations[currentLanguage].workerGenderLabel, genderMap[personalInfo.gender] || personalInfo.gender);
     }
     if (personalInfo.nationality) {
-      const nationalityItem = document.createElement("li");
-      nationalityItem.textContent = `${translations[currentLanguage].workerNationalityLabel}: ${personalInfo.nationality}`;
-      list.appendChild(nationalityItem);
+      addRow(translations[currentLanguage].workerNationalityLabel, personalInfo.nationality);
     }
     if (personalInfo.email) {
-      const emailItem = document.createElement("li");
-      emailItem.textContent = `Email: ${personalInfo.email}`;
-      list.appendChild(emailItem);
+      addRow("Email", personalInfo.email);
     }
     if (personalInfo.alienId) {
-      const alienIdItem = document.createElement("li");
-      alienIdItem.textContent = `เลขประจำตัวต่างด้าว: ${personalInfo.alienId}`;
-      list.appendChild(alienIdItem);
+      addRow("เลขประจำตัวต่างด้าว", personalInfo.alienId);
     }
     if (personalInfo.passNumber) {
-      const passItem = document.createElement("li");
-      passItem.textContent = `เลข Pass: ${personalInfo.passNumber}`;
-      list.appendChild(passItem);
+      addRow("เลข Pass", personalInfo.passNumber);
     }
     if (personalInfo.businessType) {
-      const businessItem = document.createElement("li");
-      businessItem.textContent = `${translations[currentLanguage].businessTypeLabel}: ${personalInfo.businessType}`;
-      list.appendChild(businessItem);
+      addRow(translations[currentLanguage].businessTypeLabel, personalInfo.businessType);
     }
     if (personalInfo.employerName) {
-      const employerNameItem = document.createElement("li");
-      employerNameItem.textContent = `${translations[currentLanguage].employerNameLabel}: ${personalInfo.employerName}`;
-      list.appendChild(employerNameItem);
+      addRow(translations[currentLanguage].employerNameLabel, personalInfo.employerName);
     }
     if (personalInfo.documentSender) {
-      const senderItem = document.createElement("li");
-      senderItem.textContent = `${translations[currentLanguage].documentSenderLabel}: ${personalInfo.documentSender}`;
-      list.appendChild(senderItem);
+      addRow(translations[currentLanguage].documentSenderLabel, personalInfo.documentSender);
     }
     if (personalInfo.documentSentDate) {
-      const sentItem = document.createElement("li");
-      sentItem.textContent = `${translations[currentLanguage].documentSentDateLabel}: ${personalInfo.documentSentDate}`;
-      list.appendChild(sentItem);
+      addRow(translations[currentLanguage].documentSentDateLabel, personalInfo.documentSentDate);
     }
     if (personalInfo.documentReceiver) {
-      const receiverItem = document.createElement("li");
-      receiverItem.textContent = `${translations[currentLanguage].documentReceiverLabel}: ${personalInfo.documentReceiver}`;
-      list.appendChild(receiverItem);
+      addRow(translations[currentLanguage].documentReceiverLabel, personalInfo.documentReceiver);
     }
     if (personalInfo.documentReceivedDate) {
-      const receivedItem = document.createElement("li");
-      receivedItem.textContent = `${translations[currentLanguage].documentReceivedDateLabel}: ${personalInfo.documentReceivedDate}`;
-      list.appendChild(receivedItem);
+      addRow(translations[currentLanguage].documentReceivedDateLabel, personalInfo.documentReceivedDate);
     }
     if (personalInfo.documentReturnDate) {
-      const returnItem = document.createElement("li");
-      returnItem.textContent = `${translations[currentLanguage].documentReturnDateLabel}: ${personalInfo.documentReturnDate}`;
-      list.appendChild(returnItem);
+      addRow(translations[currentLanguage].documentReturnDateLabel, personalInfo.documentReturnDate);
     }
     if (documentParts.length) {
-      const documentsItem = document.createElement("li");
-      documentsItem.textContent = `${translations[currentLanguage].documentsTitle}: ${documentParts.join(", ")}`;
-      list.appendChild(documentsItem);
+      addRow(translations[currentLanguage].documentsTitle, documentParts.join(", "));
     }
     if (documents.note) {
-      const noteItem = document.createElement("li");
-      noteItem.textContent = `${translations[currentLanguage].documentsNoteLabel}: ${documents.note}`;
-      list.appendChild(noteItem);
+      addRow(translations[currentLanguage].documentsNoteLabel, documents.note);
     }
     if (caseStatus.status) {
-      const caseStatusItem = document.createElement("li");
-      caseStatusItem.textContent = `${translations[currentLanguage].statusTitle}: ${getCaseStatusLabel(
-        caseStatus.status
-      )}`;
-      list.appendChild(caseStatusItem);
+      addRow(translations[currentLanguage].statusTitle, getCaseStatusLabel(caseStatus.status));
     }
     if (caseStatus.appointmentDate) {
-      const appointmentItem = document.createElement("li");
-      appointmentItem.textContent = `${translations[currentLanguage].statusAppointmentDateLabel}: ${caseStatus.appointmentDate}`;
-      list.appendChild(appointmentItem);
+      addRow(translations[currentLanguage].statusAppointmentDateLabel, caseStatus.appointmentDate);
     }
+    table.appendChild(body);
     recordModalBody.appendChild(title);
-    recordModalBody.appendChild(list);
+    recordModalBody.appendChild(table);
     if (record.data.notifications?.length || record.data.supportingDocs?.length || record.data.receivedDocs?.length || record.data.requiredRenewalDocs?.length) {
       const docTitle = document.createElement("h5");
       docTitle.textContent = translations[currentLanguage].receivedDocsLabel;
@@ -2306,6 +2325,7 @@ updatePaymentSlipPreview();
 loadFormDraft();
 initTheme();
 renderRecords();
+renderLatestRecordCard();
 document.querySelectorAll("a.tab-btn").forEach((link) => {
   link.addEventListener("click", () => {
     showLoader();

@@ -10,7 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=20260208" />
+    <link rel="stylesheet" href="styles.css?v=20260209" />
   </head>
   <body>
     <header class="hero">
@@ -65,6 +65,20 @@
             ลบข้อมูลทั้งหมด
           </button>
         </div>
+        <div class="summary-grid">
+          <div class="summary-card">
+            <p class="summary-card__label">ทำรายการวันนี้</p>
+            <p class="summary-card__value" id="summaryTodayCount">0</p>
+          </div>
+          <div class="summary-card">
+            <p class="summary-card__label">ทำรายการเมื่อวาน</p>
+            <p class="summary-card__value" id="summaryYesterdayCount">0</p>
+          </div>
+          <div class="summary-card">
+            <p class="summary-card__label">ทำรายการในเดือนนี้</p>
+            <p class="summary-card__value" id="summaryMonthCount">0</p>
+          </div>
+        </div>
         <div class="records-table-wrapper">
           <table class="records-table">
             <thead>
@@ -113,6 +127,6 @@
       </div>
     </div>
 
-    <script src="app.js?v=20260208"></script>
+    <script src="app.js?v=20260209"></script>
   </body>
 </html>

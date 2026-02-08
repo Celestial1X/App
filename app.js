@@ -111,6 +111,7 @@ const EDIT_KEY = "editRecordId";
 const RECORD_SEARCH_KEY = "recordSearchQuery";
 const FORM_DRAFT_KEY = "workerFormDraft";
 const THEME_KEY = "uiTheme";
+const RECORDS_API_URL = "/api/records";
 let currentEditId = null;
 let latestRenderedRecords = [];
 const uploadCache = {
@@ -1021,6 +1022,65 @@ const saveRecords = (records) => {
   localStorage.setItem("workerRecords", JSON.stringify(records));
 };
 
+const canUseServerSync = () => window.location.protocol.startsWith("http");
+
+const syncRecordsFromServer = async () => {
+  if (!canUseServerSync()) {
+    return;
+  }
+  try {
+    const response = await fetch(RECORDS_API_URL, { method: "GET" });
+    if (!response.ok) {
+      return;
+    }
+    const records = await response.json();
+    if (Array.isArray(records)) {
+      saveRecords(records);
+      renderRecords();
+      renderLatestRecordCard();
+    }
+  } catch (_error) {
+    // fallback to localStorage-only mode when API is unavailable
+  }
+};
+
+const upsertRecordToServer = async (record) => {
+  if (!canUseServerSync()) {
+    return;
+  }
+  try {
+    await fetch(RECORDS_API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(record),
+    });
+  } catch (_error) {
+    // keep local save success even if server is unavailable
+  }
+};
+
+const deleteRecordFromServer = async (formId) => {
+  if (!canUseServerSync()) {
+    return;
+  }
+  try {
+    await fetch(`${RECORDS_API_URL}/${encodeURIComponent(formId)}`, { method: "DELETE" });
+  } catch (_error) {
+    // keep local delete success even if server is unavailable
+  }
+};
+
+const clearRecordsFromServer = async () => {
+  if (!canUseServerSync()) {
+    return;
+  }
+  try {
+    await fetch(RECORDS_API_URL, { method: "DELETE" });
+  } catch (_error) {
+    // keep local clear success even if server is unavailable
+  }
+};
+
 
 const buildFormId = () => {
   const records = loadRecords();
@@ -1735,7 +1795,9 @@ const renderRecords = () => {
       const records = loadRecords();
       const nextRecords = records.filter((item) => item.formId !== record.formId);
       saveRecords(nextRecords);
+      deleteRecordFromServer(record.formId);
       renderRecords();
+      renderLatestRecordCard();
     });
     actionsWrapper.appendChild(editButton);
     actionsWrapper.appendChild(verifyButton);
@@ -2275,11 +2337,13 @@ const saveRecord = (status = "draft") => {
     records.unshift(record);
   }
   saveRecords(records);
+  upsertRecordToServer(record);
   localStorage.removeItem(FORM_DRAFT_KEY);
   setStatus(formSaveStatus, `${translations[currentLanguage].saveDraftSuccess}: ${formId}`, "ok");
   currentEditId = null;
   localStorage.removeItem(EDIT_KEY);
   renderRecords();
+  renderLatestRecordCard();
 if (workerForm) {
     localStorage.setItem(RECORD_SEARCH_KEY, formId);
     window.location.href = "records.html";
@@ -2486,6 +2550,7 @@ loadFormDraft();
 initTheme();
 renderRecords();
 renderLatestRecordCard();
+syncRecordsFromServer();
 document.querySelectorAll("a.tab-btn").forEach((link) => {
   link.addEventListener("click", () => {
     showLoader();
@@ -2578,7 +2643,9 @@ if (clearRecordsButton) {
       return;
     }
     saveRecords([]);
+    clearRecordsFromServer();
     renderRecords();
+    renderLatestRecordCard();
     setStatus(formSaveStatus, translations[currentLanguage].recordsStatus);
   });
 }

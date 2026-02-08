@@ -707,7 +707,8 @@ const translations = {
 };
 
 let currentLanguage = "th";
-let currentFormStep = 1;
+const isNextFormPage = window.location.pathname.endsWith("/nextform.html") || window.location.pathname.endsWith("nextform.html");
+let currentFormStep = isNextFormPage ? 2 : 1;
 
 const setStatus = (element, message, type = "") => {
   if (!element) return;
@@ -2324,13 +2325,24 @@ updateFormStepVisibility();
 
 if (nextStepButton) {
   nextStepButton.addEventListener("click", () => {
+    saveFormDraft();
+    if (!isNextFormPage && workerForm) {
+      showLoader();
+      window.location.href = "nextform.html";
+      return;
+    }
     currentFormStep = 2;
     updateFormStepVisibility();
-    saveFormDraft();
   });
 }
 if (prevStepButton) {
   prevStepButton.addEventListener("click", () => {
+    if (isNextFormPage) {
+      saveFormDraft();
+      showLoader();
+      window.location.href = "form.html";
+      return;
+    }
     currentFormStep = 1;
     updateFormStepVisibility();
   });

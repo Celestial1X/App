@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>หน้าทำรายการต่างๆ (ถัดไป) - ระบบตรวจสอบข้อมูลแรงงานต่างด้าว</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero__content">
+        <div class="hero__top"></div>
+        <h1 data-i18n="heroTitle">ระบบตรวจสอบข้อมูลแรงงานต่างด้าว</h1>
+      </div>
+    </header>
+
+    <main class="container">
+      <nav class="page-tabs">
+        <a class="tab-btn" href="index.html" data-i18n="tabLookup">ค้นหาข้อมูล</a>
+        <a class="tab-btn" href="records.html" data-i18n="tabRecords">ข้อมูลบันทึก</a>
+        <a class="tab-btn is-active" href="form.html" data-i18n="tabForm">หน้าทำรายการต่างๆ</a>
+      </nav>
+
+      <section class="panel" id="formPanel">
+        <h2>หน้าทำรายการต่างๆ (ถัดไป)</h2>
+        <form class="form-grid" id="workerForm">
+          <div class="form-step" data-step="1">
+            <div class="form-section">
+              <h3>แบบฟอร์มข้อมูลส่วนตัวของต่างด้าว</h3>
+              <div class="grid-3">
+                <div class="form-row">
+                  <label for="workerFullName">ชื่อต่างด้าว</label>
+                  <input id="workerFullName" type="text" placeholder="กรอกชื่อต่างด้าว" />
+                </div>
+                <div class="form-row">
+                  <label for="workerGender">เพศ</label>
+                  <select id="workerGender">
+                    <option value="">เลือกเพศ</option>
+                    <option value="male">ชาย</option>
+                    <option value="female">หญิง</option>
+                    <option value="other">อื่น ๆ</option>
+                  </select>
+                </div>
+                <div class="form-row">
+                  <label for="workerNationality">สัญชาติ (Eng)</label>
+                  <input id="workerNationality" type="text" placeholder="เช่น Myanmar, Lao, Cambodia" />
+                </div>
+              </div>
+              <div class="grid-3">
+                <div class="form-row">
+                  <label for="workerEmail">Email ต่างด้าว</label>
+                  <input id="workerEmail" type="email" placeholder="example@email.com" />
+                </div>
+                <div class="form-row">
+                  <label for="workerCode">รหัส</label>
+                  <input id="workerCode" type="text" placeholder="กรอกรหัส" />
+                </div>
+                <div class="form-row">
+                  <label for="workerAlienId">เลขประจำตัวต่างด้าว</label>
+                  <input id="workerAlienId" type="text" placeholder="กรอกเลขประจำตัวต่างด้าว" />
+                </div>
+              </div>
+              <div class="grid-3">
+                <div class="form-row">
+                  <label for="workPermitExpiry">วันหมดอายุใบทำงาน</label>
+                  <input id="workPermitExpiry" type="date" />
+                </div>
+                <div class="form-row">
+                  <label for="passNumber">เลข Pass (ถ้ามี)</label>
+                  <input id="passNumber" type="text" placeholder="กรอกเลข Pass" />
+                </div>
+                <div class="form-row">
+                  <label for="passIssueDate">วันทำ Pass</label>
+                  <input id="passIssueDate" type="date" />
+                </div>
+              </div>
+              <div class="grid-3">
+                <div class="form-row">
+                  <label for="passExpiryDate">วันหมด Pass</label>
+                  <input id="passExpiryDate" type="date" />
+                </div>
+                <div class="form-row">
+                  <label for="businessType">ประเภทกิจการ</label>
+                  <input id="businessType" type="text" placeholder="เช่น ก่อสร้าง เกษตรกร" />
+                </div>
+                <div class="form-row">
+                  <label for="employerName">ชื่อนายจ้าง</label>
+                  <input id="employerName" type="text" placeholder="กรอกชื่อนายจ้าง" />
+                </div>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="secondary" id="nextStepButton">ถัดไป</button>
+            </div>
+          </div>
+
+          <div class="form-step is-hidden" data-step="2">
+            <div class="form-row">
+              <label>ประเภทงาน</label>
+              <div class="radio-grid">
+                <label class="radio-item"><input type="radio" name="formType" value="changeEmployer" checked /><span>เปลี่ยนนายจ้าง</span></label>
+                <label class="radio-item"><input type="radio" name="formType" value="residence37_38" /><span>แจ้งที่พัก 37,38</span></label>
+                <label class="radio-item"><input type="radio" name="formType" value="visaStamp" /><span>ลงตรา Visa</span></label>
+                <label class="radio-item"><input type="radio" name="formType" value="ciReport" /><span>รายงานทำเล่ม CI</span></label>
+                <label class="radio-item"><input type="radio" name="formType" value="workPermitRenewal" /><span>ต่ออนุญาตทำงานแรงงานต่างด้าว</span></label>
+                <label class="radio-item"><input type="radio" name="formType" value="mouLaos" /><span>MOU ลาว</span></label>
+                <label class="radio-item"><input type="radio" name="formType" value="mouLaosRenew" /><span>MOU ลาว 2 ปีหลัง</span></label>
+                <label class="radio-item"><input type="radio" name="formType" value="noDocsRegister" /><span>ขึ้นทะเบียนคนไม่มีเอกสาร</span></label>
+                <label class="radio-item"><input type="radio" name="formType" value="exitNotice" /><span>แจ้งออก</span></label>
+                <label class="radio-item"><input type="radio" name="formType" value="other" /><span>อื่น ๆ</span></label>
+              </div>
+              <div class="form-row is-hidden" id="formTypeOtherRow">
+                <label for="formTypeOtherDetail">ระบุรายละเอียดอื่น ๆ</label>
+                <input id="formTypeOtherDetail" type="text" placeholder="ระบุประเภทงานอื่น ๆ" />
+              </div>
+            </div>
+
+            <div class="form-section" data-section="all">
+              <h3>ข้อมูลเอกสารที่ได้รับมา</h3>
+              <div class="checkbox-grid">
+                <label class="checkbox-item"><input type="checkbox" id="docWorkPermit" /><span>ใบอนุญาตการทำงาน</span></label>
+                <label class="checkbox-item"><input type="checkbox" id="docReceipt" /><span>ใบเสร็จ</span></label>
+                <label class="checkbox-item"><input type="checkbox" id="docRequestForm" /><span>ใบคำขอ</span></label>
+                <label class="checkbox-item"><input type="checkbox" id="docNameList" /><span>เนมลิส</span></label>
+                <label class="checkbox-item"><input type="checkbox" id="docPassPage" /><span>หน้า Pass</span></label>
+                <label class="checkbox-item"><input type="checkbox" id="docVisaPage" /><span>หน้า Visa</span></label>
+                <label class="checkbox-item"><input type="checkbox" id="docHealthCard" /><span>บัตรสุขภาพ</span></label>
+                <label class="checkbox-item"><input type="checkbox" id="docExitNotice" /><span>ใบแจ้งออก</span></label>
+                <label class="checkbox-item"><input type="checkbox" id="docHouseReg" /><span>ทะเบียนบ้านนายจ้าง</span></label>
+                <label class="checkbox-item"><input type="checkbox" id="docEmployerIdCard" /><span>บัตรประชาชนหน้าหลัง</span></label>
+                <label class="checkbox-item"><input type="checkbox" id="docCompanyCert" /><span>หนังสือรับรองบริษัท</span></label>
+              </div>
+              <div class="form-row">
+                <label for="documentsNote">หมายเหตุเอกสาร</label>
+                <textarea id="documentsNote" rows="3" placeholder="บันทึกเอกสารที่ขาด หรือเอกสารมีปัญหา"></textarea>
+              </div>
+            </div>
+
+            <div class="form-section" data-section="all">
+              <h3>สถานะ</h3>
+              <div class="radio-grid">
+                <label class="radio-item"><input type="radio" name="caseStatus" value="registered" checked /><span>ลงระบบ</span></label>
+                <label class="radio-item"><input type="radio" name="caseStatus" value="pending" /><span>รออนุมัติ</span></label>
+                <label class="radio-item"><input type="radio" name="caseStatus" value="appointment" /><span>นัดหมาย</span></label>
+              </div>
+              <div class="form-row is-hidden" id="appointmentDateRow">
+                <label for="appointmentDate">วันที่นัดหมาย</label>
+                <input id="appointmentDate" type="date" />
+                <label for="appointmentNote">รายละเอียดนัดหมาย</label>
+                <input id="appointmentNote" type="text" placeholder="ระบุรายละเอียดนัดหมาย" />
+              </div>
+            </div>
+
+            <div class="grid-3">
+              <div class="form-row">
+                <label for="documentSender">ชื่อผู้ส่งเอกสาร</label>
+                <input id="documentSender" type="text" placeholder="กรอกชื่อผู้ส่งเอกสาร" />
+              </div>
+              <div class="form-row">
+                <label for="documentSentDate">วันที่ส่ง</label>
+                <input id="documentSentDate" type="date" />
+              </div>
+              <div class="form-row">
+                <label for="documentReceiver">ชื่อผู้รับ</label>
+                <input id="documentReceiver" type="text" placeholder="กรอกชื่อผู้รับเอกสาร" />
+              </div>
+            </div>
+
+            <div class="grid-3">
+              <div class="form-row">
+                <label for="documentReceivedDate">วันที่รับ</label>
+                <input id="documentReceivedDate" type="date" />
+              </div>
+              <div class="form-row">
+                <label for="documentReturnDate">วันที่ส่งเอกสารคืน</label>
+                <input id="documentReturnDate" type="date" />
+              </div>
+              <div class="form-row">
+                <label for="recordedBy">ผู้บันทึกข้อมูล</label>
+                <input id="recordedBy" type="text" placeholder="กรอกชื่อผู้บันทึกข้อมูล" />
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <span class="status-text" id="formSaveStatus"></span>
+              <button type="button" class="secondary" id="prevStepButton">ย้อนกลับ</button>
+              <button type="button" class="secondary" id="clearFormDraft">ล้างข้อมูลแบบฟอร์ม</button>
+              <button type="button" class="secondary" id="draftButton">บันทึกฉบับร่าง</button>
+              <button type="submit" class="primary">บันทึกข้อมูล</button>
+              <button type="button" class="secondary" id="verifyRecord">ตรวจสอบข้อมูล</button>
+            </div>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <div class="page-loader is-active" id="pageLoader" aria-hidden="true">
+      <div class="page-loader__content">
+        <div class="page-loader__dots" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <p data-i18n="loadingText">กำลังโหลด...</p>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

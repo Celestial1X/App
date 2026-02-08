@@ -1590,39 +1590,13 @@ const openRecordModal = (record) => {
     const title = document.createElement("h4");
     title.textContent = translations[currentLanguage].recordDetailsTitle;
     const list = document.createElement("ul");
-    const employerItem = document.createElement("li");
-    employerItem.textContent = `${translations[currentLanguage].recordEmployerLabel}: ${
-      record.data.personalInfo?.employerName || record.data.company || record.data.employerId || "-"
-    }`;
-    const caseTypeItem = document.createElement("li");
-    caseTypeItem.textContent = `${translations[currentLanguage].recordCaseTypeLabel}: ${getCaseTypeLabel(
-      record.data.caseType
-    )}`;
     const typeItem = document.createElement("li");
     typeItem.textContent = `${translations[currentLanguage].recordFormTypeLabel}: ${record.formTypeLabel}`;
-    const statusItem = document.createElement("li");
-    statusItem.textContent = `${translations[currentLanguage].verificationLabel}: ${
+    const saveStatusItem = document.createElement("li");
+    saveStatusItem.textContent = `${translations[currentLanguage].recordsTableStatus}: ${
       record.status === "final"
         ? translations[currentLanguage].recordStatusFinal
         : translations[currentLanguage].recordStatusDraft
-    }`;
-    const renewalTypeItem = document.createElement("li");
-    renewalTypeItem.textContent = `${translations[currentLanguage].renewalTypeLabel}: ${getRenewalTypeLabel(
-      record.data.renewalType
-    )}`;
-    const renewalStatusItem = document.createElement("li");
-    renewalStatusItem.textContent = `${translations[currentLanguage].renewalStatusLabel}: ${getRenewalStatusLabel(
-      record.data.renewalStatus
-    )}`;
-    const paymentItem = document.createElement("li");
-    paymentItem.textContent = `${translations[currentLanguage].paymentStatusLabel}: ${
-      record.data.paymentStatus === "paid"
-        ? translations[currentLanguage].paymentPaid
-        : translations[currentLanguage].paymentPending
-    }`;
-    const paymentDateItem = document.createElement("li");
-    paymentDateItem.textContent = `${translations[currentLanguage].paymentDateLabel}: ${
-      record.data.paymentDate || "-"
     }`;
     const recordedByItem = document.createElement("li");
     recordedByItem.textContent = `${translations[currentLanguage].recordedByLabel}: ${
@@ -1632,6 +1606,11 @@ const openRecordModal = (record) => {
     const documents = record.data.documents || {};
     const caseStatus = record.data.caseStatus || {};
     const documentParts = [];
+    const verificationMap = {
+      pending: translations[currentLanguage].verificationPending,
+      pass: translations[currentLanguage].verificationPass,
+      fix: translations[currentLanguage].verificationFix,
+    };
     if (documents.workPermit) documentParts.push(translations[currentLanguage].documentWorkPermit);
     if (documents.receipt) documentParts.push(translations[currentLanguage].documentReceipt);
     if (documents.requestForm) documentParts.push(translations[currentLanguage].documentRequestForm);
@@ -1643,17 +1622,71 @@ const openRecordModal = (record) => {
     if (documents.houseReg) documentParts.push(translations[currentLanguage].documentHouseReg);
     if (documents.employerIdCard) documentParts.push(translations[currentLanguage].documentEmployerIdCard);
     if (documents.companyCert) documentParts.push(translations[currentLanguage].documentCompanyCert);
-    list.appendChild(employerItem);
+    list.appendChild(typeItem);
+    list.appendChild(saveStatusItem);
+    list.appendChild(recordedByItem);
+    if (record.data.verification) {
+      const verificationItem = document.createElement("li");
+      verificationItem.textContent = `${translations[currentLanguage].verificationLabel}: ${
+        verificationMap[record.data.verification] || record.data.verification
+      }`;
+      list.appendChild(verificationItem);
+    }
+    if (record.data.paymentStatus) {
+      const paymentItem = document.createElement("li");
+      paymentItem.textContent = `${translations[currentLanguage].paymentStatusLabel}: ${
+        record.data.paymentStatus === "paid"
+          ? translations[currentLanguage].paymentPaid
+          : translations[currentLanguage].paymentPending
+      }`;
+      list.appendChild(paymentItem);
+    }
+    if (record.data.paymentDate) {
+      const paymentDateItem = document.createElement("li");
+      paymentDateItem.textContent = `${translations[currentLanguage].paymentDateLabel}: ${record.data.paymentDate}`;
+      list.appendChild(paymentDateItem);
+    }
     if (record.data.caseType) {
+      const caseTypeItem = document.createElement("li");
+      caseTypeItem.textContent = `${translations[currentLanguage].recordCaseTypeLabel}: ${getCaseTypeLabel(
+        record.data.caseType
+      )}`;
       list.appendChild(caseTypeItem);
     }
-    list.appendChild(typeItem);
-    list.appendChild(statusItem);
-    list.appendChild(paymentItem);
-    list.appendChild(paymentDateItem);
-    list.appendChild(recordedByItem);
-    list.appendChild(renewalTypeItem);
-    list.appendChild(renewalStatusItem);
+    if (record.data.renewalType) {
+      const renewalTypeItem = document.createElement("li");
+      renewalTypeItem.textContent = `${translations[currentLanguage].renewalTypeLabel}: ${getRenewalTypeLabel(
+        record.data.renewalType
+      )}`;
+      list.appendChild(renewalTypeItem);
+    }
+    if (record.data.renewalStatus) {
+      const renewalStatusItem = document.createElement("li");
+      renewalStatusItem.textContent = `${translations[currentLanguage].renewalStatusLabel}: ${getRenewalStatusLabel(
+        record.data.renewalStatus
+      )}`;
+      list.appendChild(renewalStatusItem);
+    }
+    if (personalInfo.documentSender) {
+      const senderItem = document.createElement("li");
+      senderItem.textContent = `${translations[currentLanguage].documentSenderLabel}: ${personalInfo.documentSender}`;
+      list.appendChild(senderItem);
+    }
+    if (personalInfo.documentSentDate) {
+      const sentItem = document.createElement("li");
+      sentItem.textContent = `${translations[currentLanguage].documentSentDateLabel}: ${personalInfo.documentSentDate}`;
+      list.appendChild(sentItem);
+    }
+    if (personalInfo.documentReceiver) {
+      const receiverItem = document.createElement("li");
+      receiverItem.textContent = `${translations[currentLanguage].documentReceiverLabel}: ${personalInfo.documentReceiver}`;
+      list.appendChild(receiverItem);
+    }
+    if (personalInfo.documentReceivedDate) {
+      const receivedItem = document.createElement("li");
+      receivedItem.textContent = `${translations[currentLanguage].documentReceivedDateLabel}: ${personalInfo.documentReceivedDate}`;
+      list.appendChild(receivedItem);
+    }
     if (personalInfo.fullName) {
       const workerNameItem = document.createElement("li");
       workerNameItem.textContent = `${translations[currentLanguage].workerFullNameLabel}: ${personalInfo.fullName}`;
@@ -1685,26 +1718,6 @@ const openRecordModal = (record) => {
       const employerNameItem = document.createElement("li");
       employerNameItem.textContent = `${translations[currentLanguage].employerNameLabel}: ${personalInfo.employerName}`;
       list.appendChild(employerNameItem);
-    }
-    if (personalInfo.documentSender) {
-      const senderItem = document.createElement("li");
-      senderItem.textContent = `${translations[currentLanguage].documentSenderLabel}: ${personalInfo.documentSender}`;
-      list.appendChild(senderItem);
-    }
-    if (personalInfo.documentSentDate) {
-      const sentItem = document.createElement("li");
-      sentItem.textContent = `${translations[currentLanguage].documentSentDateLabel}: ${personalInfo.documentSentDate}`;
-      list.appendChild(sentItem);
-    }
-    if (personalInfo.documentReceiver) {
-      const receiverItem = document.createElement("li");
-      receiverItem.textContent = `${translations[currentLanguage].documentReceiverLabel}: ${personalInfo.documentReceiver}`;
-      list.appendChild(receiverItem);
-    }
-    if (personalInfo.documentReceivedDate) {
-      const receivedItem = document.createElement("li");
-      receivedItem.textContent = `${translations[currentLanguage].documentReceivedDateLabel}: ${personalInfo.documentReceivedDate}`;
-      list.appendChild(receivedItem);
     }
     if (personalInfo.documentReturnDate) {
       const returnItem = document.createElement("li");

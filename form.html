@@ -87,6 +87,34 @@
             <h3 data-i18n="personalInfoTitle">แบบฟอร์มข้อมูลส่วนตัวของต่างด้าว</h3>
             <div class="grid-3">
               <div class="form-row">
+                <label for="documentSender" data-i18n="documentSenderLabel">ชื่อผู้ส่งเอกสาร</label>
+                <input
+                  id="documentSender"
+                  type="text"
+                  placeholder="กรอกชื่อผู้ส่งเอกสาร"
+                  data-i18n-placeholder="documentSenderPlaceholder"
+                />
+              </div>
+              <div class="form-row">
+                <label for="documentSentDate" data-i18n="documentSentDateLabel">วันที่ส่งเอกสาร</label>
+                <input id="documentSentDate" type="date" />
+              </div>
+              <div class="form-row">
+                <label for="documentReceiver" data-i18n="documentReceiverLabel">ชื่อผู้รับเอกสาร</label>
+                <input
+                  id="documentReceiver"
+                  type="text"
+                  placeholder="กรอกชื่อผู้รับเอกสาร"
+                  data-i18n-placeholder="documentReceiverPlaceholder"
+                />
+              </div>
+            </div>
+            <div class="grid-3">
+              <div class="form-row">
+                <label for="documentReceivedDate" data-i18n="documentReceivedDateLabel">วันที่รับเอกสาร</label>
+                <input id="documentReceivedDate" type="date" />
+              </div>
+              <div class="form-row">
                 <label for="workerFullName" data-i18n="workerFullNameLabel">ชื่อต่างด้าว</label>
                 <input
                   id="workerFullName"
@@ -104,6 +132,8 @@
                   <option value="other" data-i18n="workerGenderOther">อื่น ๆ</option>
                 </select>
               </div>
+            </div>
+            <div class="grid-3">
               <div class="form-row">
                 <label for="workerNationality" data-i18n="workerNationalityLabel">สัญชาติ</label>
                 <input
@@ -113,8 +143,6 @@
                   data-i18n-placeholder="workerNationalityPlaceholder"
                 />
               </div>
-            </div>
-            <div class="grid-3">
               <div class="form-row">
                 <label for="businessType" data-i18n="businessTypeLabel">ประเภทกิจการ</label>
                 <input
@@ -132,34 +160,6 @@
                   placeholder="กรอกชื่อนายจ้าง"
                   data-i18n-placeholder="employerNamePlaceholder"
                 />
-              </div>
-              <div class="form-row">
-                <label for="documentSender" data-i18n="documentSenderLabel">ชื่อผู้ส่งเอกสาร</label>
-                <input
-                  id="documentSender"
-                  type="text"
-                  placeholder="กรอกชื่อผู้ส่งเอกสาร"
-                  data-i18n-placeholder="documentSenderPlaceholder"
-                />
-              </div>
-            </div>
-            <div class="grid-3">
-              <div class="form-row">
-                <label for="documentSentDate" data-i18n="documentSentDateLabel">วันที่ส่งเอกสาร</label>
-                <input id="documentSentDate" type="date" />
-              </div>
-              <div class="form-row">
-                <label for="documentReceiver" data-i18n="documentReceiverLabel">ชื่อผู้รับเอกสาร</label>
-                <input
-                  id="documentReceiver"
-                  type="text"
-                  placeholder="กรอกชื่อผู้รับเอกสาร"
-                  data-i18n-placeholder="documentReceiverPlaceholder"
-                />
-              </div>
-              <div class="form-row">
-                <label for="documentReceivedDate" data-i18n="documentReceivedDateLabel">วันที่รับเอกสาร</label>
-                <input id="documentReceivedDate" type="date" />
               </div>
             </div>
             <div class="grid-3">

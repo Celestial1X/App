@@ -2103,12 +2103,13 @@ const findRecordByQuery = (query) => {
   if (!query) return null;
   const records = loadRecords();
   const normalized = query.trim().toLowerCase();
+  const containsQuery = (value) => String(value || "").toLowerCase().includes(normalized);
   return (
-    records.find((record) => record.formId.toLowerCase() === normalized) ||
-    records.find((record) => record.data.company?.toLowerCase().includes(normalized)) ||
-    records.find((record) => record.data.employerId?.toLowerCase().includes(normalized)) ||
-    records.find((record) => record.data.personalInfo?.alienId?.toLowerCase().includes(normalized)) ||
-    records.find((record) => record.data.personalInfo?.passNumber?.toLowerCase().includes(normalized)) ||
+    records.find((record) => String(record.formId || "").toLowerCase() === normalized) ||
+    records.find((record) => containsQuery(record.data.company)) ||
+    records.find((record) => containsQuery(record.data.employerId)) ||
+    records.find((record) => containsQuery(record.data.personalInfo?.alienId)) ||
+    records.find((record) => containsQuery(record.data.personalInfo?.passNumber)) ||
     records.find((record) =>
       normalizeWorkers(record.data).some((worker) =>
         [
@@ -2119,7 +2120,7 @@ const findRecordByQuery = (query) => {
           worker.fullName,
         ]
           .filter(Boolean)
-          .some((value) => value.toLowerCase().includes(normalized))
+          .some((value) => containsQuery(value))
       )
     )
   );

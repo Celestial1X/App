@@ -1,4 +1,4 @@
-<!-- form.html (เวอร์ชันแก้แล้ว: ย้ายช่อง “ชื่อผู้ส่ง/วันที่ส่ง/ชื่อผู้รับ/วันที่รับ/วันที่ส่งคืน” ขึ้นไปไว้ก่อนหัวข้อข้อมูลส่วนตัว) -->
+<!-- ✅ form.html (รวมโค้ดทั้งหมด + ย้าย “วันที่ส่งคืนเอกสาร” ลงมาแถวถัดไป + ลบปุ่มที่กาออก เหลือปุ่มบันทึกข้อมูลปุ่มเดียว) -->
 <!DOCTYPE html>
 <html lang="th">
   <head>
@@ -30,6 +30,7 @@
 
       <section class="panel" id="formPanel">
         <form class="form-grid" id="workerForm">
+          <!-- ประเภทงาน -->
           <div class="form-row">
             <label data-i18n="formTypeLabel">ประเภทงาน</label>
             <div class="radio-grid">
@@ -86,7 +87,7 @@
             </div>
           </div>
 
-          <!-- ✅ ย้าย “ชื่อผู้ส่ง/วันที่ส่ง/ชื่อผู้รับ/วันที่รับ/วันที่ส่งคืน” ขึ้นมาด้านบน -->
+          <!-- ✅ ย้าย “ข้อมูลเอกสาร” ขึ้นบน + ✅ ย้าย “วันที่ส่งคืนเอกสาร” ลงมาแถวถัดไป -->
           <div class="form-section" data-section="all" id="documentMetaSection">
             <h3>ข้อมูลเอกสาร</h3>
 
@@ -123,13 +124,25 @@
                 <input id="documentReceivedDate" type="date" />
               </div>
 
+              <!-- spacer เพื่อให้ layout สวยใน grid-3 -->
+              <div></div>
+              <div></div>
+            </div>
+
+            <!-- ✅ “วันที่ส่งคืนเอกสาร” ย้ายลงมาแถวถัดไป -->
+            <div class="grid-3">
               <div class="form-row">
                 <label for="documentReturnDate" data-i18n="documentReturnDateLabel">วันที่ส่งคืนเอกสาร</label>
                 <input id="documentReturnDate" type="date" />
               </div>
+
+              <!-- spacer -->
+              <div></div>
+              <div></div>
             </div>
           </div>
 
+          <!-- ข้อมูลส่วนตัว -->
           <div class="form-section" data-section="all">
             <h3 data-i18n="personalInfoTitle">แบบฟอร์มข้อมูลส่วนตัวของต่างด้าว</h3>
 
@@ -165,7 +178,7 @@
               </div>
             </div>
 
-            <!-- ✅ ปรับให้เหลือ 2 ช่อง (ลบ documentSender ออกจากส่วนนี้) -->
+            <!-- ✅ เหลือ 2 ช่อง -->
             <div class="grid-2">
               <div class="form-row">
                 <label for="businessType" data-i18n="businessTypeLabel">ประเภทกิจการ</label>
@@ -189,6 +202,7 @@
             </div>
           </div>
 
+          <!-- เอกสารที่ได้รับ -->
           <div class="form-section" data-section="all">
             <h3 data-i18n="documentsTitle">เอกสารที่ได้รับ</h3>
             <div class="checkbox-grid">
@@ -249,6 +263,7 @@
             </div>
           </div>
 
+          <!-- สถานะ -->
           <div class="form-section" data-section="all">
             <h3 data-i18n="statusTitle">สถานะ</h3>
             <div class="radio-grid">
@@ -272,6 +287,7 @@
             </div>
           </div>
 
+          <!-- ผู้บันทึกข้อมูล -->
           <div class="form-row">
             <label for="recordedBy" data-i18n="recordedByLabel">ผู้บันทึกข้อมูล</label>
             <input
@@ -282,18 +298,10 @@
             />
           </div>
 
+          <!-- ✅ ลบปุ่มที่กาออก เหลือปุ่มเดียว -->
           <div class="form-actions">
             <span class="status-text" id="formSaveStatus"></span>
-            <button type="button" class="secondary" id="clearFormDraft" data-i18n="clearFormButton">
-              ล้างข้อมูลแบบฟอร์ม
-            </button>
-            <button type="button" class="secondary" id="draftButton" data-i18n="draftButton">
-              บันทึกฉบับร่าง
-            </button>
             <button type="submit" class="primary" data-i18n="submitButton">บันทึกข้อมูล</button>
-            <button type="button" class="secondary" id="verifyRecord" data-i18n="verifyButton">
-              ตรวจสอบข้อมูล
-            </button>
           </div>
         </form>
       </section>

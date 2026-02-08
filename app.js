@@ -81,6 +81,7 @@ const recordSearch = document.getElementById("recordSearch");
 const recordFilter = document.getElementById("recordFilter");
 const recordsStatus = document.getElementById("recordsStatus");
 const recordsList = document.getElementById("recordsList");
+const exportRecordsButton = document.getElementById("exportRecords");
 const summaryTodayCount = document.getElementById("summaryTodayCount");
 const summaryYesterdayCount = document.getElementById("summaryYesterdayCount");
 const summaryMonthCount = document.getElementById("summaryMonthCount");
@@ -111,6 +112,7 @@ const RECORD_SEARCH_KEY = "recordSearchQuery";
 const FORM_DRAFT_KEY = "workerFormDraft";
 const THEME_KEY = "uiTheme";
 let currentEditId = null;
+let latestRenderedRecords = [];
 const uploadCache = {
   facePhoto: { name: "", dataUrl: "" },
   idCard: { name: "", dataUrl: "" },
@@ -1674,6 +1676,7 @@ const renderRecords = () => {
     return matchesFilter && searchable.includes(query);
   });
   const scoped = filtered;
+  latestRenderedRecords = scoped;
   renderRecordsSummary(scoped);
 
   recordsList.innerHTML = "";
@@ -1748,6 +1751,56 @@ const renderRecords = () => {
     row.appendChild(actionsCell);
     recordsList.appendChild(row);
   });
+};
+
+const toCsvValue = (value) => {
+  const text = String(value ?? "").replace(/\r?\n|\r/g, " ").trim();
+  return `"${text.replace(/"/g, '""')}"`;
+};
+
+const exportRecordsToCsv = () => {
+  const rows = latestRenderedRecords.length ? latestRenderedRecords : loadRecords();
+  if (!rows.length) {
+    setStatus(recordsStatus, translations[currentLanguage].recordsStatus, "warn");
+    return;
+  }
+  const headers = [
+    translations[currentLanguage].recordsTableFormId,
+    translations[currentLanguage].recordsTableFormType,
+    translations[currentLanguage].recordsTableEmployer,
+    translations[currentLanguage].recordsTableWorker,
+    translations[currentLanguage].recordsTableRecordedBy,
+    translations[currentLanguage].recordsTableUpdated,
+    translations[currentLanguage].recordsTableStatus,
+  ];
+  const lines = [headers.map(toCsvValue).join(",")];
+  rows.forEach((record) => {
+    const personalInfo = record.data.personalInfo || {};
+    const workers = normalizeWorkers(record.data);
+    const workerName = personalInfo.fullName || workers[0]?.fullName || "-";
+    const employerLabel = personalInfo.employerName || record.data.company || record.data.employerId || "-";
+    const cols = [
+      record.formId,
+      record.formTypeLabel,
+      employerLabel,
+      workerName,
+      record.data.recordedBy || "-",
+      formatDateTime(record.updatedAt),
+      getCaseStatusDisplay(record.data.caseStatus || {}),
+    ];
+    lines.push(cols.map(toCsvValue).join(","));
+  });
+  const csv = `\uFEFF${lines.join("\n")}`;
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  const stamp = new Date().toISOString().slice(0, 10);
+  anchor.download = `records-${stamp}.csv`;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
 };
 
 const openRecordModal = (record) => {
@@ -2421,6 +2474,9 @@ if (clearRecordsButton) {
     renderRecords();
     setStatus(formSaveStatus, translations[currentLanguage].recordsStatus);
   });
+}
+if (exportRecordsButton) {
+  exportRecordsButton.addEventListener("click", exportRecordsToCsv);
 }
 if (passportCheckButton) {
   passportCheckButton.addEventListener("click", () => {

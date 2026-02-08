@@ -378,6 +378,7 @@ const translations = {
     recordsTableRecordedBy: "ผู้บันทึกข้อมูล",
     recordsTableUpdated: "อัปเดตล่าสุด",
     recordsTableStatus: "สถานะ",
+    recordSaveStatusLabel: "สถานะบันทึก",
     recordsTableActions: "การจัดการ",
     statusChipCompleted: "สำเร็จแล้ว",
     statusChipPending: "รอการนัด/เอกสาร/ชำระเงิน/ใบอนุญาตใกล้หมดอายุ",
@@ -649,6 +650,7 @@ const translations = {
     recordsTableRecordedBy: "Recorded by",
     recordsTableUpdated: "Last updated",
     recordsTableStatus: "Status",
+    recordSaveStatusLabel: "Saved status",
     recordsTableActions: "Actions",
     statusChipCompleted: "Completed",
     statusChipPending: "Pending appointment/docs/payment/permit expiring",
@@ -1593,7 +1595,7 @@ const openRecordModal = (record) => {
     const typeItem = document.createElement("li");
     typeItem.textContent = `${translations[currentLanguage].recordFormTypeLabel}: ${record.formTypeLabel}`;
     const saveStatusItem = document.createElement("li");
-    saveStatusItem.textContent = `${translations[currentLanguage].recordsTableStatus}: ${
+    saveStatusItem.textContent = `${translations[currentLanguage].recordSaveStatusLabel}: ${
       record.status === "final"
         ? translations[currentLanguage].recordStatusFinal
         : translations[currentLanguage].recordStatusDraft
@@ -1606,11 +1608,6 @@ const openRecordModal = (record) => {
     const documents = record.data.documents || {};
     const caseStatus = record.data.caseStatus || {};
     const documentParts = [];
-    const verificationMap = {
-      pending: translations[currentLanguage].verificationPending,
-      pass: translations[currentLanguage].verificationPass,
-      fix: translations[currentLanguage].verificationFix,
-    };
     if (documents.workPermit) documentParts.push(translations[currentLanguage].documentWorkPermit);
     if (documents.receipt) documentParts.push(translations[currentLanguage].documentReceipt);
     if (documents.requestForm) documentParts.push(translations[currentLanguage].documentRequestForm);
@@ -1625,48 +1622,6 @@ const openRecordModal = (record) => {
     list.appendChild(typeItem);
     list.appendChild(saveStatusItem);
     list.appendChild(recordedByItem);
-    if (record.data.verification) {
-      const verificationItem = document.createElement("li");
-      verificationItem.textContent = `${translations[currentLanguage].verificationLabel}: ${
-        verificationMap[record.data.verification] || record.data.verification
-      }`;
-      list.appendChild(verificationItem);
-    }
-    if (record.data.paymentStatus) {
-      const paymentItem = document.createElement("li");
-      paymentItem.textContent = `${translations[currentLanguage].paymentStatusLabel}: ${
-        record.data.paymentStatus === "paid"
-          ? translations[currentLanguage].paymentPaid
-          : translations[currentLanguage].paymentPending
-      }`;
-      list.appendChild(paymentItem);
-    }
-    if (record.data.paymentDate) {
-      const paymentDateItem = document.createElement("li");
-      paymentDateItem.textContent = `${translations[currentLanguage].paymentDateLabel}: ${record.data.paymentDate}`;
-      list.appendChild(paymentDateItem);
-    }
-    if (record.data.caseType) {
-      const caseTypeItem = document.createElement("li");
-      caseTypeItem.textContent = `${translations[currentLanguage].recordCaseTypeLabel}: ${getCaseTypeLabel(
-        record.data.caseType
-      )}`;
-      list.appendChild(caseTypeItem);
-    }
-    if (record.data.renewalType) {
-      const renewalTypeItem = document.createElement("li");
-      renewalTypeItem.textContent = `${translations[currentLanguage].renewalTypeLabel}: ${getRenewalTypeLabel(
-        record.data.renewalType
-      )}`;
-      list.appendChild(renewalTypeItem);
-    }
-    if (record.data.renewalStatus) {
-      const renewalStatusItem = document.createElement("li");
-      renewalStatusItem.textContent = `${translations[currentLanguage].renewalStatusLabel}: ${getRenewalStatusLabel(
-        record.data.renewalStatus
-      )}`;
-      list.appendChild(renewalStatusItem);
-    }
     if (personalInfo.documentSender) {
       const senderItem = document.createElement("li");
       senderItem.textContent = `${translations[currentLanguage].documentSenderLabel}: ${personalInfo.documentSender}`;

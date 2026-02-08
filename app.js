@@ -1081,6 +1081,20 @@ const clearRecordsFromServer = async () => {
   }
 };
 
+const startServerSyncPolling = () => {
+  if (!canUseServerSync()) {
+    return;
+  }
+  setInterval(() => {
+    syncRecordsFromServer();
+  }, 15000);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      syncRecordsFromServer();
+    }
+  });
+};
+
 
 const buildFormId = () => {
   const records = loadRecords();
@@ -2298,7 +2312,7 @@ const openGeneralSearchResultsModal = (records, query) => {
   recordModal.setAttribute("aria-hidden", "false");
 };
 
-const saveRecord = (status = "draft") => {
+const saveRecord = async (status = "draft") => {
   const { formData, hasAnyValue } = collectFormData();
   if (!hasAnyValue) {
     setStatus(formSaveStatus, translations[currentLanguage].saveDraftEmpty, "warn");
@@ -2337,7 +2351,7 @@ const saveRecord = (status = "draft") => {
     records.unshift(record);
   }
   saveRecords(records);
-  upsertRecordToServer(record);
+  await upsertRecordToServer(record);
   localStorage.removeItem(FORM_DRAFT_KEY);
   setStatus(formSaveStatus, `${translations[currentLanguage].saveDraftSuccess}: ${formId}`, "ok");
   currentEditId = null;
@@ -2551,6 +2565,7 @@ initTheme();
 renderRecords();
 renderLatestRecordCard();
 syncRecordsFromServer();
+startServerSyncPolling();
 document.querySelectorAll("a.tab-btn").forEach((link) => {
   link.addEventListener("click", () => {
     showLoader();
@@ -2610,16 +2625,18 @@ const applyTranslations = (lang) => {
 applyTranslations(currentLanguage);
 
 if (workerForm) {
-  workerForm.addEventListener("submit", (event) => {
+  workerForm.addEventListener("submit", async (event) => {
     event.preventDefault();
-    saveRecord("final");
+    await saveRecord("final");
   });
   workerForm.addEventListener("input", saveFormDraft);
   workerForm.addEventListener("change", saveFormDraft);
 }
 
 if (draftButton) {
-  draftButton.addEventListener("click", () => saveRecord("draft"));
+  draftButton.addEventListener("click", async () => {
+    await saveRecord("draft");
+  });
 }
 if (clearFormDraftButton) {
   clearFormDraftButton.addEventListener("click", clearFormDraft);

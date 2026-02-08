@@ -1950,12 +1950,22 @@ document.querySelectorAll("a.tab-btn").forEach((link) => {
   });
 });
 if (pageLoader) {
+  // เปิดตอนเริ่ม แล้วปิดให้แน่นอน (กันค้าง)
   showLoader();
-  window.addEventListener("load", () => {
-    setTimeout(hideLoader, 350);
-  });
-  setTimeout(hideLoader, 4000);
+
+  const safeHide = () => setTimeout(hideLoader, 200);
+
+  // ถ้าโหลดเสร็จไปแล้ว ให้ปิดทันที
+  if (document.readyState === "complete") {
+    safeHide();
+  } else {
+    window.addEventListener("load", safeHide, { once: true });
+  }
+
+  // กันเหนียว: ต่อให้มี error/โหลดไม่จบ ก็ปิดเอง
+  setTimeout(hideLoader, 1500);
 }
+
 if (recordSearch) {
   const storedQuery = localStorage.getItem(RECORD_SEARCH_KEY);
   if (storedQuery) {

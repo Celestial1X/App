@@ -981,12 +981,33 @@ const loadRecords = () => {
     localStorage.removeItem("workerRecords");
     return [];
   }
-  return records
+  const normalized = records
     .filter((record) => record && typeof record === "object")
     .map((record) => ({
       ...record,
       data: record.data && typeof record.data === "object" ? record.data : {},
     }));
+
+  const used = new Set();
+  let nextId = 1;
+  const withSequentialIds = normalized.map((record) => {
+    const parsed = Number.parseInt(String(record.formId || ""), 10);
+    let formId = Number.isNaN(parsed) || parsed <= 0 ? "" : String(parsed);
+    if (!formId || used.has(formId)) {
+      while (used.has(String(nextId))) {
+        nextId += 1;
+      }
+      formId = String(nextId);
+    }
+    used.add(formId);
+    return { ...record, formId };
+  });
+
+  if (JSON.stringify(withSequentialIds) !== JSON.stringify(normalized)) {
+    saveRecords(withSequentialIds);
+  }
+
+  return withSequentialIds;
 };
 
 const saveRecords = (records) => {
@@ -1825,131 +1846,6 @@ const openRecordModal = (record) => {
     }
     recordModalBody.appendChild(title);
     recordModalBody.appendChild(list);
-    const workers = normalizeWorkers(record.data);
-    if (workers.length) {
-      const workerTitle = document.createElement("h5");
-      workerTitle.textContent = translations[currentLanguage].workerDetailsTitle;
-      recordModalBody.appendChild(workerTitle);
-      workers.forEach((worker, index) => {
-        const workerCard = document.createElement("div");
-        const cardExpiryState = getExpiryState(worker.cardExpiryDate);
-        const visaExpiryState = getExpiryState(worker.visaExpiryDate);
-        const otherExpiryState = getExpiryState(worker.expiry);
-        const hasAlert =
-          cardExpiryState.state === "expired" ||
-          visaExpiryState.state === "expired" ||
-          otherExpiryState.state === "expired";
-        const hasWarn =
-          !hasAlert &&
-          (cardExpiryState.state === "warning" ||
-            visaExpiryState.state === "warning" ||
-            otherExpiryState.state === "warning");
-        workerCard.className = `worker-detail${hasAlert ? " alert" : hasWarn ? " warn" : ""}`;
-        const workerHeading = document.createElement("h6");
-        workerHeading.textContent = `${translations[currentLanguage].workerCardTitle} ${index + 1}: ${
-          worker.fullName || "-"
-        }`;
-        const workerList = document.createElement("ul");
-        const workerIdItem = document.createElement("li");
-        workerIdItem.textContent = `${translations[currentLanguage].workerIdLabel}: ${worker.workerId || "-"}`;
-        const scheduleItem = document.createElement("li");
-        scheduleItem.textContent = `${translations[currentLanguage].scheduleStatusLabel}: ${getScheduleStatusLabel(
-          worker.scheduleStatus
-        )}`;
-        const scheduleLocationItem = document.createElement("li");
-        scheduleLocationItem.textContent = `${translations[currentLanguage].scheduleLocationLabel}: ${
-          worker.scheduleLocation || "-"
-        }`;
-        const healthRegisteredItem = document.createElement("li");
-        const healthCheckedItem = document.createElement("li");
-        const healthIdentityItem = document.createElement("li");
-        const healthPendingItem = document.createElement("li");
-        const healthCheckDateItem = document.createElement("li");
-        const healthPendingDateItem = document.createElement("li");
-        const yesLabel = translations[currentLanguage].healthStatusYes;
-        const noLabel = translations[currentLanguage].healthStatusNo;
-        healthRegisteredItem.textContent = `${translations[currentLanguage].healthRegisteredLabel}: ${
-          worker.healthRegistered ? yesLabel : noLabel
-        }`;
-        healthCheckedItem.textContent = `${translations[currentLanguage].healthCheckedLabel}: ${
-          worker.healthChecked ? yesLabel : noLabel
-        }`;
-        healthIdentityItem.textContent = `${translations[currentLanguage].healthIdentityLabel}: ${
-          worker.healthIdentity ? yesLabel : noLabel
-        }`;
-        healthPendingItem.textContent = `${translations[currentLanguage].healthPendingLabel}: ${
-          worker.healthPending ? yesLabel : noLabel
-        }`;
-        healthCheckDateItem.textContent = `${translations[currentLanguage].healthCheckDateLabel}: ${
-          worker.healthCheckDate || "-"
-        }`;
-        healthPendingDateItem.textContent = `${translations[currentLanguage].healthPendingDateLabel}: ${
-          worker.healthPendingDate || "-"
-        }`;
-        const docStatusItem = document.createElement("li");
-        const docStatusLabel = hasAlert
-          ? translations[currentLanguage].workerDocStatusExpired
-          : hasWarn
-            ? translations[currentLanguage].workerDocStatusWarning
-            : worker.scheduleStatus === "completed"
-              ? translations[currentLanguage].workerDocStatusOk
-              : translations[currentLanguage].workerDocStatusPending;
-        docStatusItem.textContent = `${translations[currentLanguage].workerDocStatusLabel}: ${docStatusLabel}`;
-        const passportItem = document.createElement("li");
-        passportItem.textContent = `${translations[currentLanguage].recordPassportLabel}: ${worker.passport || "-"}`;
-        const passportTypeItem = document.createElement("li");
-        passportTypeItem.textContent = `${translations[currentLanguage].passportTypeLabel}: ${getPassportTypeLabel(
-          worker.passportType
-        )}`;
-        const ciItem = document.createElement("li");
-        ciItem.textContent = `${translations[currentLanguage].ciNumberLabel}: ${worker.ciNumber || "-"}`;
-        const permitItem = document.createElement("li");
-        permitItem.textContent = `${translations[currentLanguage].permitTypeLabel}: ${worker.permitType || "-"}`;
-        const permitNoItem = document.createElement("li");
-        permitNoItem.textContent = `${translations[currentLanguage].permitNoLabel}: ${worker.permitNo || "-"}`;
-        const cardIssueItem = document.createElement("li");
-        cardIssueItem.textContent = `${translations[currentLanguage].cardIssueDateLabel}: ${
-          worker.cardIssueDate || "-"
-        }`;
-        const cardExpiryItem = document.createElement("li");
-        const cardExpiryLabel = formatExpiryDisplay(worker.cardExpiryDate);
-        cardExpiryItem.textContent = `${translations[currentLanguage].cardExpiryDateLabel}: ${cardExpiryLabel}`;
-        const expiryItem = document.createElement("li");
-        const expiryLabel = formatExpiryDisplay(worker.expiry);
-        expiryItem.textContent = `${translations[currentLanguage].expiryLabel}: ${expiryLabel}`;
-        const visaIssueItem = document.createElement("li");
-        visaIssueItem.textContent = `${translations[currentLanguage].visaIssueDateLabel}: ${worker.visaIssueDate || "-"}`;
-        const visaItem = document.createElement("li");
-        visaItem.textContent = `${translations[currentLanguage].visaNumberLabel}: ${worker.visaNumber || "-"}`;
-        const visaExpiryItem = document.createElement("li");
-        const visaExpiryLabel = formatExpiryDisplay(worker.visaExpiryDate);
-        visaExpiryItem.textContent = `${translations[currentLanguage].visaExpiryDateLabel}: ${visaExpiryLabel}`;
-        workerList.appendChild(workerIdItem);
-        workerList.appendChild(scheduleItem);
-        workerList.appendChild(scheduleLocationItem);
-        workerList.appendChild(healthRegisteredItem);
-        workerList.appendChild(healthCheckedItem);
-        workerList.appendChild(healthIdentityItem);
-        workerList.appendChild(healthPendingItem);
-        workerList.appendChild(healthCheckDateItem);
-        workerList.appendChild(healthPendingDateItem);
-        workerList.appendChild(docStatusItem);
-        workerList.appendChild(passportItem);
-        workerList.appendChild(passportTypeItem);
-        workerList.appendChild(ciItem);
-        workerList.appendChild(permitItem);
-        workerList.appendChild(permitNoItem);
-        workerList.appendChild(cardIssueItem);
-        workerList.appendChild(cardExpiryItem);
-        workerList.appendChild(expiryItem);
-        workerList.appendChild(visaIssueItem);
-        workerList.appendChild(visaItem);
-        workerList.appendChild(visaExpiryItem);
-        workerCard.appendChild(workerHeading);
-        workerCard.appendChild(workerList);
-        recordModalBody.appendChild(workerCard);
-      });
-    }
     if (record.data.notifications?.length || record.data.supportingDocs?.length || record.data.receivedDocs?.length || record.data.requiredRenewalDocs?.length) {
       const docTitle = document.createElement("h5");
       docTitle.textContent = translations[currentLanguage].receivedDocsLabel;

@@ -111,7 +111,28 @@ const EDIT_KEY = "editRecordId";
 const RECORD_SEARCH_KEY = "recordSearchQuery";
 const FORM_DRAFT_KEY = "workerFormDraft";
 const THEME_KEY = "uiTheme";
-const RECORDS_API_URL = "/api/records";
+const API_BASE_KEY = "recordsApiBaseUrl";
+
+const normalizeApiBaseUrl = (value) => String(value || "").trim().replace(/\/+$/, "");
+
+const resolveApiBaseUrl = () => {
+  const params = new URLSearchParams(window.location.search || "");
+  const queryBase = normalizeApiBaseUrl(params.get("apiBase"));
+  if (queryBase) {
+    localStorage.setItem(API_BASE_KEY, queryBase);
+    return queryBase;
+  }
+
+  const storedBase = normalizeApiBaseUrl(localStorage.getItem(API_BASE_KEY));
+  if (storedBase) {
+    return storedBase;
+  }
+
+  return normalizeApiBaseUrl(window.RECORDS_API_BASE_URL);
+};
+
+const API_BASE_URL = resolveApiBaseUrl();
+const RECORDS_API_URL = API_BASE_URL ? `${API_BASE_URL}/api/records` : "/api/records";
 let currentEditId = null;
 let latestRenderedRecords = [];
 const uploadCache = {
@@ -1022,7 +1043,7 @@ const saveRecords = (records) => {
   localStorage.setItem("workerRecords", JSON.stringify(records));
 };
 
-const canUseServerSync = () => window.location.protocol.startsWith("http");
+const canUseServerSync = () => Boolean(API_BASE_URL) || window.location.protocol.startsWith("http");
 
 const syncRecordsFromServer = async () => {
   if (!canUseServerSync()) {

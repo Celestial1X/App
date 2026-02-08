@@ -1,3 +1,4 @@
+<!-- form.html (เวอร์ชันแก้แล้ว: ย้ายช่อง “ชื่อผู้ส่ง/วันที่ส่ง/ชื่อผู้รับ/วันที่รับ/วันที่ส่งคืน” ขึ้นไปไว้ก่อนหัวข้อข้อมูลส่วนตัว) -->
 <!DOCTYPE html>
 <html lang="th">
   <head>
@@ -73,6 +74,7 @@
                 <span data-i18n="formTypeOther">อื่น ๆ</span>
               </label>
             </div>
+
             <div class="form-row is-hidden" id="formTypeOtherRow">
               <label for="formTypeOtherDetail" data-i18n="formTypeOtherDetailLabel">ระบุรายละเอียดอื่น ๆ</label>
               <input
@@ -83,9 +85,11 @@
               />
             </div>
           </div>
+
+          <!-- ✅ ย้าย “ชื่อผู้ส่ง/วันที่ส่ง/ชื่อผู้รับ/วันที่รับ/วันที่ส่งคืน” ขึ้นมาด้านบน -->
           <div class="form-section" data-section="all" id="documentMetaSection">
             <h3>ข้อมูลเอกสาร</h3>
-          
+
             <div class="grid-3">
               <div class="form-row">
                 <label for="documentSender" data-i18n="documentSenderLabel">ชื่อผู้ส่งเอกสาร</label>
@@ -96,12 +100,12 @@
                   data-i18n-placeholder="documentSenderPlaceholder"
                 />
               </div>
-          
+
               <div class="form-row">
                 <label for="documentSentDate" data-i18n="documentSentDateLabel">วันที่ส่งเอกสาร</label>
                 <input id="documentSentDate" type="date" />
               </div>
-          
+
               <div class="form-row">
                 <label for="documentReceiver" data-i18n="documentReceiverLabel">ชื่อผู้รับเอกสาร</label>
                 <input
@@ -112,13 +116,13 @@
                 />
               </div>
             </div>
-          
+
             <div class="grid-3">
               <div class="form-row">
                 <label for="documentReceivedDate" data-i18n="documentReceivedDateLabel">วันที่รับเอกสาร</label>
                 <input id="documentReceivedDate" type="date" />
               </div>
-          
+
               <div class="form-row">
                 <label for="documentReturnDate" data-i18n="documentReturnDateLabel">วันที่ส่งคืนเอกสาร</label>
                 <input id="documentReturnDate" type="date" />
@@ -128,6 +132,7 @@
 
           <div class="form-section" data-section="all">
             <h3 data-i18n="personalInfoTitle">แบบฟอร์มข้อมูลส่วนตัวของต่างด้าว</h3>
+
             <div class="grid-3">
               <div class="form-row">
                 <label for="workerFullName" data-i18n="workerFullNameLabel">ชื่อต่างด้าว</label>
@@ -138,6 +143,7 @@
                   data-i18n-placeholder="workerFullNamePlaceholder"
                 />
               </div>
+
               <div class="form-row">
                 <label for="workerGender" data-i18n="workerGenderLabel">เพศ</label>
                 <select id="workerGender">
@@ -147,6 +153,7 @@
                   <option value="other" data-i18n="workerGenderOther">อื่น ๆ</option>
                 </select>
               </div>
+
               <div class="form-row">
                 <label for="workerNationality" data-i18n="workerNationalityLabel">สัญชาติ</label>
                 <input
@@ -157,7 +164,9 @@
                 />
               </div>
             </div>
-            <div class="grid-3">
+
+            <!-- ✅ ปรับให้เหลือ 2 ช่อง (ลบ documentSender ออกจากส่วนนี้) -->
+            <div class="grid-2">
               <div class="form-row">
                 <label for="businessType" data-i18n="businessTypeLabel">ประเภทกิจการ</label>
                 <input
@@ -167,6 +176,7 @@
                   data-i18n-placeholder="businessTypePlaceholder"
                 />
               </div>
+
               <div class="form-row">
                 <label for="employerName" data-i18n="employerNameLabel">ชื่อนายจ้าง</label>
                 <input
@@ -176,11 +186,8 @@
                   data-i18n-placeholder="employerNamePlaceholder"
                 />
               </div>
-              <div class="form-row">
-                <label for="documentReceivedDate" data-i18n="documentReceivedDateLabel">วันที่รับเอกสาร</label>
-                <input id="documentReceivedDate" type="date" />
-              </div>
             </div>
+          </div>
 
           <div class="form-section" data-section="all">
             <h3 data-i18n="documentsTitle">เอกสารที่ได้รับ</h3>
@@ -230,6 +237,7 @@
                 <span data-i18n="documentCompanyCert">หนังสือรับรองบริษัท</span>
               </label>
             </div>
+
             <div class="form-row">
               <label for="documentsNote" data-i18n="documentsNoteLabel">หมายเหตุเอกสาร</label>
               <textarea
@@ -257,6 +265,7 @@
                 <span data-i18n="statusAppointment">นัดหมาย</span>
               </label>
             </div>
+
             <div class="form-row is-hidden" id="appointmentDateRow">
               <label for="appointmentDate" data-i18n="statusAppointmentDateLabel">วันที่นัดหมาย</label>
               <input id="appointmentDate" type="date" />
@@ -272,13 +281,7 @@
               data-i18n-placeholder="recordedByPlaceholder"
             />
           </div>
-            <div class="grid-3">
-              <div class="form-row">
-                <label for="documentReturnDate" data-i18n="documentReturnDateLabel">วันที่ส่งคืนเอกสาร</label>
-                <input id="documentReturnDate" type="date" />
-              </div>
-            </div>
-          </div>
+
           <div class="form-actions">
             <span class="status-text" id="formSaveStatus"></span>
             <button type="button" class="secondary" id="clearFormDraft" data-i18n="clearFormButton">

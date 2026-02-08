@@ -83,33 +83,49 @@
               />
             </div>
           </div>
-          <div class="form-row">
-            <label for="recordedBy" data-i18n="recordedByLabel">ผู้รับ</label>
-            <input
-              id="recordedBy"
-              type="text"
-              placeholder="กรอกชื่อผู้รับ"
-              data-i18n-placeholder="recordedByPlaceholder"
-            />
+          <div class="form-section" data-section="all" id="documentMetaSection">
+            <h3>ข้อมูลเอกสาร</h3>
+          
             <div class="grid-3">
               <div class="form-row">
-                <label for="documentSentDate" data-i18n="documentSentDateLabel">วันที่รับ</label>
-                <input id="documentSentDate" type="date" />
+                <label for="documentSender" data-i18n="documentSenderLabel">ชื่อผู้ส่งเอกสาร</label>
+                <input
+                  id="documentSender"
+                  type="text"
+                  placeholder="กรอกชื่อผู้ส่งเอกสาร"
+                  data-i18n-placeholder="documentSenderPlaceholder"
+                />
               </div>
-            <div class="form-row">
-            <label for="recordedBy" data-i18n="recordedByLabel">รับจากใคร</label>
-            <input
-              id="recordedBy"
-              type="text"
-              placeholder="กรอกชื่อผู้ส่ง"
-              data-i18n-placeholder="recordedByPlaceholder"
-            />
-              <div class="grid-3">
+          
               <div class="form-row">
-                <label for="documentSentDate" data-i18n="documentSentDateLabel">วันที่ส่ง</label>
+                <label for="documentSentDate" data-i18n="documentSentDateLabel">วันที่ส่งเอกสาร</label>
                 <input id="documentSentDate" type="date" />
               </div>
+          
+              <div class="form-row">
+                <label for="documentReceiver" data-i18n="documentReceiverLabel">ชื่อผู้รับเอกสาร</label>
+                <input
+                  id="documentReceiver"
+                  type="text"
+                  placeholder="กรอกชื่อผู้รับเอกสาร"
+                  data-i18n-placeholder="documentReceiverPlaceholder"
+                />
+              </div>
+            </div>
+          
+            <div class="grid-3">
+              <div class="form-row">
+                <label for="documentReceivedDate" data-i18n="documentReceivedDateLabel">วันที่รับเอกสาร</label>
+                <input id="documentReceivedDate" type="date" />
+              </div>
+          
+              <div class="form-row">
+                <label for="documentReturnDate" data-i18n="documentReturnDateLabel">วันที่ส่งคืนเอกสาร</label>
+                <input id="documentReturnDate" type="date" />
+              </div>
+            </div>
           </div>
+
           <div class="form-section" data-section="all">
             <h3 data-i18n="personalInfoTitle">แบบฟอร์มข้อมูลส่วนตัวของต่างด้าว</h3>
             <div class="grid-3">
@@ -161,26 +177,10 @@
                 />
               </div>
               <div class="form-row">
-                <label for="documentSender" data-i18n="documentSenderLabel">ชื่อผู้ส่งเอกสาร</label>
-                <input
-                  id="documentSender"
-                  type="text"
-                  placeholder="กรอกชื่อผู้ส่งเอกสาร"
-                  data-i18n-placeholder="documentSenderPlaceholder"
-                />
-              </div>
-            </div>
-            <div class="grid-3">
-              <div class="form-row">
-                <label for="documentSentDate" data-i18n="documentSentDateLabel">วันที่ส่งเอกสาร</label>
-                <input id="documentSentDate" type="date" />
-              </div>
-              <div class="form-row">
                 <label for="documentReceivedDate" data-i18n="documentReceivedDateLabel">วันที่รับเอกสาร</label>
                 <input id="documentReceivedDate" type="date" />
               </div>
             </div>
-          </div>
 
           <div class="form-section" data-section="all">
             <h3 data-i18n="documentsTitle">เอกสารที่ได้รับ</h3>
@@ -263,6 +263,22 @@
             </div>
           </div>
 
+          <div class="form-row">
+            <label for="recordedBy" data-i18n="recordedByLabel">ผู้บันทึกข้อมูล</label>
+            <input
+              id="recordedBy"
+              type="text"
+              placeholder="กรอกชื่อผู้บันทึกข้อมูล"
+              data-i18n-placeholder="recordedByPlaceholder"
+            />
+          </div>
+            <div class="grid-3">
+              <div class="form-row">
+                <label for="documentReturnDate" data-i18n="documentReturnDateLabel">วันที่ส่งคืนเอกสาร</label>
+                <input id="documentReturnDate" type="date" />
+              </div>
+            </div>
+          </div>
           <div class="form-actions">
             <span class="status-text" id="formSaveStatus"></span>
             <button type="button" class="secondary" id="clearFormDraft" data-i18n="clearFormButton">

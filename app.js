@@ -1,4 +1,249 @@
+const formTypeInputs = document.querySelectorAll('input[name="formType"]');
+const formTypeOtherRow = document.getElementById("formTypeOtherRow");
+const formTypeOtherDetail = document.getElementById("formTypeOtherDetail");
+const caseStatusInputs = document.querySelectorAll('input[name="caseStatus"]');
+const appointmentDateRow = document.getElementById("appointmentDateRow");
+const appointmentDate = document.getElementById("appointmentDate");
+const sections = document.querySelectorAll(".form-section");
+const passportCheckInput = document.getElementById("passportCheck");
+const passportStatus = document.getElementById("passportStatus");
+const workerList = document.getElementById("workerList");
+const addWorkerButton = document.getElementById("addWorker");
+const workerTemplate = document.getElementById("workerTemplate");
+const company = document.getElementById("company");
+const caseType = document.getElementById("caseType");
+const position = document.getElementById("position");
+const workSite = document.getElementById("workSite");
+const startDate = document.getElementById("startDate");
+const employerId = document.getElementById("employerId");
+const renewalType = document.getElementById("renewalType");
+const renewalStatus = document.getElementById("renewalStatus");
+const receivedFacePhoto = document.getElementById("receivedFacePhoto");
+const receivedIdCard = document.getElementById("receivedIdCard");
+const receivedHouseDoc = document.getElementById("receivedHouseDoc");
+const receivedPaymentSlip = document.getElementById("receivedPaymentSlip");
+const requiredRenewalDocs = document.querySelectorAll(".required-renewal-doc");
+const receivedDocsNote = document.getElementById("receivedDocsNote");
+const renewalDocsNote = document.getElementById("renewalDocsNote");
+const notificationItems = document.querySelectorAll(".notification-item");
+const supportingDocs = document.querySelectorAll(".supporting-doc");
+const verification = document.getElementById("verification");
+const workerFullName = document.getElementById("workerFullName");
+const workerGender = document.getElementById("workerGender");
+const workerNationality = document.getElementById("workerNationality");
+const businessType = document.getElementById("businessType");
+const employerName = document.getElementById("employerName");
+const documentSender = document.getElementById("documentSender");
+const documentSentDate = document.getElementById("documentSentDate");
+const documentReceiver = document.getElementById("documentReceiver");
+const documentReceivedDate = document.getElementById("documentReceivedDate");
+const documentReturnDate = document.getElementById("documentReturnDate");
+const docWorkPermit = document.getElementById("docWorkPermit");
+const docReceipt = document.getElementById("docReceipt");
+const docRequestForm = document.getElementById("docRequestForm");
+const docNameList = document.getElementById("docNameList");
+const docPassPage = document.getElementById("docPassPage");
+const docVisaPage = document.getElementById("docVisaPage");
+const docHealthCard = document.getElementById("docHealthCard");
+const docExitNotice = document.getElementById("docExitNotice");
+const docHouseReg = document.getElementById("docHouseReg");
+const docEmployerIdCard = document.getElementById("docEmployerIdCard");
+const docCompanyCert = document.getElementById("docCompanyCert");
+const documentsNote = document.getElementById("documentsNote");
+const paymentStatus = document.getElementById("paymentStatus");
+const paymentDate = document.getElementById("paymentDate");
+const paymentNotes = document.getElementById("paymentNotes");
+const employerCheckInput = document.getElementById("employerCheck");
+const employerStatus = document.getElementById("employerStatus");
+const pageLoader = document.getElementById("pageLoader");
+const facePhotoInput = document.getElementById("facePhoto");
+const idCardInput = document.getElementById("idCard");
+const houseDocInput = document.getElementById("houseDoc");
+const uploadInputs = document.querySelectorAll("#facePhoto, #idCard, #houseDoc");
+const facePhotoCard = document.querySelector('[data-upload="facePhoto"]');
+const idCardCard = document.querySelector('[data-upload="idCard"]');
+const houseDocCard = document.querySelector('[data-upload="houseDoc"]');
+const paymentSlipCard = document.querySelector('[data-upload="paymentSlip"]');
+const uploadPreview = document.getElementById("uploadPreview");
+const paymentSlipInput = document.getElementById("paymentSlip");
+const paymentSlipPreview = document.getElementById("paymentSlipPreview");
+const workerForm = document.getElementById("workerForm");
+const formSaveStatus = document.getElementById("formSaveStatus");
+const recordSearch = document.getElementById("recordSearch");
+const recordFilter = document.getElementById("recordFilter");
+const recordsStatus = document.getElementById("recordsStatus");
+const recordsList = document.getElementById("recordsList");
+const clearRecordsButton = document.getElementById("clearRecords");
+const passportCheckButton = document.getElementById("passportCheckButton");
+const employerCheckButton = document.getElementById("employerCheckButton");
+const generalSearchInput = document.getElementById("generalSearch");
+const generalSearchButton = document.getElementById("generalSearchButton");
+const generalSearchStatus = document.getElementById("generalSearchStatus");
+const verifyRecordButton = document.getElementById("verifyRecord");
+const recordModal = document.getElementById("recordModal");
+const recordModalTitle = document.getElementById("recordModalTitle");
+const recordModalBody = document.getElementById("recordModalBody");
+const recordModalClose = document.getElementById("recordModalClose");
+const recordModalCloseButton = document.getElementById("recordModalCloseButton");
+const draftButton = document.getElementById("draftButton");
+const clearFormDraftButton = document.getElementById("clearFormDraft");
+const themeToggle = document.getElementById("themeToggle");
+const recordedBy = document.getElementById("recordedBy");
+const EDIT_KEY = "editRecordId";
+const RECORD_SEARCH_KEY = "recordSearchQuery";
+const FORM_DRAFT_KEY = "workerFormDraft";
+const THEME_KEY = "uiTheme";
+let currentEditId = null;
+const uploadCache = {
+  facePhoto: { name: "", dataUrl: "" },
+  idCard: { name: "", dataUrl: "" },
+  houseDoc: { name: "", dataUrl: "" },
+  paymentSlip: { name: "", dataUrl: "" },
+};
+const uploadFieldConfigs = [
+  { key: "facePhoto", input: facePhotoInput, card: facePhotoCard },
+  { key: "idCard", input: idCardInput, card: idCardCard },
+  { key: "houseDoc", input: houseDocInput, card: houseDocCard },
+];
+const paymentSlipConfig = { key: "paymentSlip", input: paymentSlipInput, card: paymentSlipCard };
 
+const getSelectedFormType = () => {
+  const selected = Array.from(formTypeInputs || []).find((input) => input.checked);
+  return selected ? selected.value : "";
+};
+
+const getSelectedCaseStatus = () => {
+  const selected = Array.from(caseStatusInputs || []).find((input) => input.checked);
+  return selected ? selected.value : "";
+};
+
+const updateSections = () => {
+  if (!sections.length) {
+    return;
+  }
+  const selected = getSelectedFormType();
+  sections.forEach((section) => {
+    const sectionKey = section.dataset.section;
+    const shouldShow = sectionKey === "all" || sectionKey === selected;
+    section.style.display = shouldShow ? "block" : "none";
+  });
+};
+
+const updateFormTypeOtherVisibility = () => {
+  if (!formTypeOtherRow) return;
+  const isOther = getSelectedFormType() === "other";
+  formTypeOtherRow.classList.toggle("is-hidden", !isOther);
+  if (!isOther && formTypeOtherDetail) {
+    formTypeOtherDetail.value = "";
+  }
+};
+
+const updateAppointmentVisibility = () => {
+  if (!appointmentDateRow) return;
+  const isAppointment = getSelectedCaseStatus() === "appointment";
+  appointmentDateRow.classList.toggle("is-hidden", !isAppointment);
+  if (!isAppointment && appointmentDate) {
+    appointmentDate.value = "";
+  }
+};
+
+const translations = {
+  th: {
+    heroTitle: "ระบบตรวจสอบข้อมูลแรงงานต่างด้าว",
+    sectionSelectTitle: "ค้นหาข้อมูลพื้นฐาน",
+    passportCheckTitle: "ตรวจเลขพาสปอร์ต",
+    passportCheckPlaceholder: "กรอกเลขพาสปอร์ตเพื่อเช็คข้อมูล",
+    checkButton: "ตรวจสอบ",
+    passportCheckHint: "กรุณากรอกเลขพาสปอร์ต",
+    employerSearchTitle: "ค้นหานายจ้าง/แรงงาน",
+    employerSearchPlaceholder: "กรอกเลขแรงงาน หรือชื่อนายจ้าง",
+    searchButton: "ค้นหา",
+    employerSearchHint: "ยังไม่มีคำค้นหา",
+    generalSearchTitle: "ค้นหาข้อมูล",
+    generalSearchPlaceholder: "เช่น เลขฟอร์ม / ชื่อแรงงาน / เลขต่างด้าว / นายจ้าง",
+    generalSearchHint: "พิมพ์คำค้นหาเพื่อค้นหาข้อมูล",
+    generalSearchNotFound: "ไม่พบข้อมูลที่ตรงกัน",
+    themeToggleLabel: "โหมดมืด",
+    formTypeLabel: "ประเภทงาน",
+    formTypeChangeEmployer: "เปลี่ยนนายจ้าง",
+    formTypeResidence: "แจ้งที่พัก 37,38",
+    formTypeVisaStamp: "ลงตรา Visa",
+    formTypeCiReport: "รายงานทำเล่ม CI",
+    formTypeWorkPermitRenewal: "ต่ออนุญาตทำงานแรงงานต่างด้าว",
+    formTypeMouLaos: "MOU ลาว",
+    formTypeMouLaosRenew: "MOU ลาว 2 ปีหลัง",
+    formTypeNoDocsRegister: "ขึ้นทะเบียนคนไม่มีเอกสาร",
+    formTypeExit: "แจ้งออก",
+    formTypeOther: "อื่น ๆ",
+    formTypeOtherDetailLabel: "ระบุรายละเอียดอื่น ๆ",
+    formTypeOtherDetailPlaceholder: "ระบุประเภทงานอื่น ๆ",
+    personalInfoTitle: "แบบฟอร์มข้อมูลส่วนตัวของต่างด้าว",
+    workerFullNameLabel: "ชื่อต่างด้าว",
+    workerFullNamePlaceholder: "กรอกชื่อต่างด้าว",
+    workerGenderLabel: "เพศ",
+    workerGenderPlaceholder: "เลือกเพศ",
+    workerGenderMale: "ชาย",
+    workerGenderFemale: "หญิง",
+    workerGenderOther: "อื่น ๆ",
+    workerNationalityLabel: "สัญชาติ",
+    workerNationalityPlaceholder: "กรอกสัญชาติ",
+    businessTypeLabel: "ประเภทกิจการ",
+    businessTypePlaceholder: "เช่น ก่อสร้าง เกษตรกร",
+    employerNameLabel: "ชื่อนายจ้าง",
+    employerNamePlaceholder: "กรอกชื่อนายจ้าง",
+    documentSenderLabel: "ชื่อผู้ส่งเอกสาร",
+    documentSenderPlaceholder: "กรอกชื่อผู้ส่งเอกสาร",
+    documentSentDateLabel: "วันที่ส่งเอกสาร",
+    documentReceiverLabel: "ชื่อผู้รับเอกสาร",
+    documentReceiverPlaceholder: "กรอกชื่อผู้รับเอกสาร",
+    documentReceivedDateLabel: "วันที่รับเอกสาร",
+    documentReturnDateLabel: "วันที่ส่งคืนเอกสาร",
+    documentsTitle: "เอกสารที่ได้รับ",
+    documentWorkPermit: "ใบอนุญาตการทำงาน",
+    documentReceipt: "ใบเสร็จ",
+    documentRequestForm: "ใบคำขอ",
+    documentNameList: "เนมลิส",
+    documentPassPage: "หน้า Pass",
+    documentVisaPage: "หน้า Visa",
+    documentHealthCard: "บัตรสุขภาพ",
+    documentExitNotice: "ใบแจ้งออก",
+    documentHouseReg: "ทะเบียนบ้านนายจ้าง",
+    documentEmployerIdCard: "บัตรประชาชนหน้าหลัง",
+    documentCompanyCert: "หนังสือรับรองบริษัท",
+    documentsNoteLabel: "หมายเหตุเอกสาร",
+    documentsNotePlaceholder: "บันทึกเอกสารที่ขาด หรือเอกสารมีปัญหา",
+    statusTitle: "สถานะ",
+    statusRegistered: "ลงระบบ",
+    statusPending: "รออนุมัติ",
+    statusAppointment: "นัดหมาย",
+    statusAppointmentDateLabel: "วันที่นัดหมาย",
+    workerListHelper: "เพิ่มรายชื่อแรงงานหลายคนต่อ 1 นายจ้าง โดยแต่ละคนมีชุดข้อมูลของตัวเอง",
+    addWorkerButton: "เพิ่มรายชื่อ",
+    workerCardTitle: "แรงงานคนที่",
+    removeWorkerButton: "ลบรายชื่อ",
+    workerDetailsTitle: "รายชื่อแรงงาน",
+    loadingText: "กำลังโหลด...",
+    fullNameLabel: "ชื่อ-นามสกุล",
+    fullNamePlaceholder: "กรอกชื่อแรงงาน",
+    passportTypeLabel: "ประเภทพาสปอร์ต",
+    passportTypeCi: "CI",
+    passportTypePv: "PV",
+    passportTypePj: "PJ",
+    passportTypeInternational: "RDPLAO",
+    passportLabel: "เลขหนังสือเดินทาง",
+    passportPlaceholder: "เช่น P1234567",
+    workerIdLabel: "เลขต่างด้าว",
+    workerIdPlaceholder: "เช่น FW-0001",
+    scheduleStatusLabel: "กำหนดการ/สถานะติดตาม",
+    scheduleStatusPendingAppointment: "รอการนัด",
+    scheduleStatusScheduled: "นัดแล้ว",
+    scheduleStatusPendingReview: "รอการตรวจสอบ",
+    scheduleStatusCompleted: "สำเร็จแล้ว",
+    scheduleLocationLabel: "สถานที่นัดหมาย",
+    scheduleLocationPlaceholder: "เช่น สำนักงานจัดหางาน",
+    healthSectionTitle: "การตรวจสุขภาพ",
+    healthRegisteredLabel: "ลงระบบแล้ว",
+    healthCheckedLabel: "ตรวจสุขภาพ",
     healthIdentityLabel: "อัตลักษณ์",
     healthPendingLabel: "รอตรวจสุขภาพ",
     healthCheckDateLabel: "วันที่ตรวจ",
@@ -1337,344 +1582,422 @@ const renderRecords = () => {
 const openRecordModal = (record) => {
   recordModalTitle.textContent = translations[currentLanguage].recordModalTitle;
   recordModalBody.innerHTML = "";
-
   if (!record) {
     const message = document.createElement("p");
     message.textContent = translations[currentLanguage].recordNotFound;
     recordModalBody.appendChild(message);
-
-    recordModal.classList.add("is-open");
-    recordModal.setAttribute("aria-hidden", "false");
-    return;
-  }
-
-  const title = document.createElement("h4");
-  title.textContent = translations[currentLanguage].recordDetailsTitle;
-
-  const list = document.createElement("ul");
-
-  const employerItem = document.createElement("li");
-  employerItem.textContent = `${translations[currentLanguage].recordEmployerLabel}: ${
-    record.data.personalInfo?.employerName || record.data.company || record.data.employerId || "-"
-  }`;
-
-  const caseTypeItem = document.createElement("li");
-  caseTypeItem.textContent = `${translations[currentLanguage].recordCaseTypeLabel}: ${getCaseTypeLabel(
-    record.data.caseType
-  )}`;
-
-  const typeItem = document.createElement("li");
-  typeItem.textContent = `${translations[currentLanguage].recordFormTypeLabel}: ${record.formTypeLabel}`;
-
-  const statusItem = document.createElement("li");
-  statusItem.textContent = `${translations[currentLanguage].verificationLabel}: ${
-    record.status === "final"
-      ? translations[currentLanguage].recordStatusFinal
-      : translations[currentLanguage].recordStatusDraft
-  }`;
-
-  const renewalTypeItem = document.createElement("li");
-  renewalTypeItem.textContent = `${translations[currentLanguage].renewalTypeLabel}: ${getRenewalTypeLabel(
-    record.data.renewalType
-  )}`;
-
-  const renewalStatusItem = document.createElement("li");
-  renewalStatusItem.textContent = `${translations[currentLanguage].renewalStatusLabel}: ${getRenewalStatusLabel(
-    record.data.renewalStatus
-  )}`;
-
-  const paymentItem = document.createElement("li");
-  paymentItem.textContent = `${translations[currentLanguage].paymentStatusLabel}: ${
-    record.data.paymentStatus === "paid"
-      ? translations[currentLanguage].paymentPaid
-      : translations[currentLanguage].paymentPending
-  }`;
-
-  const paymentDateItem = document.createElement("li");
-  paymentDateItem.textContent = `${translations[currentLanguage].paymentDateLabel}: ${record.data.paymentDate || "-"}`;
-
-  const recordedByItem = document.createElement("li");
-  recordedByItem.textContent = `${translations[currentLanguage].recordedByLabel}: ${record.data.recordedBy || "-"}`;
-
-  const personalInfo = record.data.personalInfo || {};
-  const documents = record.data.documents || {};
-  const caseStatus = record.data.caseStatus || {};
-
-  const documentParts = [];
-  if (documents.workPermit) documentParts.push(translations[currentLanguage].documentWorkPermit);
-  if (documents.receipt) documentParts.push(translations[currentLanguage].documentReceipt);
-  if (documents.requestForm) documentParts.push(translations[currentLanguage].documentRequestForm);
-  if (documents.nameList) documentParts.push(translations[currentLanguage].documentNameList);
-  if (documents.passPage) documentParts.push(translations[currentLanguage].documentPassPage);
-  if (documents.visaPage) documentParts.push(translations[currentLanguage].documentVisaPage);
-  if (documents.healthCard) documentParts.push(translations[currentLanguage].documentHealthCard);
-  if (documents.exitNotice) documentParts.push(translations[currentLanguage].documentExitNotice);
-  if (documents.houseReg) documentParts.push(translations[currentLanguage].documentHouseReg);
-  if (documents.employerIdCard) documentParts.push(translations[currentLanguage].documentEmployerIdCard);
-  if (documents.companyCert) documentParts.push(translations[currentLanguage].documentCompanyCert);
-
-  list.appendChild(employerItem);
-  if (record.data.caseType) list.appendChild(caseTypeItem);
-  list.appendChild(typeItem);
-  list.appendChild(statusItem);
-  list.appendChild(paymentItem);
-  list.appendChild(paymentDateItem);
-  list.appendChild(recordedByItem);
-  list.appendChild(renewalTypeItem);
-  list.appendChild(renewalStatusItem);
-
-  if (personalInfo.fullName) {
-    const workerNameItem = document.createElement("li");
-    workerNameItem.textContent = `${translations[currentLanguage].workerFullNameLabel}: ${personalInfo.fullName}`;
-    list.appendChild(workerNameItem);
-  }
-
-  if (personalInfo.gender) {
-    const genderMap = {
-      male: translations[currentLanguage].workerGenderMale,
-      female: translations[currentLanguage].workerGenderFemale,
-      other: translations[currentLanguage].workerGenderOther,
-    };
-    const genderItem = document.createElement("li");
-    genderItem.textContent = `${translations[currentLanguage].workerGenderLabel}: ${
-      genderMap[personalInfo.gender] || personalInfo.gender
+  } else {
+    const title = document.createElement("h4");
+    title.textContent = translations[currentLanguage].recordDetailsTitle;
+    const list = document.createElement("ul");
+    const employerItem = document.createElement("li");
+    employerItem.textContent = `${translations[currentLanguage].recordEmployerLabel}: ${
+      record.data.personalInfo?.employerName || record.data.company || record.data.employerId || "-"
     }`;
-    list.appendChild(genderItem);
-  }
-
-  if (personalInfo.nationality) {
-    const nationalityItem = document.createElement("li");
-    nationalityItem.textContent = `${translations[currentLanguage].workerNationalityLabel}: ${personalInfo.nationality}`;
-    list.appendChild(nationalityItem);
-  }
-
-  if (personalInfo.businessType) {
-    const businessItem = document.createElement("li");
-    businessItem.textContent = `${translations[currentLanguage].businessTypeLabel}: ${personalInfo.businessType}`;
-    list.appendChild(businessItem);
-  }
-
-  if (personalInfo.employerName) {
-    const employerNameItem = document.createElement("li");
-    employerNameItem.textContent = `${translations[currentLanguage].employerNameLabel}: ${personalInfo.employerName}`;
-    list.appendChild(employerNameItem);
-  }
-
-  if (personalInfo.documentSender) {
-    const senderItem = document.createElement("li");
-    senderItem.textContent = `${translations[currentLanguage].documentSenderLabel}: ${personalInfo.documentSender}`;
-    list.appendChild(senderItem);
-  }
-
-  if (personalInfo.documentSentDate) {
-    const sentItem = document.createElement("li");
-    sentItem.textContent = `${translations[currentLanguage].documentSentDateLabel}: ${personalInfo.documentSentDate}`;
-    list.appendChild(sentItem);
-  }
-
-  if (personalInfo.documentReceiver) {
-    const receiverItem = document.createElement("li");
-    receiverItem.textContent = `${translations[currentLanguage].documentReceiverLabel}: ${personalInfo.documentReceiver}`;
-    list.appendChild(receiverItem);
-  }
-
-  if (personalInfo.documentReceivedDate) {
-    const receivedItem = document.createElement("li");
-    receivedItem.textContent = `${translations[currentLanguage].documentReceivedDateLabel}: ${personalInfo.documentReceivedDate}`;
-    list.appendChild(receivedItem);
-  }
-
-  if (personalInfo.documentReturnDate) {
-    const returnItem = document.createElement("li");
-    returnItem.textContent = `${translations[currentLanguage].documentReturnDateLabel}: ${personalInfo.documentReturnDate}`;
-    list.appendChild(returnItem);
-  }
-
-  if (documentParts.length) {
-    const documentsItem = document.createElement("li");
-    documentsItem.textContent = `${translations[currentLanguage].documentsTitle}: ${documentParts.join(", ")}`;
-    list.appendChild(documentsItem);
-  }
-
-  if (documents.note) {
-    const noteItem = document.createElement("li");
-    noteItem.textContent = `${translations[currentLanguage].documentsNoteLabel}: ${documents.note}`;
-    list.appendChild(noteItem);
-  }
-
-  if (caseStatus.status) {
-    const caseStatusItem = document.createElement("li");
-    caseStatusItem.textContent = `${translations[currentLanguage].statusTitle}: ${getCaseStatusLabel(caseStatus.status)}`;
-    list.appendChild(caseStatusItem);
-  }
-
-  if (caseStatus.appointmentDate) {
-    const appointmentItem = document.createElement("li");
-    appointmentItem.textContent = `${translations[currentLanguage].statusAppointmentDateLabel}: ${caseStatus.appointmentDate}`;
-    list.appendChild(appointmentItem);
-  }
-
-  recordModalBody.appendChild(title);
-  recordModalBody.appendChild(list);
-
-  // ✅ ลบ "กรอบใหญ่แรงงานคนที่ 1..." ออกไปเลย (ไม่ render workers ใน modal)
-  // --- ไม่มีส่วน workers แล้ว ---
-
-  // เอกสาร/รายการแจ้งต่าง ๆ (ยังคงไว้)
-  if (
-    record.data.notifications?.length ||
-    record.data.supportingDocs?.length ||
-    record.data.receivedDocs?.length ||
-    record.data.requiredRenewalDocs?.length
-  ) {
-    const docTitle = document.createElement("h5");
-    docTitle.textContent = translations[currentLanguage].receivedDocsLabel;
-    const docList = document.createElement("ul");
-
-    const notificationLabels = {
-      residence: translations[currentLanguage].notificationResidence,
-      exit: translations[currentLanguage].notificationExit,
-      employerOverdue: translations[currentLanguage].notificationEmployerOverdue,
-      laosMouVisaRun: translations[currentLanguage].notificationLaosMouVisaRun,
-      laosMouTwoYears: translations[currentLanguage].notificationLaosMouTwoYears,
-      renew90Days: translations[currentLanguage].notificationRenew90Days,
-      renewOneYearCabinet: translations[currentLanguage].notificationRenewOneYearCabinet,
-      renewTwoYearCabinetLaos: translations[currentLanguage].notificationRenewTwoYearCabinetLaos,
-    };
-
-    const supportingLabels = {
-      employerCard: translations[currentLanguage].supportingDocEmployerCard,
-      card50: translations[currentLanguage].supportingDocCard50,
-      receipt: translations[currentLanguage].supportingDocReceipt,
-    };
-
-    const receivedLabels = {
-      facePhoto: translations[currentLanguage].recordFacePhotoLabel,
-      idCard: translations[currentLanguage].recordIdCardLabel,
-      houseDoc: translations[currentLanguage].recordHouseDocLabel,
-      paymentSlip: translations[currentLanguage].recordPaymentSlipLabel,
-    };
-
-    const renewalLabels = {
-      passport: translations[currentLanguage].renewalDocPassport,
-      visa: translations[currentLanguage].renewalDocVisa,
-      permit: translations[currentLanguage].renewalDocPermit,
-      photo: translations[currentLanguage].renewalDocPhoto,
-      employerLetter: translations[currentLanguage].renewalDocEmployerLetter,
-    };
-
-    if (record.data.notifications?.length) {
-      const notificationItem = document.createElement("li");
-      const notificationText = record.data.notifications.map((item) => notificationLabels[item] || item).join(", ");
-      notificationItem.textContent = `${translations[currentLanguage].notificationTitle}: ${notificationText}`;
-      docList.appendChild(notificationItem);
+    const caseTypeItem = document.createElement("li");
+    caseTypeItem.textContent = `${translations[currentLanguage].recordCaseTypeLabel}: ${getCaseTypeLabel(
+      record.data.caseType
+    )}`;
+    const typeItem = document.createElement("li");
+    typeItem.textContent = `${translations[currentLanguage].recordFormTypeLabel}: ${record.formTypeLabel}`;
+    const statusItem = document.createElement("li");
+    statusItem.textContent = `${translations[currentLanguage].verificationLabel}: ${
+      record.status === "final"
+        ? translations[currentLanguage].recordStatusFinal
+        : translations[currentLanguage].recordStatusDraft
+    }`;
+    const renewalTypeItem = document.createElement("li");
+    renewalTypeItem.textContent = `${translations[currentLanguage].renewalTypeLabel}: ${getRenewalTypeLabel(
+      record.data.renewalType
+    )}`;
+    const renewalStatusItem = document.createElement("li");
+    renewalStatusItem.textContent = `${translations[currentLanguage].renewalStatusLabel}: ${getRenewalStatusLabel(
+      record.data.renewalStatus
+    )}`;
+    const paymentItem = document.createElement("li");
+    paymentItem.textContent = `${translations[currentLanguage].paymentStatusLabel}: ${
+      record.data.paymentStatus === "paid"
+        ? translations[currentLanguage].paymentPaid
+        : translations[currentLanguage].paymentPending
+    }`;
+    const paymentDateItem = document.createElement("li");
+    paymentDateItem.textContent = `${translations[currentLanguage].paymentDateLabel}: ${
+      record.data.paymentDate || "-"
+    }`;
+    const recordedByItem = document.createElement("li");
+    recordedByItem.textContent = `${translations[currentLanguage].recordedByLabel}: ${
+      record.data.recordedBy || "-"
+    }`;
+    const personalInfo = record.data.personalInfo || {};
+    const documents = record.data.documents || {};
+    const caseStatus = record.data.caseStatus || {};
+    const documentParts = [];
+    if (documents.workPermit) documentParts.push(translations[currentLanguage].documentWorkPermit);
+    if (documents.receipt) documentParts.push(translations[currentLanguage].documentReceipt);
+    if (documents.requestForm) documentParts.push(translations[currentLanguage].documentRequestForm);
+    if (documents.nameList) documentParts.push(translations[currentLanguage].documentNameList);
+    if (documents.passPage) documentParts.push(translations[currentLanguage].documentPassPage);
+    if (documents.visaPage) documentParts.push(translations[currentLanguage].documentVisaPage);
+    if (documents.healthCard) documentParts.push(translations[currentLanguage].documentHealthCard);
+    if (documents.exitNotice) documentParts.push(translations[currentLanguage].documentExitNotice);
+    if (documents.houseReg) documentParts.push(translations[currentLanguage].documentHouseReg);
+    if (documents.employerIdCard) documentParts.push(translations[currentLanguage].documentEmployerIdCard);
+    if (documents.companyCert) documentParts.push(translations[currentLanguage].documentCompanyCert);
+    list.appendChild(employerItem);
+    if (record.data.caseType) {
+      list.appendChild(caseTypeItem);
     }
-
-    if (record.data.supportingDocs?.length) {
-      const supportingItem = document.createElement("li");
-      const supportingText = record.data.supportingDocs.map((item) => supportingLabels[item] || item).join(", ");
-      supportingItem.textContent = `${translations[currentLanguage].supportingDocsTitle}: ${supportingText}`;
-      docList.appendChild(supportingItem);
+    list.appendChild(typeItem);
+    list.appendChild(statusItem);
+    list.appendChild(paymentItem);
+    list.appendChild(paymentDateItem);
+    list.appendChild(recordedByItem);
+    list.appendChild(renewalTypeItem);
+    list.appendChild(renewalStatusItem);
+    if (personalInfo.fullName) {
+      const workerNameItem = document.createElement("li");
+      workerNameItem.textContent = `${translations[currentLanguage].workerFullNameLabel}: ${personalInfo.fullName}`;
+      list.appendChild(workerNameItem);
     }
-
-    if (record.data.receivedDocs?.length) {
+    if (personalInfo.gender) {
+      const genderMap = {
+        male: translations[currentLanguage].workerGenderMale,
+        female: translations[currentLanguage].workerGenderFemale,
+        other: translations[currentLanguage].workerGenderOther,
+      };
+      const genderItem = document.createElement("li");
+      genderItem.textContent = `${translations[currentLanguage].workerGenderLabel}: ${
+        genderMap[personalInfo.gender] || personalInfo.gender
+      }`;
+      list.appendChild(genderItem);
+    }
+    if (personalInfo.nationality) {
+      const nationalityItem = document.createElement("li");
+      nationalityItem.textContent = `${translations[currentLanguage].workerNationalityLabel}: ${personalInfo.nationality}`;
+      list.appendChild(nationalityItem);
+    }
+    if (personalInfo.businessType) {
+      const businessItem = document.createElement("li");
+      businessItem.textContent = `${translations[currentLanguage].businessTypeLabel}: ${personalInfo.businessType}`;
+      list.appendChild(businessItem);
+    }
+    if (personalInfo.employerName) {
+      const employerNameItem = document.createElement("li");
+      employerNameItem.textContent = `${translations[currentLanguage].employerNameLabel}: ${personalInfo.employerName}`;
+      list.appendChild(employerNameItem);
+    }
+    if (personalInfo.documentSender) {
+      const senderItem = document.createElement("li");
+      senderItem.textContent = `${translations[currentLanguage].documentSenderLabel}: ${personalInfo.documentSender}`;
+      list.appendChild(senderItem);
+    }
+    if (personalInfo.documentSentDate) {
+      const sentItem = document.createElement("li");
+      sentItem.textContent = `${translations[currentLanguage].documentSentDateLabel}: ${personalInfo.documentSentDate}`;
+      list.appendChild(sentItem);
+    }
+    if (personalInfo.documentReceiver) {
+      const receiverItem = document.createElement("li");
+      receiverItem.textContent = `${translations[currentLanguage].documentReceiverLabel}: ${personalInfo.documentReceiver}`;
+      list.appendChild(receiverItem);
+    }
+    if (personalInfo.documentReceivedDate) {
       const receivedItem = document.createElement("li");
-      const receivedText = record.data.receivedDocs.map((item) => receivedLabels[item] || item).join(", ");
-      receivedItem.textContent = `${translations[currentLanguage].receivedDocsLabel}: ${receivedText}`;
-      docList.appendChild(receivedItem);
+      receivedItem.textContent = `${translations[currentLanguage].documentReceivedDateLabel}: ${personalInfo.documentReceivedDate}`;
+      list.appendChild(receivedItem);
     }
-
-    if (record.data.requiredRenewalDocs?.length) {
-      const requiredItem = document.createElement("li");
-      const requiredText = record.data.requiredRenewalDocs.map((item) => renewalLabels[item] || item).join(", ");
-      requiredItem.textContent = `${translations[currentLanguage].requiredRenewalDocsLabel}: ${requiredText}`;
-      docList.appendChild(requiredItem);
+    if (personalInfo.documentReturnDate) {
+      const returnItem = document.createElement("li");
+      returnItem.textContent = `${translations[currentLanguage].documentReturnDateLabel}: ${personalInfo.documentReturnDate}`;
+      list.appendChild(returnItem);
     }
-
-    if (record.data.receivedDocsNote) {
+    if (documentParts.length) {
+      const documentsItem = document.createElement("li");
+      documentsItem.textContent = `${translations[currentLanguage].documentsTitle}: ${documentParts.join(", ")}`;
+      list.appendChild(documentsItem);
+    }
+    if (documents.note) {
       const noteItem = document.createElement("li");
-      noteItem.textContent = `${translations[currentLanguage].receivedDocsNoteLabel}: ${record.data.receivedDocsNote}`;
-      docList.appendChild(noteItem);
+      noteItem.textContent = `${translations[currentLanguage].documentsNoteLabel}: ${documents.note}`;
+      list.appendChild(noteItem);
     }
-
-    if (record.data.renewalDocsNote) {
-      const noteItem = document.createElement("li");
-      noteItem.textContent = `${translations[currentLanguage].renewalDocsNoteLabel}: ${record.data.renewalDocsNote}`;
-      docList.appendChild(noteItem);
+    if (caseStatus.status) {
+      const caseStatusItem = document.createElement("li");
+      caseStatusItem.textContent = `${translations[currentLanguage].statusTitle}: ${getCaseStatusLabel(
+        caseStatus.status
+      )}`;
+      list.appendChild(caseStatusItem);
     }
-
-    recordModalBody.appendChild(docTitle);
-    recordModalBody.appendChild(docList);
-  }
-
-  // แนบไฟล์ (ยังคงไว้)
-  const attachments = [];
-  if (record.data.facePhoto) {
-    attachments.push({
-      label: translations[currentLanguage].recordFacePhotoLabel,
-      value: record.data.facePhoto,
-      dataUrl: record.data.facePhotoData || "",
-    });
-  }
-  if (record.data.idCard) {
-    attachments.push({
-      label: translations[currentLanguage].recordIdCardLabel,
-      value: record.data.idCard,
-      dataUrl: record.data.idCardData || "",
-    });
-  }
-  if (record.data.houseDoc) {
-    attachments.push({
-      label: translations[currentLanguage].recordHouseDocLabel,
-      value: record.data.houseDoc,
-      dataUrl: record.data.houseDocData || "",
-    });
-  }
-  if (record.data.paymentSlip) {
-    attachments.push({
-      label: translations[currentLanguage].recordPaymentSlipLabel,
-      value: record.data.paymentSlip,
-      dataUrl: record.data.paymentSlipData || "",
-    });
-  }
-  if (!attachments.length && Array.isArray(record.data.attachments)) {
-    record.data.attachments.forEach((fileName) => {
-      attachments.push({
-        label: translations[currentLanguage].recordAttachmentsTitle,
-        value: fileName,
+    if (caseStatus.appointmentDate) {
+      const appointmentItem = document.createElement("li");
+      appointmentItem.textContent = `${translations[currentLanguage].statusAppointmentDateLabel}: ${caseStatus.appointmentDate}`;
+      list.appendChild(appointmentItem);
+    }
+    recordModalBody.appendChild(title);
+    recordModalBody.appendChild(list);
+    const workers = normalizeWorkers(record.data);
+    if (workers.length) {
+      const workerTitle = document.createElement("h5");
+      workerTitle.textContent = translations[currentLanguage].workerDetailsTitle;
+      recordModalBody.appendChild(workerTitle);
+      workers.forEach((worker, index) => {
+        const workerCard = document.createElement("div");
+        const cardExpiryState = getExpiryState(worker.cardExpiryDate);
+        const visaExpiryState = getExpiryState(worker.visaExpiryDate);
+        const otherExpiryState = getExpiryState(worker.expiry);
+        const hasAlert =
+          cardExpiryState.state === "expired" ||
+          visaExpiryState.state === "expired" ||
+          otherExpiryState.state === "expired";
+        const hasWarn =
+          !hasAlert &&
+          (cardExpiryState.state === "warning" ||
+            visaExpiryState.state === "warning" ||
+            otherExpiryState.state === "warning");
+        workerCard.className = `worker-detail${hasAlert ? " alert" : hasWarn ? " warn" : ""}`;
+        const workerHeading = document.createElement("h6");
+        workerHeading.textContent = `${translations[currentLanguage].workerCardTitle} ${index + 1}: ${
+          worker.fullName || "-"
+        }`;
+        const workerList = document.createElement("ul");
+        const workerIdItem = document.createElement("li");
+        workerIdItem.textContent = `${translations[currentLanguage].workerIdLabel}: ${worker.workerId || "-"}`;
+        const scheduleItem = document.createElement("li");
+        scheduleItem.textContent = `${translations[currentLanguage].scheduleStatusLabel}: ${getScheduleStatusLabel(
+          worker.scheduleStatus
+        )}`;
+        const scheduleLocationItem = document.createElement("li");
+        scheduleLocationItem.textContent = `${translations[currentLanguage].scheduleLocationLabel}: ${
+          worker.scheduleLocation || "-"
+        }`;
+        const healthRegisteredItem = document.createElement("li");
+        const healthCheckedItem = document.createElement("li");
+        const healthIdentityItem = document.createElement("li");
+        const healthPendingItem = document.createElement("li");
+        const healthCheckDateItem = document.createElement("li");
+        const healthPendingDateItem = document.createElement("li");
+        const yesLabel = translations[currentLanguage].healthStatusYes;
+        const noLabel = translations[currentLanguage].healthStatusNo;
+        healthRegisteredItem.textContent = `${translations[currentLanguage].healthRegisteredLabel}: ${
+          worker.healthRegistered ? yesLabel : noLabel
+        }`;
+        healthCheckedItem.textContent = `${translations[currentLanguage].healthCheckedLabel}: ${
+          worker.healthChecked ? yesLabel : noLabel
+        }`;
+        healthIdentityItem.textContent = `${translations[currentLanguage].healthIdentityLabel}: ${
+          worker.healthIdentity ? yesLabel : noLabel
+        }`;
+        healthPendingItem.textContent = `${translations[currentLanguage].healthPendingLabel}: ${
+          worker.healthPending ? yesLabel : noLabel
+        }`;
+        healthCheckDateItem.textContent = `${translations[currentLanguage].healthCheckDateLabel}: ${
+          worker.healthCheckDate || "-"
+        }`;
+        healthPendingDateItem.textContent = `${translations[currentLanguage].healthPendingDateLabel}: ${
+          worker.healthPendingDate || "-"
+        }`;
+        const docStatusItem = document.createElement("li");
+        const docStatusLabel = hasAlert
+          ? translations[currentLanguage].workerDocStatusExpired
+          : hasWarn
+            ? translations[currentLanguage].workerDocStatusWarning
+            : worker.scheduleStatus === "completed"
+              ? translations[currentLanguage].workerDocStatusOk
+              : translations[currentLanguage].workerDocStatusPending;
+        docStatusItem.textContent = `${translations[currentLanguage].workerDocStatusLabel}: ${docStatusLabel}`;
+        const passportItem = document.createElement("li");
+        passportItem.textContent = `${translations[currentLanguage].recordPassportLabel}: ${worker.passport || "-"}`;
+        const passportTypeItem = document.createElement("li");
+        passportTypeItem.textContent = `${translations[currentLanguage].passportTypeLabel}: ${getPassportTypeLabel(
+          worker.passportType
+        )}`;
+        const ciItem = document.createElement("li");
+        ciItem.textContent = `${translations[currentLanguage].ciNumberLabel}: ${worker.ciNumber || "-"}`;
+        const permitItem = document.createElement("li");
+        permitItem.textContent = `${translations[currentLanguage].permitTypeLabel}: ${worker.permitType || "-"}`;
+        const permitNoItem = document.createElement("li");
+        permitNoItem.textContent = `${translations[currentLanguage].permitNoLabel}: ${worker.permitNo || "-"}`;
+        const cardIssueItem = document.createElement("li");
+        cardIssueItem.textContent = `${translations[currentLanguage].cardIssueDateLabel}: ${
+          worker.cardIssueDate || "-"
+        }`;
+        const cardExpiryItem = document.createElement("li");
+        const cardExpiryLabel = formatExpiryDisplay(worker.cardExpiryDate);
+        cardExpiryItem.textContent = `${translations[currentLanguage].cardExpiryDateLabel}: ${cardExpiryLabel}`;
+        const expiryItem = document.createElement("li");
+        const expiryLabel = formatExpiryDisplay(worker.expiry);
+        expiryItem.textContent = `${translations[currentLanguage].expiryLabel}: ${expiryLabel}`;
+        const visaIssueItem = document.createElement("li");
+        visaIssueItem.textContent = `${translations[currentLanguage].visaIssueDateLabel}: ${worker.visaIssueDate || "-"}`;
+        const visaItem = document.createElement("li");
+        visaItem.textContent = `${translations[currentLanguage].visaNumberLabel}: ${worker.visaNumber || "-"}`;
+        const visaExpiryItem = document.createElement("li");
+        const visaExpiryLabel = formatExpiryDisplay(worker.visaExpiryDate);
+        visaExpiryItem.textContent = `${translations[currentLanguage].visaExpiryDateLabel}: ${visaExpiryLabel}`;
+        workerList.appendChild(workerIdItem);
+        workerList.appendChild(scheduleItem);
+        workerList.appendChild(scheduleLocationItem);
+        workerList.appendChild(healthRegisteredItem);
+        workerList.appendChild(healthCheckedItem);
+        workerList.appendChild(healthIdentityItem);
+        workerList.appendChild(healthPendingItem);
+        workerList.appendChild(healthCheckDateItem);
+        workerList.appendChild(healthPendingDateItem);
+        workerList.appendChild(docStatusItem);
+        workerList.appendChild(passportItem);
+        workerList.appendChild(passportTypeItem);
+        workerList.appendChild(ciItem);
+        workerList.appendChild(permitItem);
+        workerList.appendChild(permitNoItem);
+        workerList.appendChild(cardIssueItem);
+        workerList.appendChild(cardExpiryItem);
+        workerList.appendChild(expiryItem);
+        workerList.appendChild(visaIssueItem);
+        workerList.appendChild(visaItem);
+        workerList.appendChild(visaExpiryItem);
+        workerCard.appendChild(workerHeading);
+        workerCard.appendChild(workerList);
+        recordModalBody.appendChild(workerCard);
       });
-    });
-  }
-
-  if (attachments.length) {
-    const attachmentTitle = document.createElement("h5");
-    attachmentTitle.textContent = translations[currentLanguage].recordAttachmentsTitle;
-
-    const attachmentList = document.createElement("ul");
-    attachments.forEach((item) => {
-      const listItem = document.createElement("li");
-      const label = document.createElement("span");
-      label.textContent = `${item.label}: `;
-      listItem.appendChild(label);
-
-      if (item.dataUrl && item.dataUrl.startsWith("data:image")) {
-        const image = document.createElement("img");
-        image.src = item.dataUrl;
-        image.alt = item.value;
-        image.className = "attachment-thumb";
-        listItem.appendChild(image);
-      } else {
-        const value = document.createElement("span");
-        value.textContent = item.value;
-        listItem.appendChild(value);
+    }
+    if (record.data.notifications?.length || record.data.supportingDocs?.length || record.data.receivedDocs?.length || record.data.requiredRenewalDocs?.length) {
+      const docTitle = document.createElement("h5");
+      docTitle.textContent = translations[currentLanguage].receivedDocsLabel;
+      const docList = document.createElement("ul");
+      const notificationLabels = {
+        residence: translations[currentLanguage].notificationResidence,
+        exit: translations[currentLanguage].notificationExit,
+        employerOverdue: translations[currentLanguage].notificationEmployerOverdue,
+        laosMouVisaRun: translations[currentLanguage].notificationLaosMouVisaRun,
+        laosMouTwoYears: translations[currentLanguage].notificationLaosMouTwoYears,
+        renew90Days: translations[currentLanguage].notificationRenew90Days,
+        renewOneYearCabinet: translations[currentLanguage].notificationRenewOneYearCabinet,
+        renewTwoYearCabinetLaos: translations[currentLanguage].notificationRenewTwoYearCabinetLaos,
+      };
+      const supportingLabels = {
+        employerCard: translations[currentLanguage].supportingDocEmployerCard,
+        card50: translations[currentLanguage].supportingDocCard50,
+        receipt: translations[currentLanguage].supportingDocReceipt,
+      };
+      const receivedLabels = {
+        facePhoto: translations[currentLanguage].recordFacePhotoLabel,
+        idCard: translations[currentLanguage].recordIdCardLabel,
+        houseDoc: translations[currentLanguage].recordHouseDocLabel,
+        paymentSlip: translations[currentLanguage].recordPaymentSlipLabel,
+      };
+      const renewalLabels = {
+        passport: translations[currentLanguage].renewalDocPassport,
+        visa: translations[currentLanguage].renewalDocVisa,
+        permit: translations[currentLanguage].renewalDocPermit,
+        photo: translations[currentLanguage].renewalDocPhoto,
+        employerLetter: translations[currentLanguage].renewalDocEmployerLetter,
+      };
+      if (record.data.notifications?.length) {
+        const notificationItem = document.createElement("li");
+        const notificationText = record.data.notifications
+          .map((item) => notificationLabels[item] || item)
+          .join(", ");
+        notificationItem.textContent = `${translations[currentLanguage].notificationTitle}: ${notificationText}`;
+        docList.appendChild(notificationItem);
       }
-      attachmentList.appendChild(listItem);
-    });
-
-    recordModalBody.appendChild(attachmentTitle);
-    recordModalBody.appendChild(attachmentList);
+      if (record.data.supportingDocs?.length) {
+        const supportingItem = document.createElement("li");
+        const supportingText = record.data.supportingDocs
+          .map((item) => supportingLabels[item] || item)
+          .join(", ");
+        supportingItem.textContent = `${translations[currentLanguage].supportingDocsTitle}: ${supportingText}`;
+        docList.appendChild(supportingItem);
+      }
+      if (record.data.receivedDocs?.length) {
+        const receivedItem = document.createElement("li");
+        const receivedText = record.data.receivedDocs.map((item) => receivedLabels[item] || item).join(", ");
+        receivedItem.textContent = `${translations[currentLanguage].receivedDocsLabel}: ${receivedText}`;
+        docList.appendChild(receivedItem);
+      }
+      if (record.data.requiredRenewalDocs?.length) {
+        const requiredItem = document.createElement("li");
+        const requiredText = record.data.requiredRenewalDocs
+          .map((item) => renewalLabels[item] || item)
+          .join(", ");
+        requiredItem.textContent = `${translations[currentLanguage].requiredRenewalDocsLabel}: ${requiredText}`;
+        docList.appendChild(requiredItem);
+      }
+      if (record.data.receivedDocsNote) {
+        const noteItem = document.createElement("li");
+        noteItem.textContent = `${translations[currentLanguage].receivedDocsNoteLabel}: ${record.data.receivedDocsNote}`;
+        docList.appendChild(noteItem);
+      }
+      if (record.data.renewalDocsNote) {
+        const noteItem = document.createElement("li");
+        noteItem.textContent = `${translations[currentLanguage].renewalDocsNoteLabel}: ${record.data.renewalDocsNote}`;
+        docList.appendChild(noteItem);
+      }
+      recordModalBody.appendChild(docTitle);
+      recordModalBody.appendChild(docList);
+    }
+    const attachments = [];
+    if (record.data.facePhoto) {
+      attachments.push({
+        label: translations[currentLanguage].recordFacePhotoLabel,
+        value: record.data.facePhoto,
+        dataUrl: record.data.facePhotoData || "",
+      });
+    }
+    if (record.data.idCard) {
+      attachments.push({
+        label: translations[currentLanguage].recordIdCardLabel,
+        value: record.data.idCard,
+        dataUrl: record.data.idCardData || "",
+      });
+    }
+    if (record.data.houseDoc) {
+      attachments.push({
+        label: translations[currentLanguage].recordHouseDocLabel,
+        value: record.data.houseDoc,
+        dataUrl: record.data.houseDocData || "",
+      });
+    }
+    if (record.data.paymentSlip) {
+      attachments.push({
+        label: translations[currentLanguage].recordPaymentSlipLabel,
+        value: record.data.paymentSlip,
+        dataUrl: record.data.paymentSlipData || "",
+      });
+    }
+    if (!attachments.length && Array.isArray(record.data.attachments)) {
+      record.data.attachments.forEach((fileName) => {
+        attachments.push({
+          label: translations[currentLanguage].recordAttachmentsTitle,
+          value: fileName,
+        });
+      });
+    }
+    if (attachments.length) {
+      const attachmentTitle = document.createElement("h5");
+      attachmentTitle.textContent = translations[currentLanguage].recordAttachmentsTitle;
+      const attachmentList = document.createElement("ul");
+      attachments.forEach((item) => {
+        const listItem = document.createElement("li");
+        const label = document.createElement("span");
+        label.textContent = `${item.label}: `;
+        listItem.appendChild(label);
+        if (item.dataUrl && item.dataUrl.startsWith("data:image")) {
+          const image = document.createElement("img");
+          image.src = item.dataUrl;
+          image.alt = item.value;
+          image.className = "attachment-thumb";
+          listItem.appendChild(image);
+        } else {
+          const value = document.createElement("span");
+          value.textContent = item.value;
+          listItem.appendChild(value);
+        }
+        attachmentList.appendChild(listItem);
+      });
+      recordModalBody.appendChild(attachmentTitle);
+      recordModalBody.appendChild(attachmentList);
+    }
   }
-
   recordModal.classList.add("is-open");
   recordModal.setAttribute("aria-hidden", "false");
 };
@@ -1950,20 +2273,12 @@ document.querySelectorAll("a.tab-btn").forEach((link) => {
   });
 });
 if (pageLoader) {
-  // เปิดตอนเริ่ม แล้วปิดให้แน่นอน (กันค้าง)
   showLoader();
-
-  const safeHide = () => setTimeout(hideLoader, 200);
-
-  if (document.readyState === "complete") {
-    safeHide();
-  } else {
-    window.addEventListener("load", safeHide, { once: true });
-  }
-
-  setTimeout(hideLoader, 1500);
+  window.addEventListener("load", () => {
+    setTimeout(hideLoader, 350);
+  });
+  setTimeout(hideLoader, 4000);
 }
-
 if (recordSearch) {
   const storedQuery = localStorage.getItem(RECORD_SEARCH_KEY);
   if (storedQuery) {

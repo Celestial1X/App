@@ -975,7 +975,15 @@ const readJsonStorage = (key, fallback) => {
 
 const loadRecords = () => {
   const records = readJsonStorage("workerRecords", []);
-  return Array.isArray(records) ? records : [];
+  if (!Array.isArray(records)) {
+    return [];
+  }
+  return records
+    .filter((record) => record && typeof record === "object")
+    .map((record) => ({
+      ...record,
+      data: record.data && typeof record.data === "object" ? record.data : {},
+    }));
 };
 
 const saveRecords = (records) => {

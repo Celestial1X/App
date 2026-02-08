@@ -976,6 +976,7 @@ const readJsonStorage = (key, fallback) => {
 const loadRecords = () => {
   const records = readJsonStorage("workerRecords", []);
   if (!Array.isArray(records)) {
+    localStorage.removeItem("workerRecords");
     return [];
   }
   return records
@@ -1477,7 +1478,10 @@ function saveFormDraft() {
 function loadFormDraft() {
   if (!workerForm || currentEditId) return;
   const formData = readJsonStorage(FORM_DRAFT_KEY, null);
-  if (!formData || typeof formData !== "object") return;
+  if (!formData || typeof formData !== "object") {
+    localStorage.removeItem(FORM_DRAFT_KEY);
+    return;
+  }
   populateForm({ formType: formData.formType || "changeEmployer", data: formData });
 }
 

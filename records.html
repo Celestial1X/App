@@ -43,20 +43,19 @@
             />
           </div>
           <div class="form-row">
-            <label for="recordFilter" data-i18n="recordsFilterLabel">กรองตามประเภทข้อมูล</label>
+            <label for="recordFilter" data-i18n="recordsFilterLabel">กรองตามประเภทงาน</label>
             <select id="recordFilter">
               <option value="all" data-i18n="recordsFilterAll">ทั้งหมด</option>
-              <option value="renewal:passport" data-i18n="filterRenewalPassport">ต่ออายุบัตร/พาสปอร์ต</option>
-              <option value="renewal:visa" data-i18n="filterRenewalVisa">ต่ออายุวีซ่า</option>
-              <option value="renewal:permit" data-i18n="filterRenewalPermit">ต่ออายุใบอนุญาตทำงาน</option>
-              <option value="passport:ci" data-i18n="passportTypeCi">CI</option>
-              <option value="passport:pv" data-i18n="passportTypePv">PV</option>
-              <option value="passport:pj" data-i18n="passportTypePj">PJ</option>
-              <option value="passport:international" data-i18n="passportTypeInternational">พาสปอร์ตอินเตอร์</option>
-              <option value="nationality:MMR" data-i18n="filterNationalityMmr">สัญชาติ MMR</option>
-              <option value="nationality:LAO" data-i18n="filterNationalityLao">สัญชาติ LAO</option>
-              <option value="nationality:KHM" data-i18n="filterNationalityKhm">สัญชาติ KHM</option>
-              <option value="nationality:VNM" data-i18n="filterNationalityVnm">สัญชาติ VNM</option>
+              <option value="changeEmployer" data-i18n="formTypeChangeEmployer">เปลี่ยนนายจ้าง</option>
+              <option value="residence37_38" data-i18n="formTypeResidence">แจ้งที่พัก 37,38</option>
+              <option value="visaStamp" data-i18n="formTypeVisaStamp">ลงตรา Visa</option>
+              <option value="ciReport" data-i18n="formTypeCiReport">รายงานทำเล่ม CI</option>
+              <option value="workPermitRenewal" data-i18n="formTypeWorkPermitRenewal">ต่ออนุญาตทำงานแรงงานต่างด้าว</option>
+              <option value="mouLaos" data-i18n="formTypeMouLaos">MOU ลาว</option>
+              <option value="mouLaosRenew" data-i18n="formTypeMouLaosRenew">MOU ลาว 2 ปีหลัง</option>
+              <option value="noDocsRegister" data-i18n="formTypeNoDocsRegister">ขึ้นทะเบียนคนไม่มีเอกสาร</option>
+              <option value="exitNotice" data-i18n="formTypeExit">แจ้งออก</option>
+              <option value="other" data-i18n="formTypeOther">อื่น ๆ</option>
             </select>
           </div>
         </div>
@@ -66,7 +65,23 @@
             ลบข้อมูลทั้งหมด
           </button>
         </div>
-        <div id="recordsList" class="records-list"></div>
+        <div class="records-table-wrapper">
+          <table class="records-table">
+            <thead>
+              <tr>
+                <th data-i18n="recordsTableFormId">เลขที่แบบฟอร์ม</th>
+                <th data-i18n="recordsTableFormType">ประเภทงาน</th>
+                <th data-i18n="recordsTableEmployer">นายจ้าง</th>
+                <th data-i18n="recordsTableWorker">ชื่อต่างด้าว</th>
+                <th data-i18n="recordsTableRecordedBy">ผู้บันทึกข้อมูล</th>
+                <th data-i18n="recordsTableUpdated">อัปเดตล่าสุด</th>
+                <th data-i18n="recordsTableStatus">สถานะ</th>
+                <th data-i18n="recordsTableActions">การจัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="recordsList"></tbody>
+          </table>
+        </div>
       </section>
     </main>
 

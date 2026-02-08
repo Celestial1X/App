@@ -2102,31 +2102,138 @@ const closeRecordModal = () => {
   recordModal.setAttribute("aria-hidden", "true");
 };
 
-const findRecordByQuery = (query) => {
-  if (!query) return null;
+const buildRecordSearchText = (record) => {
+  const personalInfo = record.data.personalInfo || {};
+  const documents = record.data.documents || {};
+  const caseStatus = record.data.caseStatus || {};
+  const workers = normalizeWorkers(record.data);
+  const workerText = workers
+    .map((worker) =>
+      [
+        worker.fullName,
+        worker.passport,
+        worker.workerId,
+        worker.ciNumber,
+        worker.visaNumber,
+        worker.permitNo,
+        worker.scheduleStatus,
+        worker.scheduleLocation,
+      ]
+        .filter(Boolean)
+        .join(" ")
+    )
+    .join(" ");
+
+  return [
+    record.formId,
+    record.formType,
+    record.formTypeLabel,
+    record.displayName,
+    record.updatedAt,
+    record.data.company,
+    record.data.caseType,
+    record.data.position,
+    record.data.workSite,
+    record.data.startDate,
+    record.data.employerId,
+    record.data.recordedBy,
+    record.data.formTypeOtherDetail,
+    record.data.renewalType,
+    record.data.renewalStatus,
+    record.data.paymentStatus,
+    record.data.paymentDate,
+    record.data.paymentNotes,
+    personalInfo.fullName,
+    personalInfo.gender,
+    personalInfo.nationality,
+    personalInfo.email,
+    personalInfo.code,
+    personalInfo.alienId,
+    personalInfo.workPermitExpiry,
+    personalInfo.passNumber,
+    personalInfo.passIssueDate,
+    personalInfo.passExpiryDate,
+    personalInfo.businessType,
+    personalInfo.employerName,
+    personalInfo.documentSender,
+    personalInfo.documentSentDate,
+    personalInfo.documentReceiver,
+    personalInfo.documentReceivedDate,
+    personalInfo.documentReturnDate,
+    caseStatus.status,
+    caseStatus.appointmentDate,
+    caseStatus.appointmentNote,
+    documents.note,
+    workerText,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+};
+
+const findRecordsByQuery = (query) => {
+  if (!query) return [];
   const records = loadRecords();
   const normalized = query.trim().toLowerCase();
-  const containsQuery = (value) => String(value || "").toLowerCase().includes(normalized);
-  return (
-    records.find((record) => String(record.formId || "").toLowerCase() === normalized) ||
-    records.find((record) => containsQuery(record.data.company)) ||
-    records.find((record) => containsQuery(record.data.employerId)) ||
-    records.find((record) => containsQuery(record.data.personalInfo?.alienId)) ||
-    records.find((record) => containsQuery(record.data.personalInfo?.passNumber)) ||
-    records.find((record) =>
-      normalizeWorkers(record.data).some((worker) =>
-        [
-          worker.passport,
-          worker.workerId,
-          worker.ciNumber,
-          worker.visaNumber,
-          worker.fullName,
-        ]
-          .filter(Boolean)
-          .some((value) => containsQuery(value))
-      )
-    )
-  );
+  return records.filter((record) => buildRecordSearchText(record).includes(normalized));
+};
+
+const findRecordByQuery = (query) => {
+  if (!query) return null;
+  return findRecordsByQuery(query)[0] || null;
+};
+
+const openGeneralSearchResultsModal = (records, query) => {
+  recordModalTitle.textContent = `${translations[currentLanguage].recordModalTitle} (${records.length})`;
+  recordModalBody.innerHTML = "";
+  if (!records.length) {
+    const message = document.createElement("p");
+    message.textContent = translations[currentLanguage].recordNotFound;
+    recordModalBody.appendChild(message);
+  } else {
+    const wrapper = document.createElement("div");
+    wrapper.className = "records-table-wrapper";
+    const table = document.createElement("table");
+    table.className = "records-table";
+    const thead = document.createElement("thead");
+    thead.innerHTML = `<tr>
+      <th>${translations[currentLanguage].recordsTableFormId}</th>
+      <th>${translations[currentLanguage].recordsTableFormType}</th>
+      <th>${translations[currentLanguage].recordsTableEmployer}</th>
+      <th>${translations[currentLanguage].recordsTableWorker}</th>
+      <th>${translations[currentLanguage].recordsTableStatus}</th>
+      <th>${translations[currentLanguage].recordsTableActions}</th>
+    </tr>`;
+    const tbody = document.createElement("tbody");
+    records.forEach((record) => {
+      const personalInfo = record.data.personalInfo || {};
+      const workers = normalizeWorkers(record.data);
+      const tr = document.createElement("tr");
+      const employer = personalInfo.employerName || record.data.company || record.data.employerId || "-";
+      const workerName = personalInfo.fullName || workers[0]?.fullName || "-";
+      tr.innerHTML = `<td>${record.formId || "-"}</td>
+        <td>${record.formTypeLabel || "-"}</td>
+        <td>${employer}</td>
+        <td>${workerName}</td>
+        <td>${getCaseStatusDisplay(record.data.caseStatus || {})}</td>`;
+      const actionTd = document.createElement("td");
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "secondary";
+      button.textContent = translations[currentLanguage].verifyButton;
+      button.addEventListener("click", () => openRecordModal(record));
+      actionTd.appendChild(button);
+      tr.appendChild(actionTd);
+      tbody.appendChild(tr);
+    });
+    table.appendChild(thead);
+    table.appendChild(tbody);
+    wrapper.appendChild(table);
+    recordModalBody.appendChild(wrapper);
+  }
+  setStatus(generalSearchStatus, `${translations[currentLanguage].recordsCount}: ${records.length} (${query})`, "ok");
+  recordModal.classList.add("is-open");
+  recordModal.setAttribute("aria-hidden", "false");
 };
 
 const saveRecord = (status = "draft") => {
@@ -2501,13 +2608,20 @@ if (generalSearchButton) {
       setStatus(generalSearchStatus, translations[currentLanguage].generalSearchHint, "warn");
       return;
     }
-    const record = findRecordByQuery(query);
-    if (!record) {
+    const records = findRecordsByQuery(query);
+    if (!records.length) {
       setStatus(generalSearchStatus, translations[currentLanguage].generalSearchNotFound, "warn");
       return;
     }
-    setStatus(generalSearchStatus, `${translations[currentLanguage].employerChecking} ${query}`, "ok");
-    openRecordModal(record);
+    openGeneralSearchResultsModal(records, query);
+  });
+}
+if (generalSearchInput) {
+  generalSearchInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      generalSearchButton?.click();
+    }
   });
 }
 if (verifyRecordButton) {

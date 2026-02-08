@@ -1,4 +1,9 @@
-const formType = document.getElementById("formType");
+const formTypeInputs = document.querySelectorAll('input[name="formType"]');
+const formTypeOtherRow = document.getElementById("formTypeOtherRow");
+const formTypeOtherDetail = document.getElementById("formTypeOtherDetail");
+const caseStatusInputs = document.querySelectorAll('input[name="caseStatus"]');
+const appointmentDateRow = document.getElementById("appointmentDateRow");
+const appointmentDate = document.getElementById("appointmentDate");
 const sections = document.querySelectorAll(".form-section");
 const passportCheckInput = document.getElementById("passportCheck");
 const passportStatus = document.getElementById("passportStatus");
@@ -23,28 +28,28 @@ const renewalDocsNote = document.getElementById("renewalDocsNote");
 const notificationItems = document.querySelectorAll(".notification-item");
 const supportingDocs = document.querySelectorAll(".supporting-doc");
 const verification = document.getElementById("verification");
-const systemRegistered = document.getElementById("systemRegistered");
-const renewOneYearDate = document.getElementById("renewOneYearDate");
-const renewTwoYearDate = document.getElementById("renewTwoYearDate");
-const mouDate = document.getElementById("mouDate");
-const visaRunDate = document.getElementById("visaRunDate");
-const healthCheck = document.getElementById("healthCheck");
-const identityCheck = document.getElementById("identityCheck");
-const workPermit = document.getElementById("workPermit");
-const receiptCheck = document.getElementById("receiptCheck");
-const visaFiled = document.getElementById("visaFiled");
-const residenceNotice = document.getElementById("residenceNotice");
-const passPage = document.getElementById("passPage");
-const visaPage = document.getElementById("visaPage");
-const employerIdCard = document.getElementById("employerIdCard");
-const houseReg = document.getElementById("houseReg");
-const requirementUpload = document.getElementById("requirementUpload");
-const reportPhoto = document.getElementById("reportPhoto");
-const reportEmployer = document.getElementById("reportEmployer");
-const reportSender = document.getElementById("reportSender");
-const reportWorker = document.getElementById("reportWorker");
-const reportStatus = document.getElementById("reportStatus");
-const reportAppointmentDate = document.getElementById("reportAppointmentDate");
+const workerFullName = document.getElementById("workerFullName");
+const workerGender = document.getElementById("workerGender");
+const workerNationality = document.getElementById("workerNationality");
+const businessType = document.getElementById("businessType");
+const employerName = document.getElementById("employerName");
+const documentSender = document.getElementById("documentSender");
+const documentSentDate = document.getElementById("documentSentDate");
+const documentReceiver = document.getElementById("documentReceiver");
+const documentReceivedDate = document.getElementById("documentReceivedDate");
+const documentReturnDate = document.getElementById("documentReturnDate");
+const docWorkPermit = document.getElementById("docWorkPermit");
+const docReceipt = document.getElementById("docReceipt");
+const docRequestForm = document.getElementById("docRequestForm");
+const docNameList = document.getElementById("docNameList");
+const docPassPage = document.getElementById("docPassPage");
+const docVisaPage = document.getElementById("docVisaPage");
+const docHealthCard = document.getElementById("docHealthCard");
+const docExitNotice = document.getElementById("docExitNotice");
+const docHouseReg = document.getElementById("docHouseReg");
+const docEmployerIdCard = document.getElementById("docEmployerIdCard");
+const docCompanyCert = document.getElementById("docCompanyCert");
+const documentsNote = document.getElementById("documentsNote");
 const paymentStatus = document.getElementById("paymentStatus");
 const paymentDate = document.getElementById("paymentDate");
 const paymentNotes = document.getElementById("paymentNotes");
@@ -102,16 +107,44 @@ const uploadFieldConfigs = [
 ];
 const paymentSlipConfig = { key: "paymentSlip", input: paymentSlipInput, card: paymentSlipCard };
 
+const getSelectedFormType = () => {
+  const selected = Array.from(formTypeInputs || []).find((input) => input.checked);
+  return selected ? selected.value : "";
+};
+
+const getSelectedCaseStatus = () => {
+  const selected = Array.from(caseStatusInputs || []).find((input) => input.checked);
+  return selected ? selected.value : "";
+};
+
 const updateSections = () => {
-  if (!formType || !sections.length) {
+  if (!sections.length) {
     return;
   }
-  const selected = formType.value;
+  const selected = getSelectedFormType();
   sections.forEach((section) => {
     const sectionKey = section.dataset.section;
     const shouldShow = sectionKey === "all" || sectionKey === selected;
     section.style.display = shouldShow ? "block" : "none";
   });
+};
+
+const updateFormTypeOtherVisibility = () => {
+  if (!formTypeOtherRow) return;
+  const isOther = getSelectedFormType() === "other";
+  formTypeOtherRow.classList.toggle("is-hidden", !isOther);
+  if (!isOther && formTypeOtherDetail) {
+    formTypeOtherDetail.value = "";
+  }
+};
+
+const updateAppointmentVisibility = () => {
+  if (!appointmentDateRow) return;
+  const isAppointment = getSelectedCaseStatus() === "appointment";
+  appointmentDateRow.classList.toggle("is-hidden", !isAppointment);
+  if (!isAppointment && appointmentDate) {
+    appointmentDate.value = "";
+  }
 };
 
 const translations = {
@@ -131,49 +164,59 @@ const translations = {
     generalSearchHint: "พิมพ์คำค้นหาเพื่อค้นหาข้อมูล",
     generalSearchNotFound: "ไม่พบข้อมูลที่ตรงกัน",
     themeToggleLabel: "โหมดมืด",
-    formTypeLabel: "หัวข้อแบบฟอร์ม",
-    formTypePersonal: "เปลี่ยนนายจ้าง",
-    formTypeEmployment: "แจ้งที่พัก 37",
-    formTypeDocuments: "แจ้งที่พัก 38",
-    formTypeReport: "ต่อ 90 วัน ถัดไป",
-    formTypeVisa: "ลง Visa",
-    formTypeMouRenew: "ต่ออายุ MOU 2 ปีหลัง",
+    formTypeLabel: "ประเภทงาน",
+    formTypeChangeEmployer: "เปลี่ยนนายจ้าง",
+    formTypeResidence: "แจ้งที่พัก 37,38",
+    formTypeVisaStamp: "ลงตรา Visa",
+    formTypeCiReport: "รายงานทำเล่ม CI",
+    formTypeWorkPermitRenewal: "ต่ออนุญาตทำงานแรงงานต่างด้าว",
     formTypeMouLaos: "MOU ลาว",
-    formTypeCabinetOneYear: "ต่ออายุ 1 ปี มติ",
-    formTypeCabinetTwoYear: "ต่ออายุ 2 ปี มติ",
-    formTypeNoDocs: "คนไม่มีเอกสาร มติ",
-    formTypeCiBook: "ทำเล่ม CI",
+    formTypeMouLaosRenew: "MOU ลาว 2 ปีหลัง",
+    formTypeNoDocsRegister: "ขึ้นทะเบียนคนไม่มีเอกสาร",
     formTypeExit: "แจ้งออก",
     formTypeOther: "อื่น ๆ",
-    personalTitle: "ข้อมูลส่วนตัวแรงงาน",
-    requirementsTitle: "รายละเอียดที่ต้องมี",
-    requirementRegistered: "ลงระบบแล้ว",
-    requirementRenewOneYear: "ต่ออายุ 1 ปี",
-    requirementRenewTwoYear: "ต่ออายุ 2 ปี",
-    requirementMou: "MOU",
-    requirementVisaRun: "Visa run",
-    requirementHealthCheck: "ตรวจสุขภาพ",
-    requirementIdentity: "อัตลักษณ์",
-    requirementWorkPermit: "ใบอนุญาตทำงาน",
-    requirementReceipt: "ใบเสร็จ",
-    requirementVisaFiled: "ลง Visa",
-    requirementResidenceNotice: "แจ้งที่พัก",
-    requirementPassPage: "หน้า Pass",
-    requirementVisaPage: "หน้า Visa",
-    requirementEmployerCard: "บัตร ปปช นายจ้าง",
-    requirementHouseReg: "ทะเบียนบ้าน",
-    requirementUploadLabel: "แนบรูปเอกสาร",
-    requirementUploadHint: "สามารถแนบได้หลายไฟล์",
-    reportTitle: "รายงานผล",
-    reportPhotoLabel: "รูปต่างด้าว",
-    reportEmployerLabel: "ชื่อนายจ้าง",
-    reportSenderLabel: "ชื่อผู้ส่ง",
-    reportWorkerLabel: "ชื่อต่างด้าว",
-    reportStatusLabel: "สถานะการทำงาน",
-    reportStatusPending: "รออนุมัติ",
-    reportStatusDone: "ดำเนินการเสร็จสิ้น",
-    reportStatusAppointment: "รอนัด",
-    reportAppointmentDateLabel: "วันที่นัดหมาย",
+    formTypeOtherDetailLabel: "ระบุรายละเอียดอื่น ๆ",
+    formTypeOtherDetailPlaceholder: "ระบุประเภทงานอื่น ๆ",
+    personalInfoTitle: "แบบฟอร์มข้อมูลส่วนตัวของต่างด้าว",
+    workerFullNameLabel: "ชื่อต่างด้าว",
+    workerFullNamePlaceholder: "กรอกชื่อต่างด้าว",
+    workerGenderLabel: "เพศ",
+    workerGenderPlaceholder: "เลือกเพศ",
+    workerGenderMale: "ชาย",
+    workerGenderFemale: "หญิง",
+    workerGenderOther: "อื่น ๆ",
+    workerNationalityLabel: "สัญชาติ",
+    workerNationalityPlaceholder: "กรอกสัญชาติ",
+    businessTypeLabel: "ประเภทกิจการ",
+    businessTypePlaceholder: "เช่น ก่อสร้าง เกษตรกร",
+    employerNameLabel: "ชื่อนายจ้าง",
+    employerNamePlaceholder: "กรอกชื่อนายจ้าง",
+    documentSenderLabel: "ชื่อผู้ส่งเอกสาร",
+    documentSenderPlaceholder: "กรอกชื่อผู้ส่งเอกสาร",
+    documentSentDateLabel: "วันที่ส่งเอกสาร",
+    documentReceiverLabel: "ชื่อผู้รับเอกสาร",
+    documentReceiverPlaceholder: "กรอกชื่อผู้รับเอกสาร",
+    documentReceivedDateLabel: "วันที่รับเอกสาร",
+    documentReturnDateLabel: "วันที่ส่งคืนเอกสาร",
+    documentsTitle: "เอกสารที่ได้รับ",
+    documentWorkPermit: "ใบอนุญาตการทำงาน",
+    documentReceipt: "ใบเสร็จ",
+    documentRequestForm: "ใบคำขอ",
+    documentNameList: "เนมลิส",
+    documentPassPage: "หน้า Pass",
+    documentVisaPage: "หน้า Visa",
+    documentHealthCard: "บัตรสุขภาพ",
+    documentExitNotice: "ใบแจ้งออก",
+    documentHouseReg: "ทะเบียนบ้านนายจ้าง",
+    documentEmployerIdCard: "บัตรประชาชนหน้าหลัง",
+    documentCompanyCert: "หนังสือรับรองบริษัท",
+    documentsNoteLabel: "หมายเหตุเอกสาร",
+    documentsNotePlaceholder: "บันทึกเอกสารที่ขาด หรือเอกสารมีปัญหา",
+    statusTitle: "สถานะ",
+    statusRegistered: "ลงระบบ",
+    statusPending: "รออนุมัติ",
+    statusAppointment: "นัดหมาย",
+    statusAppointmentDateLabel: "วันที่นัดหมาย",
     workerListHelper: "เพิ่มรายชื่อแรงงานหลายคนต่อ 1 นายจ้าง โดยแต่ละคนมีชุดข้อมูลของตัวเอง",
     addWorkerButton: "เพิ่มรายชื่อ",
     workerCardTitle: "แรงงานคนที่",
@@ -305,7 +348,7 @@ const translations = {
     recordsSubtitle: "บันทึกข้อมูลจากแบบฟอร์มและค้นหาด้วยเลขฟอร์มหรือหัวข้อ",
     recordsSearchLabel: "ค้นหาด้วยเลขฟอร์ม/หัวข้อ",
     recordsSearchPlaceholder: "เช่น FORM-2024-0001 หรือ ข้อมูลส่วนตัวแรงงาน",
-    recordsFilterLabel: "กรองตามประเภทข้อมูล",
+    recordsFilterLabel: "กรองตามประเภทงาน",
     recordsFilterAll: "ทั้งหมด",
     filterRenewalPassport: "ต่ออายุบัตร/พาสปอร์ต",
     filterRenewalVisa: "ต่ออายุวีซ่า",
@@ -328,6 +371,14 @@ const translations = {
     editButton: "แก้ไข",
     deleteButton: "ลบ",
     verifyButton: "ตรวจสอบข้อมูล",
+    recordsTableFormId: "เลขที่แบบฟอร์ม",
+    recordsTableFormType: "ประเภทงาน",
+    recordsTableEmployer: "นายจ้าง",
+    recordsTableWorker: "ชื่อต่างด้าว",
+    recordsTableRecordedBy: "ผู้บันทึกข้อมูล",
+    recordsTableUpdated: "อัปเดตล่าสุด",
+    recordsTableStatus: "สถานะ",
+    recordsTableActions: "การจัดการ",
     statusChipCompleted: "สำเร็จแล้ว",
     statusChipPending: "รอการนัด/เอกสาร/ชำระเงิน/ใบอนุญาตใกล้หมดอายุ",
     statusChipAlert: "ใบอนุญาตหมดอายุ/ไม่จ่ายตามกำหนด",
@@ -340,7 +391,7 @@ const translations = {
     closeButton: "ปิดหน้าต่าง",
     recordNotFound: "ไม่พบข้อมูลที่ตรงกัน",
     recordDetailsTitle: "ข้อมูลที่พบ",
-    recordFormTypeLabel: "หัวข้อแบบฟอร์ม",
+    recordFormTypeLabel: "ประเภทงาน",
     recordNameLabel: "ชื่อ",
     recordPassportLabel: "พาสปอร์ต",
     recordEmployerLabel: "นายจ้าง",
@@ -359,11 +410,11 @@ const translations = {
     paymentSlipUpload: "อัปโหลดสลิป",
     paymentNotesLabel: "หมายเหตุ",
     paymentNotesPlaceholder: "รายละเอียดเพิ่มเติม",
-    tabLookup: "ค้นหาข้อมูล",
-    tabRecords: "ข้อมูลบันทึก",
-    tabForm: "กรอกแบบฟอร์ม",
-    recordedByLabel: "ชื่อผู้บันทึก",
-    recordedByPlaceholder: "กรอกชื่อผู้บันทึก",
+    tabLookup: "การค้นหาข้อมูล",
+    tabRecords: "รายการบันทึก",
+    tabForm: "บันทึกแบบฟอร์ม",
+    recordedByLabel: "ผู้บันทึกข้อมูล",
+    recordedByPlaceholder: "กรอกชื่อผู้บันทึกข้อมูล",
     workerCountSuffix: "คน",
     confirmClearRecords: "ยืนยันลบข้อมูลทั้งหมดหรือไม่?",
     confirmDeleteRecord: "ต้องการลบรายการนี้หรือไม่?",
@@ -384,49 +435,59 @@ const translations = {
     generalSearchHint: "Enter a query to search records.",
     generalSearchNotFound: "No matching records found.",
     themeToggleLabel: "Dark mode",
-    formTypeLabel: "Form type",
-    formTypePersonal: "Change employer",
-    formTypeEmployment: "Residence notice 37",
-    formTypeDocuments: "Residence notice 38",
-    formTypeReport: "Next 90-day extension",
-    formTypeVisa: "Visa registration",
-    formTypeMouRenew: "MOU renewal (2 years)",
+    formTypeLabel: "Work category",
+    formTypeChangeEmployer: "Change employer",
+    formTypeResidence: "Residence notice 37/38",
+    formTypeVisaStamp: "Visa stamp",
+    formTypeCiReport: "CI book report",
+    formTypeWorkPermitRenewal: "Foreign worker work permit renewal",
     formTypeMouLaos: "MOU Laos",
-    formTypeCabinetOneYear: "Cabinet resolution 1-year renewal",
-    formTypeCabinetTwoYear: "Cabinet resolution 2-year renewal",
-    formTypeNoDocs: "No documents (Cabinet resolution)",
-    formTypeCiBook: "Create CI book",
+    formTypeMouLaosRenew: "MOU Laos (2-year renewal)",
+    formTypeNoDocsRegister: "Undocumented worker registration",
     formTypeExit: "Exit notification",
     formTypeOther: "Other",
-    personalTitle: "Personal details",
-    requirementsTitle: "Requirements checklist",
-    requirementRegistered: "Registered in system",
-    requirementRenewOneYear: "Renew 1 year",
-    requirementRenewTwoYear: "Renew 2 years",
-    requirementMou: "MOU",
-    requirementVisaRun: "Visa run",
-    requirementHealthCheck: "Health check",
-    requirementIdentity: "Identity",
-    requirementWorkPermit: "Work permit",
-    requirementReceipt: "Receipt",
-    requirementVisaFiled: "Visa registration",
-    requirementResidenceNotice: "Residence notice",
-    requirementPassPage: "Passport page",
-    requirementVisaPage: "Visa page",
-    requirementEmployerCard: "Employer ID card",
-    requirementHouseReg: "House registration",
-    requirementUploadLabel: "Attach documents",
-    requirementUploadHint: "Multiple files allowed",
-    reportTitle: "Report",
-    reportPhotoLabel: "Worker photo",
-    reportEmployerLabel: "Employer name",
-    reportSenderLabel: "Sender name",
-    reportWorkerLabel: "Worker name",
-    reportStatusLabel: "Work status",
-    reportStatusPending: "Pending approval",
-    reportStatusDone: "Completed",
-    reportStatusAppointment: "Appointment pending",
-    reportAppointmentDateLabel: "Appointment date",
+    formTypeOtherDetailLabel: "Specify other details",
+    formTypeOtherDetailPlaceholder: "Specify other work category",
+    personalInfoTitle: "Foreign worker personal information",
+    workerFullNameLabel: "Worker name",
+    workerFullNamePlaceholder: "Enter worker name",
+    workerGenderLabel: "Gender",
+    workerGenderPlaceholder: "Select gender",
+    workerGenderMale: "Male",
+    workerGenderFemale: "Female",
+    workerGenderOther: "Other",
+    workerNationalityLabel: "Nationality",
+    workerNationalityPlaceholder: "Enter nationality",
+    businessTypeLabel: "Business type",
+    businessTypePlaceholder: "e.g. Construction, agriculture",
+    employerNameLabel: "Employer name",
+    employerNamePlaceholder: "Enter employer name",
+    documentSenderLabel: "Document sender",
+    documentSenderPlaceholder: "Enter document sender",
+    documentSentDateLabel: "Document sent date",
+    documentReceiverLabel: "Document receiver",
+    documentReceiverPlaceholder: "Enter document receiver",
+    documentReceivedDateLabel: "Document received date",
+    documentReturnDateLabel: "Document return date",
+    documentsTitle: "Received documents",
+    documentWorkPermit: "Work permit",
+    documentReceipt: "Receipt",
+    documentRequestForm: "Request form",
+    documentNameList: "Name list",
+    documentPassPage: "Passport page",
+    documentVisaPage: "Visa page",
+    documentHealthCard: "Health card",
+    documentExitNotice: "Exit notice",
+    documentHouseReg: "Employer house registration",
+    documentEmployerIdCard: "Employer ID card (front/back)",
+    documentCompanyCert: "Company certificate",
+    documentsNoteLabel: "Document notes",
+    documentsNotePlaceholder: "Record missing or problematic documents",
+    statusTitle: "Status",
+    statusRegistered: "Registered",
+    statusPending: "Pending approval",
+    statusAppointment: "Appointment",
+    statusAppointmentDateLabel: "Appointment date",
     workerListHelper: "Add multiple workers per employer. Each person has their own details.",
     addWorkerButton: "Add worker",
     workerCardTitle: "Worker",
@@ -558,7 +619,7 @@ const translations = {
     recordsSubtitle: "Save form data and search by form ID or section.",
     recordsSearchLabel: "Search by form ID/section",
     recordsSearchPlaceholder: "e.g. FORM-2024-0001 or Personal details",
-    recordsFilterLabel: "Filter by type",
+    recordsFilterLabel: "Filter by work category",
     recordsFilterAll: "All",
     filterRenewalPassport: "Renew passport/card",
     filterRenewalVisa: "Renew visa",
@@ -581,6 +642,14 @@ const translations = {
     editButton: "Edit",
     deleteButton: "Delete",
     verifyButton: "Verify record",
+    recordsTableFormId: "Form ID",
+    recordsTableFormType: "Work category",
+    recordsTableEmployer: "Employer",
+    recordsTableWorker: "Worker name",
+    recordsTableRecordedBy: "Recorded by",
+    recordsTableUpdated: "Last updated",
+    recordsTableStatus: "Status",
+    recordsTableActions: "Actions",
     statusChipCompleted: "Completed",
     statusChipPending: "Pending appointment/docs/payment/permit expiring",
     statusChipAlert: "Permit expired/unpaid",
@@ -593,7 +662,7 @@ const translations = {
     closeButton: "Close",
     recordNotFound: "No matching records found.",
     recordDetailsTitle: "Matched record",
-    recordFormTypeLabel: "Section",
+    recordFormTypeLabel: "Work category",
     recordNameLabel: "Name",
     recordPassportLabel: "Passport",
     recordEmployerLabel: "Employer",
@@ -614,7 +683,7 @@ const translations = {
     paymentNotesPlaceholder: "Additional details",
     tabLookup: "Lookup",
     tabRecords: "Records",
-    tabForm: "Form",
+    tabForm: "Form entry",
     recordedByLabel: "Recorded by",
     recordedByPlaceholder: "Enter recorder name",
     workerCountSuffix: "workers",
@@ -904,21 +973,26 @@ const formatDateTime = (value) => {
 
 const getFormTypeLabel = (value) => {
   const map = {
-    changeEmployer: translations[currentLanguage].formTypePersonal,
-    residence37: translations[currentLanguage].formTypeEmployment,
-    residence38: translations[currentLanguage].formTypeDocuments,
-    renew90: translations[currentLanguage].formTypeReport,
-    visaRegister: translations[currentLanguage].formTypeVisa,
-    mouRenew: translations[currentLanguage].formTypeMouRenew,
+    changeEmployer: translations[currentLanguage].formTypeChangeEmployer,
+    residence37_38: translations[currentLanguage].formTypeResidence,
+    visaStamp: translations[currentLanguage].formTypeVisaStamp,
+    ciReport: translations[currentLanguage].formTypeCiReport,
+    workPermitRenewal: translations[currentLanguage].formTypeWorkPermitRenewal,
     mouLaos: translations[currentLanguage].formTypeMouLaos,
-    cabinetOneYear: translations[currentLanguage].formTypeCabinetOneYear,
-    cabinetTwoYear: translations[currentLanguage].formTypeCabinetTwoYear,
-    noDocsCabinet: translations[currentLanguage].formTypeNoDocs,
-    ciBook: translations[currentLanguage].formTypeCiBook,
+    mouLaosRenew: translations[currentLanguage].formTypeMouLaosRenew,
+    noDocsRegister: translations[currentLanguage].formTypeNoDocsRegister,
     exitNotice: translations[currentLanguage].formTypeExit,
     other: translations[currentLanguage].formTypeOther,
   };
   return map[value] || value;
+};
+
+const buildFormTypeLabel = (formData) => {
+  const baseLabel = getFormTypeLabel(formData.formType);
+  if (formData.formType === "other" && formData.formTypeOtherDetail) {
+    return `${baseLabel}: ${formData.formTypeOtherDetail}`;
+  }
+  return baseLabel;
 };
 
 const getCaseTypeLabel = (value) => {
@@ -926,6 +1000,15 @@ const getCaseTypeLabel = (value) => {
     changeEmployer: translations[currentLanguage].caseTypeChangeEmployer,
     relocation: translations[currentLanguage].caseTypeRelocation,
     other: translations[currentLanguage].caseTypeOther,
+  };
+  return map[value] || value || "-";
+};
+
+const getCaseStatusLabel = (value) => {
+  const map = {
+    registered: translations[currentLanguage].statusRegistered,
+    pending: translations[currentLanguage].statusPending,
+    appointment: translations[currentLanguage].statusAppointment,
   };
   return map[value] || value || "-";
 };
@@ -1253,7 +1336,8 @@ const collectFormData = () => {
     .map((item) => item.value);
   const workers = getWorkerCards().map(extractWorkerData).filter(hasWorkerValue);
   const formData = {
-    formType: formType.value,
+    formType: getSelectedFormType(),
+    formTypeOtherDetail: formTypeOtherDetail?.value?.trim() || "",
     workers,
     company: company?.value?.trim() || "",
     caseType: caseType?.value || "",
@@ -1268,31 +1352,35 @@ const collectFormData = () => {
     recordedBy: recordedBy ? recordedBy.value.trim() : "",
     renewalType: renewalType?.value || "",
     renewalStatus: renewalStatus?.value || "",
-    requirements: {
-      systemRegistered: systemRegistered?.checked || false,
-      renewOneYearDate: renewOneYearDate?.value || "",
-      renewTwoYearDate: renewTwoYearDate?.value || "",
-      mouDate: mouDate?.value || "",
-      visaRunDate: visaRunDate?.value || "",
-      healthCheck: healthCheck?.checked || false,
-      identityCheck: identityCheck?.checked || false,
-      workPermit: workPermit?.checked || false,
-      receiptCheck: receiptCheck?.checked || false,
-      visaFiled: visaFiled?.checked || false,
-      residenceNotice: residenceNotice?.checked || false,
-      passPage: passPage?.checked || false,
-      visaPage: visaPage?.checked || false,
-      employerIdCard: employerIdCard?.checked || false,
-      houseReg: houseReg?.checked || false,
-      attachments: requirementUpload?.files ? Array.from(requirementUpload.files).map((file) => file.name) : [],
+    personalInfo: {
+      fullName: workerFullName?.value?.trim() || "",
+      gender: workerGender?.value || "",
+      nationality: workerNationality?.value?.trim() || "",
+      businessType: businessType?.value?.trim() || "",
+      employerName: employerName?.value?.trim() || "",
+      documentSender: documentSender?.value?.trim() || "",
+      documentSentDate: documentSentDate?.value || "",
+      documentReceiver: documentReceiver?.value?.trim() || "",
+      documentReceivedDate: documentReceivedDate?.value || "",
+      documentReturnDate: documentReturnDate?.value || "",
     },
-    report: {
-      photo: reportPhoto?.files?.[0]?.name || "",
-      employerName: reportEmployer?.value?.trim() || "",
-      senderName: reportSender?.value?.trim() || "",
-      workerName: reportWorker?.value?.trim() || "",
-      status: reportStatus?.value || "",
-      appointmentDate: reportAppointmentDate?.value || "",
+    documents: {
+      workPermit: docWorkPermit?.checked || false,
+      receipt: docReceipt?.checked || false,
+      requestForm: docRequestForm?.checked || false,
+      nameList: docNameList?.checked || false,
+      passPage: docPassPage?.checked || false,
+      visaPage: docVisaPage?.checked || false,
+      healthCard: docHealthCard?.checked || false,
+      exitNotice: docExitNotice?.checked || false,
+      houseReg: docHouseReg?.checked || false,
+      employerIdCard: docEmployerIdCard?.checked || false,
+      companyCert: docCompanyCert?.checked || false,
+      note: documentsNote?.value?.trim() || "",
+    },
+    caseStatus: {
+      status: getSelectedCaseStatus(),
+      appointmentDate: appointmentDate?.value || "",
     },
     receivedDocs,
     notifications,
@@ -1333,7 +1421,7 @@ function loadFormDraft() {
   const stored = localStorage.getItem(FORM_DRAFT_KEY);
   if (!stored) return;
   const formData = JSON.parse(stored);
-  populateForm({ formType: formData.formType || "personal", data: formData });
+  populateForm({ formType: formData.formType || "changeEmployer", data: formData });
 }
 
 function clearFormDraft() {
@@ -1357,9 +1445,11 @@ function clearFormDraft() {
   setStatus(formSaveStatus, translations[currentLanguage].formDraftCleared, "ok");
 }
 
-const applyTheme = (theme) => {
+const applyTheme = (theme, { persist = true } = {}) => {
   document.body.classList.toggle("theme-dark", theme === "dark");
-  localStorage.setItem(THEME_KEY, theme);
+  if (persist) {
+    localStorage.setItem(THEME_KEY, theme);
+  }
 };
 
 const initTheme = () => {
@@ -1368,7 +1458,14 @@ const initTheme = () => {
     applyTheme(storedTheme);
     return;
   }
-  applyTheme("light");
+  const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+  applyTheme(mediaQuery.matches ? "dark" : "light", { persist: false });
+  mediaQuery.addEventListener("change", (event) => {
+    if (localStorage.getItem(THEME_KEY)) {
+      return;
+    }
+    applyTheme(event.matches ? "dark" : "light", { persist: false });
+  });
 };
 
 const renderRecords = () => {
@@ -1379,31 +1476,28 @@ const renderRecords = () => {
   const query = recordSearch.value.trim().toLowerCase();
   const filter = recordFilter.value;
   const filtered = records.filter((record) => {
-    const matchesFilter =
-      filter === "all" || record.formType === filter || filter.startsWith("renewal:") || filter.startsWith("passport:") || filter.startsWith("nationality:");
-    const workers = normalizeWorkers(record.data);
-    if (filter.startsWith("renewal:")) {
-      const renewalValue = filter.split(":")[1];
-      if (record.data.renewalType !== renewalValue) {
-        return false;
-      }
-    }
-    if (filter.startsWith("passport:")) {
-      const passportValue = filter.split(":")[1];
-      if (!workers.some((worker) => worker.passportType === passportValue)) {
-        return false;
-      }
-    }
-    if (filter.startsWith("nationality:")) {
-      const nationalityValue = filter.split(":")[1];
-      if (!workers.some((worker) => worker.nationality === nationalityValue)) {
-        return false;
-      }
-    }
+    const matchesFilter = filter === "all" || record.formType === filter;
     if (!query) return matchesFilter;
-    const searchable = `${record.formId} ${record.formTypeLabel} ${record.displayName} ${record.data.company || ""} ${
-      record.data.employerId || ""
-    } ${getWorkerSearchText(workers)}`.toLowerCase();
+    const workers = normalizeWorkers(record.data);
+    const personalInfo = record.data.personalInfo || {};
+    const searchable = [
+      record.formId,
+      record.formTypeLabel,
+      record.displayName,
+      record.data.company,
+      record.data.employerId,
+      personalInfo.fullName,
+      personalInfo.employerName,
+      personalInfo.documentSender,
+      personalInfo.documentReceiver,
+      personalInfo.documentReturnDate,
+      record.data.recordedBy,
+      record.data.formTypeOtherDetail,
+      getWorkerSearchText(workers),
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
     return matchesFilter && searchable.includes(query);
   });
   const scoped = filtered;
@@ -1417,58 +1511,32 @@ const renderRecords = () => {
     recordsStatus.textContent = `${scoped.length} ${translations[currentLanguage].recordsCount}`;
   }
 
-  const grouped = scoped.reduce((acc, record) => {
-    const key = record.data.company || record.data.employerId || translations[currentLanguage].recordEmployerLabel;
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(record);
-    return acc;
-  }, {});
-  Object.entries(grouped).forEach(([employerName, records]) => {
-    const groupTitle = document.createElement("h4");
-    groupTitle.className = "record-group-title";
-    groupTitle.textContent = employerName;
-    recordsList.appendChild(groupTitle);
-    records.forEach((record) => {
-      const card = document.createElement("div");
-      card.className = "record-card";
-    const title = document.createElement("div");
-    title.className = "record-title";
-    title.textContent = record.displayName || record.formTypeLabel;
-    const meta = document.createElement("div");
-    meta.className = "record-meta";
-    meta.textContent = `${translations[currentLanguage].recordFormId}: ${record.formId} • ${
-      translations[currentLanguage].recordFormType
-    }: ${record.formTypeLabel} • ${translations[currentLanguage].recordUpdated}: ${formatDateTime(
-      record.updatedAt
-    )}`;
-    const tags = document.createElement("div");
-    tags.className = "record-tags";
-    const chip = document.createElement("span");
-    chip.className = "record-chip";
-    chip.textContent = record.formTypeLabel;
-    tags.appendChild(chip);
-    const statusChip = document.createElement("span");
-    statusChip.className = "record-chip";
-    statusChip.textContent =
+  scoped.forEach((record) => {
+    const row = document.createElement("tr");
+    const personalInfo = record.data.personalInfo || {};
+    const workers = normalizeWorkers(record.data);
+    const workerName = personalInfo.fullName || workers[0]?.fullName || "-";
+    const employerLabel = personalInfo.employerName || record.data.company || record.data.employerId || "-";
+    const formIdCell = document.createElement("td");
+    formIdCell.textContent = record.formId;
+    const formTypeCell = document.createElement("td");
+    formTypeCell.textContent = record.formTypeLabel;
+    const employerCell = document.createElement("td");
+    employerCell.textContent = employerLabel;
+    const workerCell = document.createElement("td");
+    workerCell.textContent = workerName;
+    const recordedByCell = document.createElement("td");
+    recordedByCell.textContent = record.data.recordedBy || "-";
+    const updatedCell = document.createElement("td");
+    updatedCell.textContent = formatDateTime(record.updatedAt);
+    const statusCell = document.createElement("td");
+    statusCell.textContent =
       record.status === "final"
         ? translations[currentLanguage].recordStatusFinal
         : translations[currentLanguage].recordStatusDraft;
-    tags.appendChild(statusChip);
-    if (record.data.caseType) {
-      const caseChip = document.createElement("span");
-      caseChip.className = "record-chip";
-      caseChip.textContent = getCaseTypeLabel(record.data.caseType);
-      tags.appendChild(caseChip);
-    }
-    if (record.data.paymentStatus) {
-      const paymentChip = document.createElement("span");
-      paymentChip.className = "record-chip";
-      paymentChip.textContent =
-        record.data.paymentStatus === "paid"
-          ? translations[currentLanguage].paymentPaid
-          : translations[currentLanguage].paymentPending;
-      tags.appendChild(paymentChip);
-    }
+    const actionsCell = document.createElement("td");
+    const actionsWrapper = document.createElement("div");
+    actionsWrapper.className = "table-actions";
     const editButton = document.createElement("button");
     editButton.type = "button";
     editButton.className = "secondary";
@@ -1495,33 +1563,19 @@ const renderRecords = () => {
       saveRecords(nextRecords);
       renderRecords();
     });
-    card.appendChild(title);
-    card.appendChild(meta);
-    card.appendChild(tags);
-    card.appendChild(editButton);
-    card.appendChild(verifyButton);
-    card.appendChild(deleteButton);
-      const statusSummary = getRecordStatusSummary(record);
-      if (statusSummary.hasCompleted) {
-        const completedChip = document.createElement("span");
-        completedChip.className = "record-chip success";
-        completedChip.textContent = translations[currentLanguage].statusChipCompleted;
-        tags.appendChild(completedChip);
-      }
-      if (statusSummary.hasPending) {
-        const pendingChip = document.createElement("span");
-        pendingChip.className = "record-chip warn";
-        pendingChip.textContent = translations[currentLanguage].statusChipPending;
-        tags.appendChild(pendingChip);
-      }
-      if (statusSummary.hasAlert) {
-        const alertChip = document.createElement("span");
-        alertChip.className = "record-chip alert";
-        alertChip.textContent = translations[currentLanguage].statusChipAlert;
-        tags.appendChild(alertChip);
-      }
-      recordsList.appendChild(card);
-    });
+    actionsWrapper.appendChild(editButton);
+    actionsWrapper.appendChild(verifyButton);
+    actionsWrapper.appendChild(deleteButton);
+    actionsCell.appendChild(actionsWrapper);
+    row.appendChild(formIdCell);
+    row.appendChild(formTypeCell);
+    row.appendChild(employerCell);
+    row.appendChild(workerCell);
+    row.appendChild(recordedByCell);
+    row.appendChild(updatedCell);
+    row.appendChild(statusCell);
+    row.appendChild(actionsCell);
+    recordsList.appendChild(row);
   });
 };
 
@@ -1538,7 +1592,7 @@ const openRecordModal = (record) => {
     const list = document.createElement("ul");
     const employerItem = document.createElement("li");
     employerItem.textContent = `${translations[currentLanguage].recordEmployerLabel}: ${
-      record.data.company || record.data.employerId || "-"
+      record.data.personalInfo?.employerName || record.data.company || record.data.employerId || "-"
     }`;
     const caseTypeItem = document.createElement("li");
     caseTypeItem.textContent = `${translations[currentLanguage].recordCaseTypeLabel}: ${getCaseTypeLabel(
@@ -1574,36 +1628,21 @@ const openRecordModal = (record) => {
     recordedByItem.textContent = `${translations[currentLanguage].recordedByLabel}: ${
       record.data.recordedBy || "-"
     }`;
-    const requirements = record.data.requirements || {};
-    const requirementParts = [];
-    if (requirements.systemRegistered) requirementParts.push(translations[currentLanguage].requirementRegistered);
-    if (requirements.healthCheck) requirementParts.push(translations[currentLanguage].requirementHealthCheck);
-    if (requirements.identityCheck) requirementParts.push(translations[currentLanguage].requirementIdentity);
-    if (requirements.workPermit) requirementParts.push(translations[currentLanguage].requirementWorkPermit);
-    if (requirements.receiptCheck) requirementParts.push(translations[currentLanguage].requirementReceipt);
-    if (requirements.visaFiled) requirementParts.push(translations[currentLanguage].requirementVisaFiled);
-    if (requirements.residenceNotice) requirementParts.push(translations[currentLanguage].requirementResidenceNotice);
-    if (requirements.passPage) requirementParts.push(translations[currentLanguage].requirementPassPage);
-    if (requirements.visaPage) requirementParts.push(translations[currentLanguage].requirementVisaPage);
-    if (requirements.employerIdCard) requirementParts.push(translations[currentLanguage].requirementEmployerCard);
-    if (requirements.houseReg) requirementParts.push(translations[currentLanguage].requirementHouseReg);
-    if (requirements.renewOneYearDate) {
-      requirementParts.push(
-        `${translations[currentLanguage].requirementRenewOneYear}: ${requirements.renewOneYearDate}`
-      );
-    }
-    if (requirements.renewTwoYearDate) {
-      requirementParts.push(
-        `${translations[currentLanguage].requirementRenewTwoYear}: ${requirements.renewTwoYearDate}`
-      );
-    }
-    if (requirements.mouDate) {
-      requirementParts.push(`${translations[currentLanguage].requirementMou}: ${requirements.mouDate}`);
-    }
-    if (requirements.visaRunDate) {
-      requirementParts.push(`${translations[currentLanguage].requirementVisaRun}: ${requirements.visaRunDate}`);
-    }
-    const report = record.data.report || {};
+    const personalInfo = record.data.personalInfo || {};
+    const documents = record.data.documents || {};
+    const caseStatus = record.data.caseStatus || {};
+    const documentParts = [];
+    if (documents.workPermit) documentParts.push(translations[currentLanguage].documentWorkPermit);
+    if (documents.receipt) documentParts.push(translations[currentLanguage].documentReceipt);
+    if (documents.requestForm) documentParts.push(translations[currentLanguage].documentRequestForm);
+    if (documents.nameList) documentParts.push(translations[currentLanguage].documentNameList);
+    if (documents.passPage) documentParts.push(translations[currentLanguage].documentPassPage);
+    if (documents.visaPage) documentParts.push(translations[currentLanguage].documentVisaPage);
+    if (documents.healthCard) documentParts.push(translations[currentLanguage].documentHealthCard);
+    if (documents.exitNotice) documentParts.push(translations[currentLanguage].documentExitNotice);
+    if (documents.houseReg) documentParts.push(translations[currentLanguage].documentHouseReg);
+    if (documents.employerIdCard) documentParts.push(translations[currentLanguage].documentEmployerIdCard);
+    if (documents.companyCert) documentParts.push(translations[currentLanguage].documentCompanyCert);
     list.appendChild(employerItem);
     if (record.data.caseType) {
       list.appendChild(caseTypeItem);
@@ -1615,31 +1654,84 @@ const openRecordModal = (record) => {
     list.appendChild(recordedByItem);
     list.appendChild(renewalTypeItem);
     list.appendChild(renewalStatusItem);
-    if (requirementParts.length) {
-      const requirementItem = document.createElement("li");
-      requirementItem.textContent = `${translations[currentLanguage].requirementsTitle}: ${requirementParts.join(
-        ", "
+    if (personalInfo.fullName) {
+      const workerNameItem = document.createElement("li");
+      workerNameItem.textContent = `${translations[currentLanguage].workerFullNameLabel}: ${personalInfo.fullName}`;
+      list.appendChild(workerNameItem);
+    }
+    if (personalInfo.gender) {
+      const genderMap = {
+        male: translations[currentLanguage].workerGenderMale,
+        female: translations[currentLanguage].workerGenderFemale,
+        other: translations[currentLanguage].workerGenderOther,
+      };
+      const genderItem = document.createElement("li");
+      genderItem.textContent = `${translations[currentLanguage].workerGenderLabel}: ${
+        genderMap[personalInfo.gender] || personalInfo.gender
+      }`;
+      list.appendChild(genderItem);
+    }
+    if (personalInfo.nationality) {
+      const nationalityItem = document.createElement("li");
+      nationalityItem.textContent = `${translations[currentLanguage].workerNationalityLabel}: ${personalInfo.nationality}`;
+      list.appendChild(nationalityItem);
+    }
+    if (personalInfo.businessType) {
+      const businessItem = document.createElement("li");
+      businessItem.textContent = `${translations[currentLanguage].businessTypeLabel}: ${personalInfo.businessType}`;
+      list.appendChild(businessItem);
+    }
+    if (personalInfo.employerName) {
+      const employerNameItem = document.createElement("li");
+      employerNameItem.textContent = `${translations[currentLanguage].employerNameLabel}: ${personalInfo.employerName}`;
+      list.appendChild(employerNameItem);
+    }
+    if (personalInfo.documentSender) {
+      const senderItem = document.createElement("li");
+      senderItem.textContent = `${translations[currentLanguage].documentSenderLabel}: ${personalInfo.documentSender}`;
+      list.appendChild(senderItem);
+    }
+    if (personalInfo.documentSentDate) {
+      const sentItem = document.createElement("li");
+      sentItem.textContent = `${translations[currentLanguage].documentSentDateLabel}: ${personalInfo.documentSentDate}`;
+      list.appendChild(sentItem);
+    }
+    if (personalInfo.documentReceiver) {
+      const receiverItem = document.createElement("li");
+      receiverItem.textContent = `${translations[currentLanguage].documentReceiverLabel}: ${personalInfo.documentReceiver}`;
+      list.appendChild(receiverItem);
+    }
+    if (personalInfo.documentReceivedDate) {
+      const receivedItem = document.createElement("li");
+      receivedItem.textContent = `${translations[currentLanguage].documentReceivedDateLabel}: ${personalInfo.documentReceivedDate}`;
+      list.appendChild(receivedItem);
+    }
+    if (personalInfo.documentReturnDate) {
+      const returnItem = document.createElement("li");
+      returnItem.textContent = `${translations[currentLanguage].documentReturnDateLabel}: ${personalInfo.documentReturnDate}`;
+      list.appendChild(returnItem);
+    }
+    if (documentParts.length) {
+      const documentsItem = document.createElement("li");
+      documentsItem.textContent = `${translations[currentLanguage].documentsTitle}: ${documentParts.join(", ")}`;
+      list.appendChild(documentsItem);
+    }
+    if (documents.note) {
+      const noteItem = document.createElement("li");
+      noteItem.textContent = `${translations[currentLanguage].documentsNoteLabel}: ${documents.note}`;
+      list.appendChild(noteItem);
+    }
+    if (caseStatus.status) {
+      const caseStatusItem = document.createElement("li");
+      caseStatusItem.textContent = `${translations[currentLanguage].statusTitle}: ${getCaseStatusLabel(
+        caseStatus.status
       )}`;
-      list.appendChild(requirementItem);
+      list.appendChild(caseStatusItem);
     }
-    if (report.employerName || report.senderName || report.workerName) {
-      const reportItem = document.createElement("li");
-      reportItem.textContent = `${translations[currentLanguage].reportTitle}: ${
-        report.workerName || "-"
-      } • ${translations[currentLanguage].reportEmployerLabel}: ${report.employerName || "-"} • ${
-        translations[currentLanguage].reportSenderLabel
-      }: ${report.senderName || "-"}`;
-      list.appendChild(reportItem);
-    }
-    if (report.status) {
-      const reportStatusItem = document.createElement("li");
-      reportStatusItem.textContent = `${translations[currentLanguage].reportStatusLabel}: ${report.status}`;
-      list.appendChild(reportStatusItem);
-    }
-    if (report.appointmentDate) {
-      const reportDateItem = document.createElement("li");
-      reportDateItem.textContent = `${translations[currentLanguage].reportAppointmentDateLabel}: ${report.appointmentDate}`;
-      list.appendChild(reportDateItem);
+    if (caseStatus.appointmentDate) {
+      const appointmentItem = document.createElement("li");
+      appointmentItem.textContent = `${translations[currentLanguage].statusAppointmentDateLabel}: ${caseStatus.appointmentDate}`;
+      list.appendChild(appointmentItem);
     }
     recordModalBody.appendChild(title);
     recordModalBody.appendChild(list);
@@ -1996,14 +2088,14 @@ const saveRecord = (status = "draft") => {
     ? ` (${workerNames.length} ${translations[currentLanguage].workerCountSuffix})`
     : "";
   const displayName =
-    formData.company?.trim()
-      ? `${formData.company}${workerCountLabel}`
-      : workerNames[0] || formData.employerId || formId;
+    formData.personalInfo?.employerName?.trim()
+      ? `${formData.personalInfo.employerName}${workerCountLabel}`
+      : formData.personalInfo?.fullName || workerNames[0] || formData.employerId || formId;
   const existingIndex = records.findIndex((record) => record.formId === formId);
   const record = {
     formId,
     formType: formData.formType,
-    formTypeLabel: getFormTypeLabel(formData.formType),
+    formTypeLabel: buildFormTypeLabel(formData),
     displayName,
     updatedAt: new Date().toISOString(),
     status,
@@ -2028,28 +2120,43 @@ const saveRecord = (status = "draft") => {
 
 const populateForm = (record) => {
   if (!record) return;
-  if (formType) formType.value = record.formType;
+  if (formTypeInputs?.length) {
+    formTypeInputs.forEach((input) => {
+      input.checked = input.value === record.formType;
+    });
+  }
+  if (formTypeOtherDetail) formTypeOtherDetail.value = record.data.formTypeOtherDetail || "";
   if (recordedBy) recordedBy.value = record.data.recordedBy || "";
-  if (systemRegistered) systemRegistered.checked = record.data.requirements?.systemRegistered || false;
-  if (renewOneYearDate) renewOneYearDate.value = record.data.requirements?.renewOneYearDate || "";
-  if (renewTwoYearDate) renewTwoYearDate.value = record.data.requirements?.renewTwoYearDate || "";
-  if (mouDate) mouDate.value = record.data.requirements?.mouDate || "";
-  if (visaRunDate) visaRunDate.value = record.data.requirements?.visaRunDate || "";
-  if (healthCheck) healthCheck.checked = record.data.requirements?.healthCheck || false;
-  if (identityCheck) identityCheck.checked = record.data.requirements?.identityCheck || false;
-  if (workPermit) workPermit.checked = record.data.requirements?.workPermit || false;
-  if (receiptCheck) receiptCheck.checked = record.data.requirements?.receiptCheck || false;
-  if (visaFiled) visaFiled.checked = record.data.requirements?.visaFiled || false;
-  if (residenceNotice) residenceNotice.checked = record.data.requirements?.residenceNotice || false;
-  if (passPage) passPage.checked = record.data.requirements?.passPage || false;
-  if (visaPage) visaPage.checked = record.data.requirements?.visaPage || false;
-  if (employerIdCard) employerIdCard.checked = record.data.requirements?.employerIdCard || false;
-  if (houseReg) houseReg.checked = record.data.requirements?.houseReg || false;
-  if (reportEmployer) reportEmployer.value = record.data.report?.employerName || "";
-  if (reportSender) reportSender.value = record.data.report?.senderName || "";
-  if (reportWorker) reportWorker.value = record.data.report?.workerName || "";
-  if (reportStatus) reportStatus.value = record.data.report?.status || "";
-  if (reportAppointmentDate) reportAppointmentDate.value = record.data.report?.appointmentDate || "";
+  if (workerFullName) workerFullName.value = record.data.personalInfo?.fullName || "";
+  if (workerGender) workerGender.value = record.data.personalInfo?.gender || "";
+  if (workerNationality) workerNationality.value = record.data.personalInfo?.nationality || "";
+  if (businessType) businessType.value = record.data.personalInfo?.businessType || "";
+  if (employerName) employerName.value = record.data.personalInfo?.employerName || "";
+  if (documentSender) documentSender.value = record.data.personalInfo?.documentSender || "";
+  if (documentSentDate) documentSentDate.value = record.data.personalInfo?.documentSentDate || "";
+  if (documentReceiver) documentReceiver.value = record.data.personalInfo?.documentReceiver || "";
+  if (documentReceivedDate) documentReceivedDate.value = record.data.personalInfo?.documentReceivedDate || "";
+  if (documentReturnDate) documentReturnDate.value = record.data.personalInfo?.documentReturnDate || "";
+  if (docWorkPermit) docWorkPermit.checked = record.data.documents?.workPermit || false;
+  if (docReceipt) docReceipt.checked = record.data.documents?.receipt || false;
+  if (docRequestForm) docRequestForm.checked = record.data.documents?.requestForm || false;
+  if (docNameList) docNameList.checked = record.data.documents?.nameList || false;
+  if (docPassPage) docPassPage.checked = record.data.documents?.passPage || false;
+  if (docVisaPage) docVisaPage.checked = record.data.documents?.visaPage || false;
+  if (docHealthCard) docHealthCard.checked = record.data.documents?.healthCard || false;
+  if (docExitNotice) docExitNotice.checked = record.data.documents?.exitNotice || false;
+  if (docHouseReg) docHouseReg.checked = record.data.documents?.houseReg || false;
+  if (docEmployerIdCard) docEmployerIdCard.checked = record.data.documents?.employerIdCard || false;
+  if (docCompanyCert) docCompanyCert.checked = record.data.documents?.companyCert || false;
+  if (documentsNote) documentsNote.value = record.data.documents?.note || "";
+  if (caseStatusInputs?.length) {
+    caseStatusInputs.forEach((input) => {
+      input.checked = input.value === record.data.caseStatus?.status;
+    });
+  }
+  if (appointmentDate) appointmentDate.value = record.data.caseStatus?.appointmentDate || "";
+  updateFormTypeOtherVisibility();
+  updateAppointmentVisibility();
   if (workerList) {
     workerList.innerHTML = "";
     const workers = normalizeWorkers(record.data);
@@ -2116,8 +2223,18 @@ const populateForm = (record) => {
   updatePaymentSlipPreview();
 };
 
-if (formType) {
-  formType.addEventListener("change", updateSections);
+if (formTypeInputs?.length) {
+  formTypeInputs.forEach((input) => {
+    input.addEventListener("change", () => {
+      updateSections();
+      updateFormTypeOtherVisibility();
+    });
+  });
+}
+if (caseStatusInputs?.length) {
+  caseStatusInputs.forEach((input) => {
+    input.addEventListener("change", updateAppointmentVisibility);
+  });
 }
 if (passportCheckInput && passportStatus) {
   passportCheckInput.addEventListener("input", () => validatePassport(passportCheckInput.value, passportStatus));
@@ -2142,6 +2259,8 @@ if (paymentSlipInput) {
   paymentSlipInput.addEventListener("change", updatePaymentSlipPreview);
 }
 updateSections();
+updateFormTypeOtherVisibility();
+updateAppointmentVisibility();
 ensureWorkerCards();
 updateUploadPreview();
 updatePaymentSlipPreview();

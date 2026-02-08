@@ -1955,14 +1955,12 @@ if (pageLoader) {
 
   const safeHide = () => setTimeout(hideLoader, 200);
 
-  // ถ้าโหลดเสร็จไปแล้ว ให้ปิดทันที
   if (document.readyState === "complete") {
     safeHide();
   } else {
     window.addEventListener("load", safeHide, { once: true });
   }
 
-  // กันเหนียว: ต่อให้มี error/โหลดไม่จบ ก็ปิดเอง
   setTimeout(hideLoader, 1500);
 }
 

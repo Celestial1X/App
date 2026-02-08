@@ -995,12 +995,15 @@ const saveRecords = (records) => {
 
 
 const buildFormId = () => {
-  const date = new Date();
-  const month = `${date.getMonth() + 1}`.padStart(2, "0");
-  const day = `${date.getDate()}`.padStart(2, "0");
-  const year = date.getFullYear();
-  const random = Math.floor(Math.random() * 9000 + 1000);
-  return `FORM-${year}${month}${day}-${random}`;
+  const records = loadRecords();
+  const maxId = records.reduce((max, record) => {
+    const value = Number.parseInt(String(record.formId || ""), 10);
+    if (Number.isNaN(value)) {
+      return max;
+    }
+    return Math.max(max, value);
+  }, 0);
+  return String(maxId + 1);
 };
 
 const formatDateTime = (value) => {
@@ -1049,6 +1052,18 @@ const getCaseStatusLabel = (value) => {
     appointment: translations[currentLanguage].statusAppointment,
   };
   return map[value] || value || "-";
+};
+
+const getCaseStatusDisplay = (caseStatus = {}) => {
+  const status = caseStatus.status || "";
+  if (status === "appointment") {
+    if (caseStatus.appointmentDate) {
+      const waitingLabel = currentLanguage === "th" ? "รอวันนัด" : "Awaiting appointment";
+      return `${waitingLabel} (${caseStatus.appointmentDate})`;
+    }
+    return getCaseStatusLabel(status);
+  }
+  return getCaseStatusLabel(status);
 };
 
 const getPassportTypeLabel = (value) => {
@@ -1595,10 +1610,7 @@ const renderRecords = () => {
     const updatedCell = document.createElement("td");
     updatedCell.textContent = formatDateTime(record.updatedAt);
     const statusCell = document.createElement("td");
-    statusCell.textContent =
-      record.status === "final"
-        ? translations[currentLanguage].recordStatusFinal
-        : translations[currentLanguage].recordStatusDraft;
+    statusCell.textContent = getCaseStatusDisplay(record.data.caseStatus || {});
     const actionsCell = document.createElement("td");
     const actionsWrapper = document.createElement("div");
     actionsWrapper.className = "table-actions";
@@ -1666,11 +1678,9 @@ const openRecordModal = (record) => {
     const typeItem = document.createElement("li");
     typeItem.textContent = `${translations[currentLanguage].recordFormTypeLabel}: ${record.formTypeLabel}`;
     const statusItem = document.createElement("li");
-    statusItem.textContent = `${translations[currentLanguage].verificationLabel}: ${
-      record.status === "final"
-        ? translations[currentLanguage].recordStatusFinal
-        : translations[currentLanguage].recordStatusDraft
-    }`;
+    statusItem.textContent = `${translations[currentLanguage].statusTitle}: ${getCaseStatusDisplay(
+      record.data.caseStatus || {}
+    )}`;
     const renewalTypeItem = document.createElement("li");
     renewalTypeItem.textContent = `${translations[currentLanguage].renewalTypeLabel}: ${getRenewalTypeLabel(
       record.data.renewalType

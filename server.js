@@ -49,20 +49,26 @@ app.get("/api/records/:id", async (req, res) => {
 });
 
 app.post("/api/records", async (req, res) => {
-  const payload = req.body;
-  if (!payload?.formId) {
-    res.status(400).json({ message: "formId is required" });
+  const payload = req.body || {};
+  const records = await readRecords();
+  const incomingId = String(payload.formId || "").trim();
+  const index = incomingId ? records.findIndex((item) => item.formId === incomingId) : -1;
+  if (index >= 0) {
+    records[index] = { ...payload, formId: incomingId };
+    await writeRecords(records);
+    res.json(records[index]);
     return;
   }
-  const records = await readRecords();
-  const index = records.findIndex((item) => item.formId === payload.formId);
-  if (index >= 0) {
-    records[index] = payload;
-  } else {
-    records.unshift(payload);
-  }
+
+  const maxId = records.reduce((max, item) => {
+    const value = Number.parseInt(String(item.formId || ""), 10);
+    return Number.isNaN(value) ? max : Math.max(max, value);
+  }, 0);
+  const nextId = String(maxId + 1);
+  const nextRecord = { ...payload, formId: nextId };
+  records.unshift(nextRecord);
   await writeRecords(records);
-  res.json({ status: "ok" });
+  res.json(nextRecord);
 });
 
 app.delete("/api/records", async (_req, res) => {

@@ -1046,16 +1046,22 @@ const syncRecordsFromServer = async () => {
 
 const upsertRecordToServer = async (record) => {
   if (!canUseServerSync()) {
-    return;
+    return null;
   }
   try {
-    await fetch(RECORDS_API_URL, {
+    const response = await fetch(RECORDS_API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(record),
     });
+    if (!response.ok) {
+      return null;
+    }
+    const savedRecord = await response.json();
+    return savedRecord && typeof savedRecord === "object" ? savedRecord : null;
   } catch (_error) {
     // keep local save success even if server is unavailable
+    return null;
   }
 };
 
@@ -2326,7 +2332,7 @@ const saveRecord = async (status = "draft") => {
     setStatus(formSaveStatus, formatExpiryLabel(cardExpiryState.state, cardExpiryState.days), "warn");
   }
   const records = loadRecords();
-  const formId = currentEditId || buildFormId();
+  const formId = currentEditId || "";
   const workerNames = (formData.workers || []).map((worker) => worker.fullName).filter(Boolean);
   const workerCountLabel = workerNames.length
     ? ` (${workerNames.length} ${translations[currentLanguage].workerCountSuffix})`
@@ -2335,9 +2341,8 @@ const saveRecord = async (status = "draft") => {
     formData.personalInfo?.employerName?.trim()
       ? `${formData.personalInfo.employerName}${workerCountLabel}`
       : formData.personalInfo?.fullName || workerNames[0] || formData.employerId || formId;
-  const existingIndex = records.findIndex((record) => record.formId === formId);
-  const record = {
-    formId,
+  const recordPayload = {
+    ...(formId ? { formId } : {}),
     formType: formData.formType,
     formTypeLabel: buildFormTypeLabel(formData),
     displayName,
@@ -2345,21 +2350,36 @@ const saveRecord = async (status = "draft") => {
     status,
     data: formData,
   };
-  if (existingIndex >= 0) {
-    records.splice(existingIndex, 1, record);
+
+  let finalRecord = null;
+  const savedServerRecord = await upsertRecordToServer(recordPayload);
+  if (savedServerRecord) {
+    finalRecord = {
+      ...recordPayload,
+      ...savedServerRecord,
+      formId: String(savedServerRecord.formId || ""),
+    };
   } else {
-    records.unshift(record);
+    const fallbackFormId = formId || buildFormId();
+    finalRecord = { ...recordPayload, formId: fallbackFormId };
   }
+
+  const existingIndex = records.findIndex((record) => record.formId === finalRecord.formId);
+  if (existingIndex >= 0) {
+    records.splice(existingIndex, 1, finalRecord);
+  } else {
+    records.unshift(finalRecord);
+  }
+
   saveRecords(records);
-  await upsertRecordToServer(record);
   localStorage.removeItem(FORM_DRAFT_KEY);
-  setStatus(formSaveStatus, `${translations[currentLanguage].saveDraftSuccess}: ${formId}`, "ok");
-  currentEditId = null;
+  setStatus(formSaveStatus, `${translations[currentLanguage].saveDraftSuccess}: ${finalRecord.formId}`, "ok");
+  currentEditId = finalRecord.formId;
   localStorage.removeItem(EDIT_KEY);
   renderRecords();
   renderLatestRecordCard();
 if (workerForm) {
-    localStorage.setItem(RECORD_SEARCH_KEY, formId);
+    localStorage.setItem(RECORD_SEARCH_KEY, finalRecord.formId);
     window.location.href = "records.html";
   }
 };

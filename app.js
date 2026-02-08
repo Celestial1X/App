@@ -112,6 +112,7 @@ const RECORD_SEARCH_KEY = "recordSearchQuery";
 const FORM_DRAFT_KEY = "workerFormDraft";
 const THEME_KEY = "uiTheme";
 const API_BASE_KEY = "recordsApiBaseUrl";
+const LINKED_STORE_KEY = "linkedEntities";
 
 const normalizeApiBaseUrl = (value) => String(value || "").trim().replace(/\/+$/, "");
 
@@ -1004,6 +1005,128 @@ const readJsonStorage = (key, fallback) => {
   }
 };
 
+const loadLinkedStore = () => {
+  const store = readJsonStorage(LINKED_STORE_KEY, { employers: {}, workers: {} });
+  const employers = store?.employers && typeof store.employers === "object" ? store.employers : {};
+  const workers = store?.workers && typeof store.workers === "object" ? store.workers : {};
+  return { employers, workers };
+};
+
+const saveLinkedStore = (store) => {
+  localStorage.setItem(LINKED_STORE_KEY, JSON.stringify(store));
+};
+
+const buildEmployerKey = (formData) => {
+  const employerIdValue = formData?.employerId?.trim?.() || "";
+  if (employerIdValue) {
+    return `employer:${employerIdValue.toLowerCase()}`;
+  }
+  const employerNameValue = formData?.personalInfo?.employerName?.trim?.() || "";
+  if (employerNameValue) {
+    return `employer-name:${employerNameValue.toLowerCase()}`;
+  }
+  return "";
+};
+
+const buildWorkerKey = (worker = {}, fallbackIndex = 0) => {
+  const workerIdValue = worker.workerId?.trim?.() || "";
+  if (workerIdValue) {
+    return `worker-id:${workerIdValue.toLowerCase()}`;
+  }
+  const passportValue = worker.passport?.trim?.() || "";
+  if (passportValue) {
+    return `passport:${passportValue.toLowerCase()}`;
+  }
+  const alienIdValue = worker.alienId?.trim?.() || "";
+  if (alienIdValue) {
+    return `alien:${alienIdValue.toLowerCase()}`;
+  }
+  const ciValue = worker.ciNumber?.trim?.() || "";
+  if (ciValue) {
+    return `ci:${ciValue.toLowerCase()}`;
+  }
+  const fullNameValue = worker.fullName?.trim?.() || "";
+  const nationalityValue = worker.nationality?.trim?.() || "";
+  if (fullNameValue || nationalityValue) {
+    return `worker:${fullNameValue.toLowerCase()}-${nationalityValue.toLowerCase()}`;
+  }
+  return `worker:unknown-${fallbackIndex}`;
+};
+
+const buildLinkedWorkerList = (formData) => {
+  const workers = Array.isArray(formData?.workers) ? formData.workers : [];
+  if (workers.length) {
+    return workers;
+  }
+  const personalInfo = formData?.personalInfo || {};
+  const fallbackWorker = {
+    fullName: personalInfo.fullName || "",
+    passport: personalInfo.passNumber || "",
+    alienId: personalInfo.alienId || "",
+    nationality: personalInfo.nationality || "",
+    gender: personalInfo.gender || "",
+    email: personalInfo.email || "",
+  };
+  return hasWorkerValue(fallbackWorker) ? [fallbackWorker] : [];
+};
+
+const upsertLinkedEntities = (formData) => {
+  const store = loadLinkedStore();
+  const employerKey = buildEmployerKey(formData);
+  if (employerKey) {
+    store.employers[employerKey] = {
+      employerId: formData?.employerId || "",
+      name: formData?.personalInfo?.employerName || "",
+      businessType: formData?.personalInfo?.businessType || "",
+      company: formData?.company || "",
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  const linkedWorkers = buildLinkedWorkerList(formData);
+  const workerKeys = linkedWorkers.map((worker, index) => {
+    const key = buildWorkerKey(worker, index);
+    store.workers[key] = {
+      ...worker,
+      updatedAt: new Date().toISOString(),
+    };
+    return key;
+  });
+
+  saveLinkedStore(store);
+  return { employerKey, workerKeys };
+};
+
+const resolveLinkedEmployer = (record) => {
+  const store = loadLinkedStore();
+  const key = record?.data?.linked?.employerKey || "";
+  if (!key) return null;
+  return store.employers?.[key] || null;
+};
+
+const resolveLinkedWorkers = (record) => {
+  const store = loadLinkedStore();
+  const keys = Array.isArray(record?.data?.linked?.workerKeys) ? record.data.linked.workerKeys : [];
+  return keys.map((key) => store.workers?.[key]).filter(Boolean);
+};
+
+const buildLinkedRecordView = (record) => {
+  if (!record || !record.data) return record;
+  const linkedEmployer = resolveLinkedEmployer(record);
+  const linkedWorkers = resolveLinkedWorkers(record);
+  const personalInfo = { ...(record.data.personalInfo || {}) };
+  if (linkedEmployer) {
+    if (linkedEmployer.name) personalInfo.employerName = linkedEmployer.name;
+    if (linkedEmployer.businessType) personalInfo.businessType = linkedEmployer.businessType;
+  }
+  const data = {
+    ...record.data,
+    personalInfo,
+    workers: linkedWorkers.length ? linkedWorkers : record.data.workers,
+  };
+  return { ...record, data };
+};
+
 const loadRecords = () => {
   const records = readJsonStorage("workerRecords", []);
   if (!Array.isArray(records)) {
@@ -1202,9 +1325,13 @@ const renderLatestRecordCard = () => {
     return;
   }
   const latest = [...records].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))[0];
-  latestRecordTitle.textContent = `${latest.formId} • ${latest.formTypeLabel || "-"}`;
-  latestRecordMeta.textContent = `${formatDateTime(latest.updatedAt)} • ${
-    latest.data?.personalInfo?.fullName || latest.data?.personalInfo?.employerName || latest.displayName || "-"
+  const linkedLatest = buildLinkedRecordView(latest);
+  latestRecordTitle.textContent = `${linkedLatest.formId} • ${linkedLatest.formTypeLabel || "-"}`;
+  latestRecordMeta.textContent = `${formatDateTime(linkedLatest.updatedAt)} • ${
+    linkedLatest.data?.personalInfo?.fullName ||
+    linkedLatest.data?.personalInfo?.employerName ||
+    linkedLatest.displayName ||
+    "-"
   }`;
 };
 
@@ -1550,7 +1677,8 @@ const getAggregatedExpiryState = (workers, field) => {
 };
 
 const getRecordStatusSummary = (record) => {
-  const workers = normalizeWorkers(record.data);
+  const linkedRecord = buildLinkedRecordView(record);
+  const workers = normalizeWorkers(linkedRecord.data);
   const hasCompleted = workers.some((worker) => worker.scheduleStatus === "completed");
   const hasPendingSchedule = workers.some((worker) => worker.scheduleStatus !== "completed");
   const hasExpiryWarning =
@@ -1561,7 +1689,7 @@ const getRecordStatusSummary = (record) => {
     getAggregatedExpiryState(workers, "cardExpiryDate").state === "expired" ||
     getAggregatedExpiryState(workers, "visaExpiryDate").state === "expired" ||
     getAggregatedExpiryState(workers, "expiry").state === "expired";
-  const hasPaymentPending = record.data.paymentStatus === "pending";
+  const hasPaymentPending = linkedRecord.data.paymentStatus === "pending";
   return {
     hasCompleted,
     hasPending: hasPendingSchedule || hasExpiryWarning,
@@ -1752,23 +1880,24 @@ const renderRecords = () => {
   const query = recordSearch.value.trim().toLowerCase();
   const filter = recordFilter.value;
   const filtered = records.filter((record) => {
-    const matchesFilter = filter === "all" || record.formType === filter;
+    const linkedRecord = buildLinkedRecordView(record);
+    const matchesFilter = filter === "all" || linkedRecord.formType === filter;
     if (!query) return matchesFilter;
-    const workers = normalizeWorkers(record.data);
-    const personalInfo = record.data.personalInfo || {};
+    const workers = normalizeWorkers(linkedRecord.data);
+    const personalInfo = linkedRecord.data.personalInfo || {};
     const searchable = [
-      record.formId,
-      record.formTypeLabel,
-      record.displayName,
-      record.data.company,
-      record.data.employerId,
+      linkedRecord.formId,
+      linkedRecord.formTypeLabel,
+      linkedRecord.displayName,
+      linkedRecord.data.company,
+      linkedRecord.data.employerId,
       personalInfo.fullName,
       personalInfo.employerName,
       personalInfo.documentSender,
       personalInfo.documentReceiver,
       personalInfo.documentReturnDate,
-      record.data.recordedBy,
-      record.data.formTypeOtherDetail,
+      linkedRecord.data.recordedBy,
+      linkedRecord.data.formTypeOtherDetail,
       getWorkerSearchText(workers),
     ]
       .filter(Boolean)
@@ -1790,25 +1919,27 @@ const renderRecords = () => {
   }
 
   scoped.forEach((record) => {
+    const linkedRecord = buildLinkedRecordView(record);
     const row = document.createElement("tr");
-    const personalInfo = record.data.personalInfo || {};
-    const workers = normalizeWorkers(record.data);
+    const personalInfo = linkedRecord.data.personalInfo || {};
+    const workers = normalizeWorkers(linkedRecord.data);
     const workerName = personalInfo.fullName || workers[0]?.fullName || "-";
-    const employerLabel = personalInfo.employerName || record.data.company || record.data.employerId || "-";
+    const employerLabel =
+      personalInfo.employerName || linkedRecord.data.company || linkedRecord.data.employerId || "-";
     const formIdCell = document.createElement("td");
-    formIdCell.textContent = record.formId;
+    formIdCell.textContent = linkedRecord.formId;
     const formTypeCell = document.createElement("td");
-    formTypeCell.textContent = record.formTypeLabel;
+    formTypeCell.textContent = linkedRecord.formTypeLabel;
     const employerCell = document.createElement("td");
     employerCell.textContent = employerLabel;
     const workerCell = document.createElement("td");
     workerCell.textContent = workerName;
     const recordedByCell = document.createElement("td");
-    recordedByCell.textContent = record.data.recordedBy || "-";
+    recordedByCell.textContent = linkedRecord.data.recordedBy || "-";
     const updatedCell = document.createElement("td");
-    updatedCell.textContent = formatDateTime(record.updatedAt);
+    updatedCell.textContent = formatDateTime(linkedRecord.updatedAt);
     const statusCell = document.createElement("td");
-    statusCell.textContent = getCaseStatusDisplay(record.data.caseStatus || {});
+    statusCell.textContent = getCaseStatusDisplay(linkedRecord.data.caseStatus || {});
     const actionsCell = document.createElement("td");
     const actionsWrapper = document.createElement("div");
     actionsWrapper.className = "table-actions";
@@ -1878,18 +2009,20 @@ const exportRecordsToCsv = () => {
   ];
   const lines = [headers.map(toCsvValue).join(",")];
   rows.forEach((record) => {
-    const personalInfo = record.data.personalInfo || {};
-    const workers = normalizeWorkers(record.data);
+    const linkedRecord = buildLinkedRecordView(record);
+    const personalInfo = linkedRecord.data.personalInfo || {};
+    const workers = normalizeWorkers(linkedRecord.data);
     const workerName = personalInfo.fullName || workers[0]?.fullName || "-";
-    const employerLabel = personalInfo.employerName || record.data.company || record.data.employerId || "-";
+    const employerLabel =
+      personalInfo.employerName || linkedRecord.data.company || linkedRecord.data.employerId || "-";
     const cols = [
-      record.formId,
-      record.formTypeLabel,
+      linkedRecord.formId,
+      linkedRecord.formTypeLabel,
       employerLabel,
       workerName,
-      record.data.recordedBy || "-",
-      formatDateTime(record.updatedAt),
-      getCaseStatusDisplay(record.data.caseStatus || {}),
+      linkedRecord.data.recordedBy || "-",
+      formatDateTime(linkedRecord.updatedAt),
+      getCaseStatusDisplay(linkedRecord.data.caseStatus || {}),
     ];
     lines.push(cols.map(toCsvValue).join(","));
   });
@@ -1914,6 +2047,7 @@ const openRecordModal = (record) => {
     message.textContent = translations[currentLanguage].recordNotFound;
     recordModalBody.appendChild(message);
   } else {
+    const linkedRecord = buildLinkedRecordView(record);
     const title = document.createElement("h4");
     title.textContent = translations[currentLanguage].recordDetailsTitle;
     const table = document.createElement("table");
@@ -1929,9 +2063,9 @@ const openRecordModal = (record) => {
       row.appendChild(td);
       body.appendChild(row);
     };
-    const personalInfo = record.data.personalInfo || {};
-    const documents = record.data.documents || {};
-    const caseStatus = record.data.caseStatus || {};
+    const personalInfo = linkedRecord.data.personalInfo || {};
+    const documents = linkedRecord.data.documents || {};
+    const caseStatus = linkedRecord.data.caseStatus || {};
     const documentParts = [];
     if (documents.workPermit) documentParts.push(translations[currentLanguage].documentWorkPermit);
     if (documents.receipt) documentParts.push(translations[currentLanguage].documentReceipt);
@@ -1944,23 +2078,25 @@ const openRecordModal = (record) => {
     if (documents.houseReg) documentParts.push(translations[currentLanguage].documentHouseReg);
     if (documents.employerIdCard) documentParts.push(translations[currentLanguage].documentEmployerIdCard);
     if (documents.companyCert) documentParts.push(translations[currentLanguage].documentCompanyCert);
-    addRow(translations[currentLanguage].recordFormId, record.formId);
-    addRow(translations[currentLanguage].recordFormTypeLabel, record.formTypeLabel);
+    addRow(translations[currentLanguage].recordFormId, linkedRecord.formId);
+    addRow(translations[currentLanguage].recordFormTypeLabel, linkedRecord.formTypeLabel);
     addRow(
       translations[currentLanguage].recordEmployerLabel,
-      record.data.personalInfo?.employerName || record.data.company || record.data.employerId || "-"
+      personalInfo?.employerName || linkedRecord.data.company || linkedRecord.data.employerId || "-"
     );
-    addRow(translations[currentLanguage].statusTitle, getCaseStatusDisplay(record.data.caseStatus || {}));
+    addRow(translations[currentLanguage].statusTitle, getCaseStatusDisplay(linkedRecord.data.caseStatus || {}));
     addRow(
       translations[currentLanguage].paymentStatusLabel,
-      record.data.paymentStatus === "paid" ? translations[currentLanguage].paymentPaid : translations[currentLanguage].paymentPending
+      linkedRecord.data.paymentStatus === "paid"
+        ? translations[currentLanguage].paymentPaid
+        : translations[currentLanguage].paymentPending
     );
-    addRow(translations[currentLanguage].paymentDateLabel, record.data.paymentDate || "-");
-    addRow(translations[currentLanguage].recordedByLabel, record.data.recordedBy || "-");
-    addRow(translations[currentLanguage].renewalTypeLabel, getRenewalTypeLabel(record.data.renewalType));
-    addRow(translations[currentLanguage].renewalStatusLabel, getRenewalStatusLabel(record.data.renewalStatus));
-    if (record.data.caseType) {
-      addRow(translations[currentLanguage].recordCaseTypeLabel, getCaseTypeLabel(record.data.caseType));
+    addRow(translations[currentLanguage].paymentDateLabel, linkedRecord.data.paymentDate || "-");
+    addRow(translations[currentLanguage].recordedByLabel, linkedRecord.data.recordedBy || "-");
+    addRow(translations[currentLanguage].renewalTypeLabel, getRenewalTypeLabel(linkedRecord.data.renewalType));
+    addRow(translations[currentLanguage].renewalStatusLabel, getRenewalStatusLabel(linkedRecord.data.renewalStatus));
+    if (linkedRecord.data.caseType) {
+      addRow(translations[currentLanguage].recordCaseTypeLabel, getCaseTypeLabel(linkedRecord.data.caseType));
     }
     if (personalInfo.fullName) {
       addRow(translations[currentLanguage].workerFullNameLabel, personalInfo.fullName);
@@ -2021,7 +2157,12 @@ const openRecordModal = (record) => {
     table.appendChild(body);
     recordModalBody.appendChild(title);
     recordModalBody.appendChild(table);
-    if (record.data.notifications?.length || record.data.supportingDocs?.length || record.data.receivedDocs?.length || record.data.requiredRenewalDocs?.length) {
+    if (
+      linkedRecord.data.notifications?.length ||
+      linkedRecord.data.supportingDocs?.length ||
+      linkedRecord.data.receivedDocs?.length ||
+      linkedRecord.data.requiredRenewalDocs?.length
+    ) {
       const docTitle = document.createElement("h5");
       docTitle.textContent = translations[currentLanguage].receivedDocsLabel;
       const docList = document.createElement("ul");
@@ -2053,80 +2194,80 @@ const openRecordModal = (record) => {
         photo: translations[currentLanguage].renewalDocPhoto,
         employerLetter: translations[currentLanguage].renewalDocEmployerLetter,
       };
-      if (record.data.notifications?.length) {
+      if (linkedRecord.data.notifications?.length) {
         const notificationItem = document.createElement("li");
-        const notificationText = record.data.notifications
+        const notificationText = linkedRecord.data.notifications
           .map((item) => notificationLabels[item] || item)
           .join(", ");
         notificationItem.textContent = `${translations[currentLanguage].notificationTitle}: ${notificationText}`;
         docList.appendChild(notificationItem);
       }
-      if (record.data.supportingDocs?.length) {
+      if (linkedRecord.data.supportingDocs?.length) {
         const supportingItem = document.createElement("li");
-        const supportingText = record.data.supportingDocs
+        const supportingText = linkedRecord.data.supportingDocs
           .map((item) => supportingLabels[item] || item)
           .join(", ");
         supportingItem.textContent = `${translations[currentLanguage].supportingDocsTitle}: ${supportingText}`;
         docList.appendChild(supportingItem);
       }
-      if (record.data.receivedDocs?.length) {
+      if (linkedRecord.data.receivedDocs?.length) {
         const receivedItem = document.createElement("li");
-        const receivedText = record.data.receivedDocs.map((item) => receivedLabels[item] || item).join(", ");
+        const receivedText = linkedRecord.data.receivedDocs.map((item) => receivedLabels[item] || item).join(", ");
         receivedItem.textContent = `${translations[currentLanguage].receivedDocsLabel}: ${receivedText}`;
         docList.appendChild(receivedItem);
       }
-      if (record.data.requiredRenewalDocs?.length) {
+      if (linkedRecord.data.requiredRenewalDocs?.length) {
         const requiredItem = document.createElement("li");
-        const requiredText = record.data.requiredRenewalDocs
+        const requiredText = linkedRecord.data.requiredRenewalDocs
           .map((item) => renewalLabels[item] || item)
           .join(", ");
         requiredItem.textContent = `${translations[currentLanguage].requiredRenewalDocsLabel}: ${requiredText}`;
         docList.appendChild(requiredItem);
       }
-      if (record.data.receivedDocsNote) {
+      if (linkedRecord.data.receivedDocsNote) {
         const noteItem = document.createElement("li");
-        noteItem.textContent = `${translations[currentLanguage].receivedDocsNoteLabel}: ${record.data.receivedDocsNote}`;
+        noteItem.textContent = `${translations[currentLanguage].receivedDocsNoteLabel}: ${linkedRecord.data.receivedDocsNote}`;
         docList.appendChild(noteItem);
       }
-      if (record.data.renewalDocsNote) {
+      if (linkedRecord.data.renewalDocsNote) {
         const noteItem = document.createElement("li");
-        noteItem.textContent = `${translations[currentLanguage].renewalDocsNoteLabel}: ${record.data.renewalDocsNote}`;
+        noteItem.textContent = `${translations[currentLanguage].renewalDocsNoteLabel}: ${linkedRecord.data.renewalDocsNote}`;
         docList.appendChild(noteItem);
       }
       recordModalBody.appendChild(docTitle);
       recordModalBody.appendChild(docList);
     }
     const attachments = [];
-    if (record.data.facePhoto) {
+    if (linkedRecord.data.facePhoto) {
       attachments.push({
         label: translations[currentLanguage].recordFacePhotoLabel,
-        value: record.data.facePhoto,
-        dataUrl: record.data.facePhotoData || "",
+        value: linkedRecord.data.facePhoto,
+        dataUrl: linkedRecord.data.facePhotoData || "",
       });
     }
-    if (record.data.idCard) {
+    if (linkedRecord.data.idCard) {
       attachments.push({
         label: translations[currentLanguage].recordIdCardLabel,
-        value: record.data.idCard,
-        dataUrl: record.data.idCardData || "",
+        value: linkedRecord.data.idCard,
+        dataUrl: linkedRecord.data.idCardData || "",
       });
     }
-    if (record.data.houseDoc) {
+    if (linkedRecord.data.houseDoc) {
       attachments.push({
         label: translations[currentLanguage].recordHouseDocLabel,
-        value: record.data.houseDoc,
-        dataUrl: record.data.houseDocData || "",
+        value: linkedRecord.data.houseDoc,
+        dataUrl: linkedRecord.data.houseDocData || "",
       });
     }
-    if (record.data.paymentSlip) {
+    if (linkedRecord.data.paymentSlip) {
       attachments.push({
         label: translations[currentLanguage].recordPaymentSlipLabel,
-        value: record.data.paymentSlip,
-        dataUrl: record.data.paymentSlipData || "",
+        value: linkedRecord.data.paymentSlip,
+        dataUrl: linkedRecord.data.paymentSlipData || "",
       });
     }
-    if (!attachments.length && Array.isArray(record.data.attachments)) {
-      record.data.attachments.forEach((fileName) => {
+    if (!attachments.length && Array.isArray(linkedRecord.data.attachments)) {
+      linkedRecord.data.attachments.forEach((fileName) => {
         attachments.push({
           label: translations[currentLanguage].recordAttachmentsTitle,
           value: fileName,
@@ -2167,7 +2308,8 @@ const openEmployerModal = (query) => {
   recordModalTitle.textContent = translations[currentLanguage].recordModalTitle;
   recordModalBody.innerHTML = "";
   const records = loadRecords().filter((record) => {
-    const employer = `${record.data.company || ""} ${record.data.employerId || ""}`.toLowerCase();
+    const linkedRecord = buildLinkedRecordView(record);
+    const employer = `${linkedRecord.data.company || ""} ${linkedRecord.data.employerId || ""}`.toLowerCase();
     return employer.includes(query.toLowerCase());
   });
   if (!records.length) {
@@ -2177,7 +2319,8 @@ const openEmployerModal = (query) => {
   } else {
     const list = document.createElement("ul");
     records.forEach((record) => {
-      const workers = normalizeWorkers(record.data);
+      const linkedRecord = buildLinkedRecordView(record);
+      const workers = normalizeWorkers(linkedRecord.data);
       workers.forEach((worker) => {
         const item = document.createElement("li");
         const name = worker.fullName || "-";
@@ -2206,10 +2349,11 @@ const closeRecordModal = () => {
 };
 
 const buildRecordSearchText = (record) => {
-  const personalInfo = record.data.personalInfo || {};
-  const documents = record.data.documents || {};
-  const caseStatus = record.data.caseStatus || {};
-  const workers = normalizeWorkers(record.data);
+  const linkedRecord = buildLinkedRecordView(record);
+  const personalInfo = linkedRecord.data.personalInfo || {};
+  const documents = linkedRecord.data.documents || {};
+  const caseStatus = linkedRecord.data.caseStatus || {};
+  const workers = normalizeWorkers(linkedRecord.data);
   const workerText = workers
     .map((worker) =>
       [
@@ -2228,24 +2372,24 @@ const buildRecordSearchText = (record) => {
     .join(" ");
 
   return [
-    record.formId,
-    record.formType,
-    record.formTypeLabel,
-    record.displayName,
-    record.updatedAt,
-    record.data.company,
-    record.data.caseType,
-    record.data.position,
-    record.data.workSite,
-    record.data.startDate,
-    record.data.employerId,
-    record.data.recordedBy,
-    record.data.formTypeOtherDetail,
-    record.data.renewalType,
-    record.data.renewalStatus,
-    record.data.paymentStatus,
-    record.data.paymentDate,
-    record.data.paymentNotes,
+    linkedRecord.formId,
+    linkedRecord.formType,
+    linkedRecord.formTypeLabel,
+    linkedRecord.displayName,
+    linkedRecord.updatedAt,
+    linkedRecord.data.company,
+    linkedRecord.data.caseType,
+    linkedRecord.data.position,
+    linkedRecord.data.workSite,
+    linkedRecord.data.startDate,
+    linkedRecord.data.employerId,
+    linkedRecord.data.recordedBy,
+    linkedRecord.data.formTypeOtherDetail,
+    linkedRecord.data.renewalType,
+    linkedRecord.data.renewalStatus,
+    linkedRecord.data.paymentStatus,
+    linkedRecord.data.paymentDate,
+    linkedRecord.data.paymentNotes,
     personalInfo.fullName,
     personalInfo.gender,
     personalInfo.nationality,
@@ -2309,16 +2453,17 @@ const openGeneralSearchResultsModal = (records, query) => {
     </tr>`;
     const tbody = document.createElement("tbody");
     records.forEach((record) => {
-      const personalInfo = record.data.personalInfo || {};
-      const workers = normalizeWorkers(record.data);
+      const linkedRecord = buildLinkedRecordView(record);
+      const personalInfo = linkedRecord.data.personalInfo || {};
+      const workers = normalizeWorkers(linkedRecord.data);
       const tr = document.createElement("tr");
-      const employer = personalInfo.employerName || record.data.company || record.data.employerId || "-";
+      const employer = personalInfo.employerName || linkedRecord.data.company || linkedRecord.data.employerId || "-";
       const workerName = personalInfo.fullName || workers[0]?.fullName || "-";
-      tr.innerHTML = `<td>${record.formId || "-"}</td>
-        <td>${record.formTypeLabel || "-"}</td>
+      tr.innerHTML = `<td>${linkedRecord.formId || "-"}</td>
+        <td>${linkedRecord.formTypeLabel || "-"}</td>
         <td>${employer}</td>
         <td>${workerName}</td>
-        <td>${getCaseStatusDisplay(record.data.caseStatus || {})}</td>`;
+        <td>${getCaseStatusDisplay(linkedRecord.data.caseStatus || {})}</td>`;
       const actionTd = document.createElement("td");
       const button = document.createElement("button");
       button.type = "button";
@@ -2353,6 +2498,8 @@ const saveRecord = async (status = "draft") => {
     setStatus(formSaveStatus, formatExpiryLabel(cardExpiryState.state, cardExpiryState.days), "warn");
   }
   const records = loadRecords();
+  const linkedKeys = upsertLinkedEntities(formData);
+  formData.linked = linkedKeys;
   const formId = currentEditId || "";
   const workerNames = (formData.workers || []).map((worker) => worker.fullName).filter(Boolean);
   const workerCountLabel = workerNames.length
@@ -2399,7 +2546,7 @@ const saveRecord = async (status = "draft") => {
   localStorage.removeItem(EDIT_KEY);
   renderRecords();
   renderLatestRecordCard();
-if (workerForm) {
+  if (workerForm) {
     localStorage.setItem(RECORD_SEARCH_KEY, finalRecord.formId);
     window.location.href = "records.html";
   }
@@ -2407,54 +2554,55 @@ if (workerForm) {
 
 const populateForm = (record) => {
   if (!record) return;
-if (formTypeInputs?.length) {
+  const linkedRecord = buildLinkedRecordView(record);
+  if (formTypeInputs?.length) {
     formTypeInputs.forEach((input) => {
-      input.checked = input.value === record.formType;
+      input.checked = input.value === linkedRecord.formType;
     });
   }
-  if (formTypeOtherDetail) formTypeOtherDetail.value = record.data.formTypeOtherDetail || "";
-  if (recordedBy) recordedBy.value = record.data.recordedBy || "";
-  if (workerFullName) workerFullName.value = record.data.personalInfo?.fullName || "";
-  if (workerGender) workerGender.value = record.data.personalInfo?.gender || "";
-  if (workerNationality) workerNationality.value = record.data.personalInfo?.nationality || "";
-  if (workerEmail) workerEmail.value = record.data.personalInfo?.email || "";
-  if (workerCode) workerCode.value = record.data.personalInfo?.code || "";
-  if (workerAlienId) workerAlienId.value = record.data.personalInfo?.alienId || "";
-  if (workPermitExpiry) workPermitExpiry.value = record.data.personalInfo?.workPermitExpiry || "";
-  if (passNumber) passNumber.value = record.data.personalInfo?.passNumber || "";
-  if (passIssueDate) passIssueDate.value = record.data.personalInfo?.passIssueDate || "";
-  if (passExpiryDate) passExpiryDate.value = record.data.personalInfo?.passExpiryDate || "";
-  if (businessType) businessType.value = record.data.personalInfo?.businessType || "";
-  if (employerName) employerName.value = record.data.personalInfo?.employerName || "";
-  if (documentSender) documentSender.value = record.data.personalInfo?.documentSender || "";
-  if (documentSentDate) documentSentDate.value = record.data.personalInfo?.documentSentDate || "";
-  if (documentReceiver) documentReceiver.value = record.data.personalInfo?.documentReceiver || "";
-  if (documentReceivedDate) documentReceivedDate.value = record.data.personalInfo?.documentReceivedDate || "";
-  if (documentReturnDate) documentReturnDate.value = record.data.personalInfo?.documentReturnDate || "";
-  if (docWorkPermit) docWorkPermit.checked = record.data.documents?.workPermit || false;
-  if (docReceipt) docReceipt.checked = record.data.documents?.receipt || false;
-  if (docRequestForm) docRequestForm.checked = record.data.documents?.requestForm || false;
-  if (docNameList) docNameList.checked = record.data.documents?.nameList || false;
-  if (docPassPage) docPassPage.checked = record.data.documents?.passPage || false;
-  if (docVisaPage) docVisaPage.checked = record.data.documents?.visaPage || false;
-  if (docHealthCard) docHealthCard.checked = record.data.documents?.healthCard || false;
-  if (docExitNotice) docExitNotice.checked = record.data.documents?.exitNotice || false;
-  if (docHouseReg) docHouseReg.checked = record.data.documents?.houseReg || false;
-  if (docEmployerIdCard) docEmployerIdCard.checked = record.data.documents?.employerIdCard || false;
-  if (docCompanyCert) docCompanyCert.checked = record.data.documents?.companyCert || false;
-  if (documentsNote) documentsNote.value = record.data.documents?.note || "";
+  if (formTypeOtherDetail) formTypeOtherDetail.value = linkedRecord.data.formTypeOtherDetail || "";
+  if (recordedBy) recordedBy.value = linkedRecord.data.recordedBy || "";
+  if (workerFullName) workerFullName.value = linkedRecord.data.personalInfo?.fullName || "";
+  if (workerGender) workerGender.value = linkedRecord.data.personalInfo?.gender || "";
+  if (workerNationality) workerNationality.value = linkedRecord.data.personalInfo?.nationality || "";
+  if (workerEmail) workerEmail.value = linkedRecord.data.personalInfo?.email || "";
+  if (workerCode) workerCode.value = linkedRecord.data.personalInfo?.code || "";
+  if (workerAlienId) workerAlienId.value = linkedRecord.data.personalInfo?.alienId || "";
+  if (workPermitExpiry) workPermitExpiry.value = linkedRecord.data.personalInfo?.workPermitExpiry || "";
+  if (passNumber) passNumber.value = linkedRecord.data.personalInfo?.passNumber || "";
+  if (passIssueDate) passIssueDate.value = linkedRecord.data.personalInfo?.passIssueDate || "";
+  if (passExpiryDate) passExpiryDate.value = linkedRecord.data.personalInfo?.passExpiryDate || "";
+  if (businessType) businessType.value = linkedRecord.data.personalInfo?.businessType || "";
+  if (employerName) employerName.value = linkedRecord.data.personalInfo?.employerName || "";
+  if (documentSender) documentSender.value = linkedRecord.data.personalInfo?.documentSender || "";
+  if (documentSentDate) documentSentDate.value = linkedRecord.data.personalInfo?.documentSentDate || "";
+  if (documentReceiver) documentReceiver.value = linkedRecord.data.personalInfo?.documentReceiver || "";
+  if (documentReceivedDate) documentReceivedDate.value = linkedRecord.data.personalInfo?.documentReceivedDate || "";
+  if (documentReturnDate) documentReturnDate.value = linkedRecord.data.personalInfo?.documentReturnDate || "";
+  if (docWorkPermit) docWorkPermit.checked = linkedRecord.data.documents?.workPermit || false;
+  if (docReceipt) docReceipt.checked = linkedRecord.data.documents?.receipt || false;
+  if (docRequestForm) docRequestForm.checked = linkedRecord.data.documents?.requestForm || false;
+  if (docNameList) docNameList.checked = linkedRecord.data.documents?.nameList || false;
+  if (docPassPage) docPassPage.checked = linkedRecord.data.documents?.passPage || false;
+  if (docVisaPage) docVisaPage.checked = linkedRecord.data.documents?.visaPage || false;
+  if (docHealthCard) docHealthCard.checked = linkedRecord.data.documents?.healthCard || false;
+  if (docExitNotice) docExitNotice.checked = linkedRecord.data.documents?.exitNotice || false;
+  if (docHouseReg) docHouseReg.checked = linkedRecord.data.documents?.houseReg || false;
+  if (docEmployerIdCard) docEmployerIdCard.checked = linkedRecord.data.documents?.employerIdCard || false;
+  if (docCompanyCert) docCompanyCert.checked = linkedRecord.data.documents?.companyCert || false;
+  if (documentsNote) documentsNote.value = linkedRecord.data.documents?.note || "";
   if (caseStatusInputs?.length) {
     caseStatusInputs.forEach((input) => {
-      input.checked = input.value === record.data.caseStatus?.status;
+      input.checked = input.value === linkedRecord.data.caseStatus?.status;
     });
   }
-  if (appointmentDate) appointmentDate.value = record.data.caseStatus?.appointmentDate || "";
-  if (appointmentNote) appointmentNote.value = record.data.caseStatus?.appointmentNote || "";
+  if (appointmentDate) appointmentDate.value = linkedRecord.data.caseStatus?.appointmentDate || "";
+  if (appointmentNote) appointmentNote.value = linkedRecord.data.caseStatus?.appointmentNote || "";
   updateFormTypeOtherVisibility();
   updateAppointmentVisibility();
   if (workerList) {
     workerList.innerHTML = "";
-    const workers = normalizeWorkers(record.data);
+    const workers = normalizeWorkers(linkedRecord.data);
     if (workers.length) {
       workers.forEach((worker) => {
         const card = createWorkerCard(worker);
@@ -2464,54 +2612,54 @@ if (formTypeInputs?.length) {
     ensureWorkerCards();
     refreshWorkerStatuses();
   }
-  if (company) company.value = record.data.company || "";
-  if (caseType) caseType.value = record.data.caseType || "changeEmployer";
-  if (position) position.value = record.data.position || "";
-  if (workSite) workSite.value = record.data.workSite || "";
-  if (startDate) startDate.value = record.data.startDate || "";
-  if (employerId) employerId.value = record.data.employerId || "";
-  if (renewalType) renewalType.value = record.data.renewalType || "passport";
-  if (renewalStatus) renewalStatus.value = record.data.renewalStatus || "none";
-  if (receivedFacePhoto) receivedFacePhoto.checked = record.data.receivedDocs?.includes("facePhoto") || false;
-  if (receivedIdCard) receivedIdCard.checked = record.data.receivedDocs?.includes("idCard") || false;
-  if (receivedHouseDoc) receivedHouseDoc.checked = record.data.receivedDocs?.includes("houseDoc") || false;
-  if (receivedPaymentSlip) receivedPaymentSlip.checked = record.data.receivedDocs?.includes("paymentSlip") || false;
+  if (company) company.value = linkedRecord.data.company || "";
+  if (caseType) caseType.value = linkedRecord.data.caseType || "changeEmployer";
+  if (position) position.value = linkedRecord.data.position || "";
+  if (workSite) workSite.value = linkedRecord.data.workSite || "";
+  if (startDate) startDate.value = linkedRecord.data.startDate || "";
+  if (employerId) employerId.value = linkedRecord.data.employerId || "";
+  if (renewalType) renewalType.value = linkedRecord.data.renewalType || "passport";
+  if (renewalStatus) renewalStatus.value = linkedRecord.data.renewalStatus || "none";
+  if (receivedFacePhoto) receivedFacePhoto.checked = linkedRecord.data.receivedDocs?.includes("facePhoto") || false;
+  if (receivedIdCard) receivedIdCard.checked = linkedRecord.data.receivedDocs?.includes("idCard") || false;
+  if (receivedHouseDoc) receivedHouseDoc.checked = linkedRecord.data.receivedDocs?.includes("houseDoc") || false;
+  if (receivedPaymentSlip) receivedPaymentSlip.checked = linkedRecord.data.receivedDocs?.includes("paymentSlip") || false;
   if (notificationItems?.length) {
     notificationItems.forEach((checkbox) => {
-      checkbox.checked = record.data.notifications?.includes(checkbox.value) || false;
+      checkbox.checked = linkedRecord.data.notifications?.includes(checkbox.value) || false;
     });
   }
   if (supportingDocs?.length) {
     supportingDocs.forEach((checkbox) => {
-      checkbox.checked = record.data.supportingDocs?.includes(checkbox.value) || false;
+      checkbox.checked = linkedRecord.data.supportingDocs?.includes(checkbox.value) || false;
     });
   }
   if (requiredRenewalDocs?.length) {
     requiredRenewalDocs.forEach((checkbox) => {
-      checkbox.checked = record.data.requiredRenewalDocs?.includes(checkbox.value) || false;
+      checkbox.checked = linkedRecord.data.requiredRenewalDocs?.includes(checkbox.value) || false;
     });
   }
-  if (receivedDocsNote) receivedDocsNote.value = record.data.receivedDocsNote || "";
-  if (renewalDocsNote) renewalDocsNote.value = record.data.renewalDocsNote || "";
-  if (verification) verification.value = record.data.verification || "";
-  if (paymentStatus) paymentStatus.value = record.data.paymentStatus || "pending";
-  if (paymentDate) paymentDate.value = record.data.paymentDate || "";
-  if (paymentNotes) paymentNotes.value = record.data.paymentNotes || "";
+  if (receivedDocsNote) receivedDocsNote.value = linkedRecord.data.receivedDocsNote || "";
+  if (renewalDocsNote) renewalDocsNote.value = linkedRecord.data.renewalDocsNote || "";
+  if (verification) verification.value = linkedRecord.data.verification || "";
+  if (paymentStatus) paymentStatus.value = linkedRecord.data.paymentStatus || "pending";
+  if (paymentDate) paymentDate.value = linkedRecord.data.paymentDate || "";
+  if (paymentNotes) paymentNotes.value = linkedRecord.data.paymentNotes || "";
   uploadCache.facePhoto = {
-    name: record.data.facePhoto || "",
-    dataUrl: record.data.facePhotoData || "",
+    name: linkedRecord.data.facePhoto || "",
+    dataUrl: linkedRecord.data.facePhotoData || "",
   };
   uploadCache.idCard = {
-    name: record.data.idCard || "",
-    dataUrl: record.data.idCardData || "",
+    name: linkedRecord.data.idCard || "",
+    dataUrl: linkedRecord.data.idCardData || "",
   };
   uploadCache.houseDoc = {
-    name: record.data.houseDoc || "",
-    dataUrl: record.data.houseDocData || "",
+    name: linkedRecord.data.houseDoc || "",
+    dataUrl: linkedRecord.data.houseDocData || "",
   };
   uploadCache.paymentSlip = {
-    name: record.data.paymentSlip || "",
-    dataUrl: record.data.paymentSlipData || "",
+    name: linkedRecord.data.paymentSlip || "",
+    dataUrl: linkedRecord.data.paymentSlipData || "",
   };
   updateSections();
   updateUploadPreview();
@@ -2701,6 +2849,7 @@ if (clearRecordsButton) {
       return;
     }
     saveRecords([]);
+    localStorage.removeItem(LINKED_STORE_KEY);
     clearRecordsFromServer();
     renderRecords();
     renderLatestRecordCard();

@@ -99,6 +99,7 @@ const themeToggle = document.getElementById("themeToggle");
 const recordedBy = document.getElementById("recordedBy");
 const formSteps = document.querySelectorAll(".form-step");
 const nextStepButton = document.getElementById("nextStepButton");
+const nextStepLink = document.getElementById("nextStepLink");
 const prevStepButton = document.getElementById("prevStepButton");
 const EDIT_KEY = "editRecordId";
 const RECORD_SEARCH_KEY = "recordSearchQuery";
@@ -2323,7 +2324,18 @@ const updateFormStepVisibility = () => {
 
 updateFormStepVisibility();
 
-if (nextStepButton) {
+if (nextStepLink) {
+  nextStepLink.addEventListener("click", (event) => {
+    saveFormDraft();
+    showLoader();
+    if (isNextFormPage) {
+      event.preventDefault();
+      currentFormStep = 2;
+      updateFormStepVisibility();
+      return;
+    }
+  });
+} else if (nextStepButton) {
   nextStepButton.addEventListener("click", () => {
     saveFormDraft();
     if (!isNextFormPage && workerForm) {

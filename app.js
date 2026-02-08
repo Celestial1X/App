@@ -1334,6 +1334,20 @@ const getRecordStatusSummary = (record) => {
     hasAlert: hasExpired || hasPaymentPending,
   };
 };
+
+const hasMeaningfulValue = (value) => {
+  if (Array.isArray(value)) {
+    return value.some((item) => hasMeaningfulValue(item));
+  }
+  if (value && typeof value === "object") {
+    return Object.values(value).some((item) => hasMeaningfulValue(item));
+  }
+  if (typeof value === "string") {
+    return value.trim().length > 0;
+  }
+  return Boolean(value);
+};
+
 const collectFormData = () => {
   const receivedDocs = [];
   if (receivedFacePhoto?.checked) receivedDocs.push("facePhoto");
@@ -1422,9 +1436,10 @@ const collectFormData = () => {
     paymentSlipData: uploadCache.paymentSlip.dataUrl || "",
   };
   const hasAnyValue = Object.entries(formData).some(([key, value]) => {
-    if (key === "formType" || key === "attachments") return false;
-    if (Array.isArray(value)) return value.length > 0;
-    return value;
+    if (key === "formType" || key === "attachments") {
+      return false;
+    }
+    return hasMeaningfulValue(value);
   });
   return { formData, hasAnyValue };
 };

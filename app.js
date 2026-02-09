@@ -39,6 +39,7 @@ const workPermitExpiry = document.getElementById("workPermitExpiry");
 const passNumber = document.getElementById("passNumber");
 const passIssueDate = document.getElementById("passIssueDate");
 const passExpiryDate = document.getElementById("passExpiryDate");
+const visaExpiryDate = document.getElementById("visaExpiryDate");
 const businessType = document.getElementById("businessType");
 const employerName = document.getElementById("employerName");
 const documentSender = document.getElementById("documentSender");
@@ -47,11 +48,14 @@ const documentReceiver = document.getElementById("documentReceiver");
 const documentReceivedDate = document.getElementById("documentReceivedDate");
 const documentReturnDate = document.getElementById("documentReturnDate");
 const docWorkPermit = document.getElementById("docWorkPermit");
+const docWorkPermitCopy = document.getElementById("docWorkPermitCopy");
 const docReceipt = document.getElementById("docReceipt");
 const docRequestForm = document.getElementById("docRequestForm");
 const docNameList = document.getElementById("docNameList");
 const docPassPage = document.getElementById("docPassPage");
+const docPassCopy = document.getElementById("docPassCopy");
 const docVisaPage = document.getElementById("docVisaPage");
+const docVisaCopy = document.getElementById("docVisaCopy");
 const docHealthCard = document.getElementById("docHealthCard");
 const docExitNotice = document.getElementById("docExitNotice");
 const docHouseReg = document.getElementById("docHouseReg");
@@ -101,7 +105,6 @@ const recordModalClose = document.getElementById("recordModalClose");
 const recordModalCloseButton = document.getElementById("recordModalCloseButton");
 const draftButton = document.getElementById("draftButton");
 const clearFormDraftButton = document.getElementById("clearFormDraft");
-const themeToggle = document.getElementById("themeToggle");
 const recordedBy = document.getElementById("recordedBy");
 const formSteps = document.querySelectorAll(".form-step");
 const nextStepButton = document.getElementById("nextStepButton");
@@ -110,7 +113,6 @@ const prevStepButton = document.getElementById("prevStepButton");
 const EDIT_KEY = "editRecordId";
 const RECORD_SEARCH_KEY = "recordSearchQuery";
 const FORM_DRAFT_KEY = "workerFormDraft";
-const THEME_KEY = "uiTheme";
 const API_BASE_KEY = "recordsApiBaseUrl";
 const LINKED_STORE_KEY = "linkedEntities";
 
@@ -208,12 +210,11 @@ const translations = {
     generalSearchPlaceholder: "เช่น เลขฟอร์ม / ชื่อแรงงาน / เลขต่างด้าว / นายจ้าง",
     generalSearchHint: "พิมพ์คำค้นหาเพื่อค้นหาข้อมูล",
     generalSearchNotFound: "ไม่พบข้อมูลที่ตรงกัน",
-    themeToggleLabel: "โหมดมืด",
     formTypeLabel: "ประเภทงาน",
     formTypeChangeEmployer: "เปลี่ยนนายจ้าง",
     formTypeResidence: "แจ้งที่พัก 37,38",
     formTypeVisaStamp: "ลงตรา Visa",
-    formTypeCiReport: "รายงานทำเล่ม CI",
+    formTypeCiReport: "ทำเล่ม CI",
     formTypeWorkPermitRenewal: "ต่ออนุญาตทำงานแรงงานต่างด้าว",
     formTypeMouLaos: "MOU ลาว",
     formTypeMouLaosRenew: "MOU ลาว 2 ปีหลัง",
@@ -233,7 +234,7 @@ const translations = {
     workerNationalityLabel: "สัญชาติ",
     workerNationalityPlaceholder: "กรอกสัญชาติ",
     businessTypeLabel: "ประเภทกิจการ",
-    businessTypePlaceholder: "เช่น ก่อสร้าง เกษตรกร",
+    businessTypePlaceholder: "เลือกประเภทกิจการ",
     employerNameLabel: "ชื่อนายจ้าง",
     employerNamePlaceholder: "กรอกชื่อนายจ้าง",
     documentSenderLabel: "ชื่อผู้ส่งเอกสาร",
@@ -249,7 +250,10 @@ const translations = {
     documentRequestForm: "ใบคำขอ",
     documentNameList: "เนมลิส",
     documentPassPage: "หน้า Pass (ตัวจริง)",
+    documentPassCopy: "หน้า Pass (สำเนา)",
     documentVisaPage: "หน้า Visa (ตัวจริง)",
+    documentVisaCopy: "หน้า Visa (สำเนา)",
+    documentWorkPermitCopy: "ใบอนุญาติทำงาน (สำเนา)",
     documentHealthCard: "บัตรสุขภาพ",
     documentExitNotice: "ใบแจ้งออก",
     documentHouseReg: "ทะเบียนบ้านนายจ้าง",
@@ -331,6 +335,7 @@ const translations = {
     visaNumberPlaceholder: "ระบุเลขวีซ่า",
     visaIssueDateLabel: "วันทำวีซ่า",
     visaExpiryDateLabel: "วันหมดอายุวีซ่า",
+    personalVisaExpiryDateLabel: "วันหมดอายุ Visa",
     renewalTypeLabel: "ประเภทการต่ออายุ",
     renewalTypePassport: "บัตร/พาสปอร์ต",
     renewalTypeVisa: "วีซ่า",
@@ -479,12 +484,11 @@ const translations = {
     generalSearchPlaceholder: "e.g. form ID / worker name / worker ID / employer",
     generalSearchHint: "Enter a query to search records.",
     generalSearchNotFound: "No matching records found.",
-    themeToggleLabel: "Dark mode",
     formTypeLabel: "Work category",
     formTypeChangeEmployer: "Change employer",
     formTypeResidence: "Residence notice 37/38",
     formTypeVisaStamp: "Visa stamp",
-    formTypeCiReport: "CI book report",
+    formTypeCiReport: "CI booklet",
     formTypeWorkPermitRenewal: "Foreign worker work permit renewal",
     formTypeMouLaos: "MOU Laos",
     formTypeMouLaosRenew: "MOU Laos (2-year renewal)",
@@ -504,7 +508,7 @@ const translations = {
     workerNationalityLabel: "Nationality",
     workerNationalityPlaceholder: "Enter nationality",
     businessTypeLabel: "Business type",
-    businessTypePlaceholder: "e.g. Construction, agriculture",
+    businessTypePlaceholder: "Select business type",
     employerNameLabel: "Employer name",
     employerNamePlaceholder: "Enter employer name",
     documentSenderLabel: "Document sender",
@@ -520,7 +524,10 @@ const translations = {
     documentRequestForm: "Request form",
     documentNameList: "Name list",
     documentPassPage: "Passport page (original)",
+    documentPassCopy: "Passport page (copy)",
     documentVisaPage: "Visa page (original)",
+    documentVisaCopy: "Visa page (copy)",
+    documentWorkPermitCopy: "Work permit (copy)",
     documentHealthCard: "Health card",
     documentExitNotice: "Exit notice",
     documentHouseReg: "Employer house registration",
@@ -602,6 +609,7 @@ const translations = {
     visaNumberPlaceholder: "Enter visa number",
     visaIssueDateLabel: "Visa issue date",
     visaExpiryDateLabel: "Visa expiry date",
+    personalVisaExpiryDateLabel: "Visa expiry date",
     renewalTypeLabel: "Renewal type",
     renewalTypePassport: "Passport/card",
     renewalTypeVisa: "Visa",
@@ -1754,6 +1762,7 @@ const collectFormData = () => {
       passNumber: passNumber?.value?.trim() || "",
       passIssueDate: passIssueDate?.value || "",
       passExpiryDate: passExpiryDate?.value || "",
+      visaExpiryDate: visaExpiryDate?.value || "",
       businessType: businessType?.value?.trim() || "",
       employerName: employerName?.value?.trim() || "",
       documentSender: documentSender?.value?.trim() || "",
@@ -1764,11 +1773,14 @@ const collectFormData = () => {
     },
     documents: {
       workPermit: docWorkPermit?.checked || false,
+      workPermitCopy: docWorkPermitCopy?.checked || false,
       receipt: docReceipt?.checked || false,
       requestForm: docRequestForm?.checked || false,
       nameList: docNameList?.checked || false,
       passPage: docPassPage?.checked || false,
+      passCopy: docPassCopy?.checked || false,
       visaPage: docVisaPage?.checked || false,
+      visaCopy: docVisaCopy?.checked || false,
       healthCard: docHealthCard?.checked || false,
       exitNotice: docExitNotice?.checked || false,
       houseReg: docHouseReg?.checked || false,
@@ -1848,29 +1860,6 @@ function clearFormDraft() {
   updateFormStepVisibility();
   setStatus(formSaveStatus, translations[currentLanguage].formDraftCleared, "ok");
 }
-
-const applyTheme = (theme, { persist = true } = {}) => {
-  document.body.classList.toggle("theme-dark", theme === "dark");
-  if (persist) {
-    localStorage.setItem(THEME_KEY, theme);
-  }
-};
-
-const initTheme = () => {
-  const storedTheme = localStorage.getItem(THEME_KEY);
-  if (storedTheme) {
-    applyTheme(storedTheme);
-    return;
-  }
-  const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-  applyTheme(mediaQuery.matches ? "dark" : "light", { persist: false });
-  mediaQuery.addEventListener("change", (event) => {
-    if (localStorage.getItem(THEME_KEY)) {
-      return;
-    }
-    applyTheme(event.matches ? "dark" : "light", { persist: false });
-  });
-};
 
 const renderRecords = () => {
   if (!recordsList || !recordsStatus || !recordSearch || !recordFilter) {
@@ -2068,11 +2057,14 @@ const openRecordModal = (record) => {
     const caseStatus = linkedRecord.data.caseStatus || {};
     const documentParts = [];
     if (documents.workPermit) documentParts.push(translations[currentLanguage].documentWorkPermit);
+    if (documents.workPermitCopy) documentParts.push(translations[currentLanguage].documentWorkPermitCopy);
     if (documents.receipt) documentParts.push(translations[currentLanguage].documentReceipt);
     if (documents.requestForm) documentParts.push(translations[currentLanguage].documentRequestForm);
     if (documents.nameList) documentParts.push(translations[currentLanguage].documentNameList);
     if (documents.passPage) documentParts.push(translations[currentLanguage].documentPassPage);
+    if (documents.passCopy) documentParts.push(translations[currentLanguage].documentPassCopy);
     if (documents.visaPage) documentParts.push(translations[currentLanguage].documentVisaPage);
+    if (documents.visaCopy) documentParts.push(translations[currentLanguage].documentVisaCopy);
     if (documents.healthCard) documentParts.push(translations[currentLanguage].documentHealthCard);
     if (documents.exitNotice) documentParts.push(translations[currentLanguage].documentExitNotice);
     if (documents.houseReg) documentParts.push(translations[currentLanguage].documentHouseReg);
@@ -2120,6 +2112,9 @@ const openRecordModal = (record) => {
     }
     if (personalInfo.passNumber) {
       addRow("เลข Pass", personalInfo.passNumber);
+    }
+    if (personalInfo.visaExpiryDate) {
+      addRow(translations[currentLanguage].personalVisaExpiryDateLabel, personalInfo.visaExpiryDate);
     }
     if (personalInfo.businessType) {
       addRow(translations[currentLanguage].businessTypeLabel, personalInfo.businessType);
@@ -2400,6 +2395,7 @@ const buildRecordSearchText = (record) => {
     personalInfo.passNumber,
     personalInfo.passIssueDate,
     personalInfo.passExpiryDate,
+    personalInfo.visaExpiryDate,
     personalInfo.businessType,
     personalInfo.employerName,
     personalInfo.documentSender,
@@ -2572,6 +2568,7 @@ const populateForm = (record) => {
   if (passNumber) passNumber.value = linkedRecord.data.personalInfo?.passNumber || "";
   if (passIssueDate) passIssueDate.value = linkedRecord.data.personalInfo?.passIssueDate || "";
   if (passExpiryDate) passExpiryDate.value = linkedRecord.data.personalInfo?.passExpiryDate || "";
+  if (visaExpiryDate) visaExpiryDate.value = linkedRecord.data.personalInfo?.visaExpiryDate || "";
   if (businessType) businessType.value = linkedRecord.data.personalInfo?.businessType || "";
   if (employerName) employerName.value = linkedRecord.data.personalInfo?.employerName || "";
   if (documentSender) documentSender.value = linkedRecord.data.personalInfo?.documentSender || "";
@@ -2580,11 +2577,14 @@ const populateForm = (record) => {
   if (documentReceivedDate) documentReceivedDate.value = linkedRecord.data.personalInfo?.documentReceivedDate || "";
   if (documentReturnDate) documentReturnDate.value = linkedRecord.data.personalInfo?.documentReturnDate || "";
   if (docWorkPermit) docWorkPermit.checked = linkedRecord.data.documents?.workPermit || false;
+  if (docWorkPermitCopy) docWorkPermitCopy.checked = linkedRecord.data.documents?.workPermitCopy || false;
   if (docReceipt) docReceipt.checked = linkedRecord.data.documents?.receipt || false;
   if (docRequestForm) docRequestForm.checked = linkedRecord.data.documents?.requestForm || false;
   if (docNameList) docNameList.checked = linkedRecord.data.documents?.nameList || false;
   if (docPassPage) docPassPage.checked = linkedRecord.data.documents?.passPage || false;
+  if (docPassCopy) docPassCopy.checked = linkedRecord.data.documents?.passCopy || false;
   if (docVisaPage) docVisaPage.checked = linkedRecord.data.documents?.visaPage || false;
+  if (docVisaCopy) docVisaCopy.checked = linkedRecord.data.documents?.visaCopy || false;
   if (docHealthCard) docHealthCard.checked = linkedRecord.data.documents?.healthCard || false;
   if (docExitNotice) docExitNotice.checked = linkedRecord.data.documents?.exitNotice || false;
   if (docHouseReg) docHouseReg.checked = linkedRecord.data.documents?.houseReg || false;
@@ -2750,7 +2750,6 @@ ensureWorkerCards();
 updateUploadPreview();
 updatePaymentSlipPreview();
 loadFormDraft();
-initTheme();
 renderRecords();
 renderLatestRecordCard();
 syncRecordsFromServer();
@@ -2829,12 +2828,6 @@ if (draftButton) {
 }
 if (clearFormDraftButton) {
   clearFormDraftButton.addEventListener("click", clearFormDraft);
-}
-if (themeToggle) {
-  themeToggle.addEventListener("click", () => {
-    const nextTheme = document.body.classList.contains("theme-dark") ? "light" : "dark";
-    applyTheme(nextTheme);
-  });
 }
 if (recordSearch) {
   recordSearch.addEventListener("input", renderRecords);

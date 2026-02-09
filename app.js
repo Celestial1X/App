@@ -1,6 +1,7 @@
 const formTypeInputs = document.querySelectorAll('input[name="formType"]');
 const formTypeOtherRow = document.getElementById("formTypeOtherRow");
 const formTypeOtherDetail = document.getElementById("formTypeOtherDetail");
+const formTypeRow = document.getElementById("formTypeRow");
 const caseStatusInputs = document.querySelectorAll('input[name="caseStatus"]');
 const appointmentDateRow = document.getElementById("appointmentDateRow");
 const appointmentDate = document.getElementById("appointmentDate");
@@ -499,6 +500,8 @@ const translations = {
     tabLookup: "การค้นหาข้อมูล",
     tabRecords: "รายการบันทึก",
     tabForm: "หน้าทำรายการต่างๆ",
+    tabReport90: "รายงานตัว 90 วัน",
+    tabVisaRun: "Visa Run",
     recordedByLabel: "ผู้บันทึกข้อมูล",
     recordedByPlaceholder: "กรอกชื่อผู้บันทึกข้อมูล",
     workerCountSuffix: "คน",
@@ -792,6 +795,8 @@ const translations = {
     tabLookup: "Lookup",
     tabRecords: "Records",
     tabForm: "Task page",
+    tabReport90: "90-day report",
+    tabVisaRun: "Visa run",
     recordedByLabel: "Recorded by",
     recordedByPlaceholder: "Enter recorder name",
     workerCountSuffix: "workers",
@@ -803,6 +808,52 @@ const translations = {
 let currentLanguage = "th";
 const isNextFormPage = window.location.pathname.endsWith("/nextform.html") || window.location.pathname.endsWith("nextform.html");
 let currentFormStep = isNextFormPage ? 2 : 1;
+const allowedFormTypes = new Set([
+  "changeEmployer",
+  "residence37_38",
+  "visaStamp",
+  "ciReport",
+  "workPermitRenewal",
+  "mouLaos",
+  "laosRegular",
+  "mouLaosRenew",
+  "noDocsRegister",
+  "exitNotice",
+  "report90Days",
+  "visaRun",
+  "other",
+]);
+
+const initFormTypeFromQuery = () => {
+  const params = new URLSearchParams(window.location.search || "");
+  const formType = params.get("formType");
+  if (!formType || !allowedFormTypes.has(formType)) return;
+  if (formTypeInputs?.length) {
+    formTypeInputs.forEach((input) => {
+      const isMatch = input.value === formType;
+      input.checked = isMatch;
+      input.disabled = !isMatch;
+    });
+  }
+  if (formTypeRow) {
+    formTypeRow.classList.add("is-hidden");
+  }
+  if (formTypeOtherDetail && formType !== "other") {
+    formTypeOtherDetail.value = "";
+  }
+  updateFormTypeOtherVisibility();
+  updateSections();
+};
+
+const initRecordFilterFromQuery = () => {
+  if (!recordFilter) return;
+  const params = new URLSearchParams(window.location.search || "");
+  const formType = params.get("formType");
+  if (!formType || !allowedFormTypes.has(formType)) return;
+  recordFilter.value = formType;
+  recordFilter.disabled = true;
+  renderRecords();
+};
 
 const setStatus = (element, message, type = "") => {
   if (!element) return;
@@ -2917,6 +2968,8 @@ const updateFormStepVisibility = () => {
 };
 
 updateFormStepVisibility();
+initFormTypeFromQuery();
+initRecordFilterFromQuery();
 
 if (nextStepLink) {
   nextStepLink.addEventListener("click", () => {

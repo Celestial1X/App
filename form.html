@@ -25,6 +25,8 @@
         <a class="tab-btn" href="index.html" data-i18n="tabLookup">ค้นหาข้อมูล</a>
         <a class="tab-btn" href="records.html" data-i18n="tabRecords">ข้อมูลบันทึก</a>
         <a class="tab-btn is-active" href="form.html" data-i18n="tabForm">หน้าทำรายการต่างๆ</a>
+        <a class="tab-btn" href="form.html?formType=report90Days" data-i18n="tabReport90">รายงานตัว 90 วัน</a>
+        <a class="tab-btn" href="form.html?formType=visaRun" data-i18n="tabVisaRun">Visa Run</a>
       </nav>
 
       <section class="panel" id="formPanel">
@@ -156,7 +158,7 @@
           </div>
 
           <div class="form-step is-hidden" data-step="2">
-            <div class="form-row">
+            <div class="form-row" id="formTypeRow">
               <label>ประเภทงาน</label>
               <div class="radio-grid">
                 <label class="radio-item"><input type="radio" name="formType" value="changeEmployer" checked /><span>เปลี่ยนนายจ้าง</span></label>

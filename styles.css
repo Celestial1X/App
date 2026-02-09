@@ -619,18 +619,6 @@ button {
   margin-top: 12px;
 }
 
-.records-type-tabs {
-  display: flex;
-  gap: 12px;
-  margin: 12px 0 20px;
-  flex-wrap: wrap;
-}
-
-.records-type-tabs .tab-btn {
-  font-size: 1rem;
-  padding: 10px 18px;
-  border-radius: 999px;
-}
 
 .summary-grid {
   display: grid;
@@ -768,15 +756,6 @@ button {
   color: #1f2a44;
 }
 
-.records-table td.status-warn {
-  color: #b3541e;
-  font-weight: 600;
-}
-
-.records-table td.status-error {
-  color: #b42318;
-  font-weight: 600;
-}
 
 .records-table thead th {
   background: #f1f5f9;

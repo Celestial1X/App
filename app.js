@@ -1,6 +1,7 @@
 const formTypeInputs = document.querySelectorAll('input[name="formType"]');
 const formTypeOtherRow = document.getElementById("formTypeOtherRow");
 const formTypeOtherDetail = document.getElementById("formTypeOtherDetail");
+const formTypeRow = document.getElementById("formTypeRow");
 const caseStatusInputs = document.querySelectorAll('input[name="caseStatus"]');
 const appointmentDateRow = document.getElementById("appointmentDateRow");
 const appointmentDate = document.getElementById("appointmentDate");
@@ -39,19 +40,37 @@ const workPermitExpiry = document.getElementById("workPermitExpiry");
 const passNumber = document.getElementById("passNumber");
 const passIssueDate = document.getElementById("passIssueDate");
 const passExpiryDate = document.getElementById("passExpiryDate");
+const visaExpiryDate = document.getElementById("visaExpiryDate");
 const businessType = document.getElementById("businessType");
 const employerName = document.getElementById("employerName");
+const report90FullName = document.getElementById("report90FullName");
+const report90Nationality = document.getElementById("report90Nationality");
+const report90EmployerName = document.getElementById("report90EmployerName");
+const report90StartDate = document.getElementById("report90StartDate");
+const report90NextDate = document.getElementById("report90NextDate");
+const report90Overstay = document.getElementById("report90Overstay");
+const visaRunPo30 = document.getElementById("visaRunPo30");
+const visaRunPo60 = document.getElementById("visaRunPo60");
+const visaRunFullName = document.getElementById("visaRunFullName");
+const visaRunNationality = document.getElementById("visaRunNationality");
+const visaRunEmployerName = document.getElementById("visaRunEmployerName");
+const visaRunStartDate = document.getElementById("visaRunStartDate");
+const visaRunEndDate = document.getElementById("visaRunEndDate");
+const visaRunOverstay = document.getElementById("visaRunOverstay");
 const documentSender = document.getElementById("documentSender");
 const documentSentDate = document.getElementById("documentSentDate");
 const documentReceiver = document.getElementById("documentReceiver");
 const documentReceivedDate = document.getElementById("documentReceivedDate");
 const documentReturnDate = document.getElementById("documentReturnDate");
 const docWorkPermit = document.getElementById("docWorkPermit");
+const docWorkPermitCopy = document.getElementById("docWorkPermitCopy");
 const docReceipt = document.getElementById("docReceipt");
 const docRequestForm = document.getElementById("docRequestForm");
 const docNameList = document.getElementById("docNameList");
 const docPassPage = document.getElementById("docPassPage");
+const docPassCopy = document.getElementById("docPassCopy");
 const docVisaPage = document.getElementById("docVisaPage");
+const docVisaCopy = document.getElementById("docVisaCopy");
 const docHealthCard = document.getElementById("docHealthCard");
 const docExitNotice = document.getElementById("docExitNotice");
 const docHouseReg = document.getElementById("docHouseReg");
@@ -82,10 +101,13 @@ const recordFilter = document.getElementById("recordFilter");
 const recordsStatus = document.getElementById("recordsStatus");
 const recordsList = document.getElementById("recordsList");
 const exportRecordsButton = document.getElementById("exportRecords");
+const restoreRecordsButton = document.getElementById("restoreRecords");
 const summaryTodayCount = document.getElementById("summaryTodayCount");
 const summaryYesterdayCount = document.getElementById("summaryYesterdayCount");
 const summaryMonthCount = document.getElementById("summaryMonthCount");
 const clearRecordsButton = document.getElementById("clearRecords");
+const filterReport90DaysButton = document.getElementById("filterReport90Days");
+const filterVisaRunButton = document.getElementById("filterVisaRun");
 const passportCheckButton = document.getElementById("passportCheckButton");
 const employerCheckButton = document.getElementById("employerCheckButton");
 const generalSearchInput = document.getElementById("generalSearch");
@@ -101,7 +123,6 @@ const recordModalClose = document.getElementById("recordModalClose");
 const recordModalCloseButton = document.getElementById("recordModalCloseButton");
 const draftButton = document.getElementById("draftButton");
 const clearFormDraftButton = document.getElementById("clearFormDraft");
-const themeToggle = document.getElementById("themeToggle");
 const recordedBy = document.getElementById("recordedBy");
 const formSteps = document.querySelectorAll(".form-step");
 const nextStepButton = document.getElementById("nextStepButton");
@@ -110,8 +131,8 @@ const prevStepButton = document.getElementById("prevStepButton");
 const EDIT_KEY = "editRecordId";
 const RECORD_SEARCH_KEY = "recordSearchQuery";
 const FORM_DRAFT_KEY = "workerFormDraft";
-const THEME_KEY = "uiTheme";
 const API_BASE_KEY = "recordsApiBaseUrl";
+const LINKED_STORE_KEY = "linkedEntities";
 
 const normalizeApiBaseUrl = (value) => String(value || "").trim().replace(/\/+$/, "");
 
@@ -207,32 +228,44 @@ const translations = {
     generalSearchPlaceholder: "เช่น เลขฟอร์ม / ชื่อแรงงาน / เลขต่างด้าว / นายจ้าง",
     generalSearchHint: "พิมพ์คำค้นหาเพื่อค้นหาข้อมูล",
     generalSearchNotFound: "ไม่พบข้อมูลที่ตรงกัน",
-    themeToggleLabel: "โหมดมืด",
     formTypeLabel: "ประเภทงาน",
     formTypeChangeEmployer: "เปลี่ยนนายจ้าง",
     formTypeResidence: "แจ้งที่พัก 37,38",
     formTypeVisaStamp: "ลงตรา Visa",
-    formTypeCiReport: "รายงานทำเล่ม CI",
+    formTypeCiReport: "ทำเล่ม CI",
     formTypeWorkPermitRenewal: "ต่ออนุญาตทำงานแรงงานต่างด้าว",
     formTypeMouLaos: "MOU ลาว",
+    formTypeLaosRegular: "ลาวธรรมดา",
     formTypeMouLaosRenew: "MOU ลาว 2 ปีหลัง",
     formTypeNoDocsRegister: "ขึ้นทะเบียนคนไม่มีเอกสาร",
     formTypeExit: "แจ้งออก",
+    formTypeReport90Days: "รายงานตัว 90 วัน",
+    formTypeVisaRun: "Visa Run",
     formTypeOther: "อื่น ๆ",
     formTypeOtherDetailLabel: "ระบุรายละเอียดอื่น ๆ",
     formTypeOtherDetailPlaceholder: "ระบุประเภทงานอื่น ๆ",
     personalInfoTitle: "แบบฟอร์มข้อมูลส่วนตัวของต่างด้าว",
+    report90Title: "รายงานตัว 90 วัน",
+    report90StartDateLabel: "วันที่เริ่มรายงานตัว",
+    report90NextDateLabel: "90 วันถัดไป",
+    report90OverstayLabel: "ปรับ 90 เกิน",
+    visaRunTitle: "Visa Run",
+    visaRunPo30Label: "ผ.30",
+    visaRunPo60Label: "ผ.60",
+    visaRunStartDateLabel: "วันเริ่ม Visa",
+    visaRunEndDateLabel: "วันหมด Visa",
+    visaRunOverstayLabel: "Visa เกิน",
     workerFullNameLabel: "ชื่อต่างด้าว",
     workerFullNamePlaceholder: "กรอกชื่อต่างด้าว",
-    workerGenderLabel: "เพศ",
-    workerGenderPlaceholder: "เลือกเพศ",
-    workerGenderMale: "ชาย",
-    workerGenderFemale: "หญิง",
-    workerGenderOther: "อื่น ๆ",
+    workerGenderLabel: "Gender",
+    workerGenderPlaceholder: "Select gender",
+    workerGenderMale: "Male",
+    workerGenderFemale: "Female",
+    workerGenderOther: "Other",
     workerNationalityLabel: "สัญชาติ",
     workerNationalityPlaceholder: "กรอกสัญชาติ",
     businessTypeLabel: "ประเภทกิจการ",
-    businessTypePlaceholder: "เช่น ก่อสร้าง เกษตรกร",
+    businessTypePlaceholder: "เลือกประเภทกิจการ",
     employerNameLabel: "ชื่อนายจ้าง",
     employerNamePlaceholder: "กรอกชื่อนายจ้าง",
     documentSenderLabel: "ชื่อผู้ส่งเอกสาร",
@@ -248,7 +281,10 @@ const translations = {
     documentRequestForm: "ใบคำขอ",
     documentNameList: "เนมลิส",
     documentPassPage: "หน้า Pass (ตัวจริง)",
+    documentPassCopy: "หน้า Pass (สำเนา)",
     documentVisaPage: "หน้า Visa (ตัวจริง)",
+    documentVisaCopy: "หน้า Visa (สำเนา)",
+    documentWorkPermitCopy: "ใบอนุญาติทำงาน (สำเนา)",
     documentHealthCard: "บัตรสุขภาพ",
     documentExitNotice: "ใบแจ้งออก",
     documentHouseReg: "ทะเบียนบ้านนายจ้าง",
@@ -301,10 +337,10 @@ const translations = {
     nationalityLabel: "สัญชาติ",
     nationalityPlaceholder: "เมียนมา / ลาว / กัมพูชา",
     dobLabel: "วันเดือนปีเกิด",
-    genderLabel: "เพศ",
-    genderMale: "ชาย",
-    genderFemale: "หญิง",
-    genderOther: "อื่น ๆ",
+    genderLabel: "Gender",
+    genderMale: "Male",
+    genderFemale: "Female",
+    genderOther: "Other",
     employmentTitle: "ข้อมูลนายจ้าง",
     companyLabel: "ชื่อนายจ้าง",
     companyPlaceholder: "ระบุชื่อนายจ้าง",
@@ -330,6 +366,7 @@ const translations = {
     visaNumberPlaceholder: "ระบุเลขวีซ่า",
     visaIssueDateLabel: "วันทำวีซ่า",
     visaExpiryDateLabel: "วันหมดอายุวีซ่า",
+    personalVisaExpiryDateLabel: "วันหมดอายุ Visa",
     renewalTypeLabel: "ประเภทการต่ออายุ",
     renewalTypePassport: "บัตร/พาสปอร์ต",
     renewalTypeVisa: "วีซ่า",
@@ -402,6 +439,10 @@ const translations = {
     filterNationalityKhm: "สัญชาติ KHM",
     filterNationalityVnm: "สัญชาติ VNM",
     recordsStatus: "ยังไม่มีข้อมูลที่บันทึก",
+    restoreBackupButton: "กู้คืนข้อมูลสำรอง",
+    restoreBackupConfirm: "ยืนยันการกู้คืนข้อมูลสำรองหรือไม่?",
+    restoreBackupEmpty: "ยังไม่พบข้อมูลสำรอง",
+    restoreBackupSuccess: "กู้คืนข้อมูลสำรองเรียบร้อยแล้ว",
     clearButton: "ลบข้อมูลทั้งหมด",
     saveDraftSuccess: "บันทึกข้อมูลเรียบร้อยแล้ว",
     saveDraftEmpty: "กรุณากรอกข้อมูลก่อนบันทึก",
@@ -412,6 +453,8 @@ const translations = {
     recordsCount: "รายการที่พบ",
     recordStatusDraft: "ฉบับร่าง",
     recordStatusFinal: "สำเร็จแล้ว",
+    recordExpiryWarning: "ใกล้ครบกำหนดใน {days} วัน",
+    recordExpiryExpired: "เกินกำหนดแล้ว",
     editButton: "แก้ไข",
     deleteButton: "ลบ",
     verifyButton: "ตรวจสอบข้อมูล",
@@ -457,6 +500,8 @@ const translations = {
     tabLookup: "การค้นหาข้อมูล",
     tabRecords: "รายการบันทึก",
     tabForm: "หน้าทำรายการต่างๆ",
+    tabReport90: "รายงานตัว 90 วัน",
+    tabVisaRun: "Visa Run",
     recordedByLabel: "ผู้บันทึกข้อมูล",
     recordedByPlaceholder: "กรอกชื่อผู้บันทึกข้อมูล",
     workerCountSuffix: "คน",
@@ -478,21 +523,33 @@ const translations = {
     generalSearchPlaceholder: "e.g. form ID / worker name / worker ID / employer",
     generalSearchHint: "Enter a query to search records.",
     generalSearchNotFound: "No matching records found.",
-    themeToggleLabel: "Dark mode",
     formTypeLabel: "Work category",
     formTypeChangeEmployer: "Change employer",
     formTypeResidence: "Residence notice 37/38",
     formTypeVisaStamp: "Visa stamp",
-    formTypeCiReport: "CI book report",
+    formTypeCiReport: "CI booklet",
     formTypeWorkPermitRenewal: "Foreign worker work permit renewal",
     formTypeMouLaos: "MOU Laos",
+    formTypeLaosRegular: "Laos (regular)",
     formTypeMouLaosRenew: "MOU Laos (2-year renewal)",
     formTypeNoDocsRegister: "Undocumented worker registration",
     formTypeExit: "Exit notification",
+    formTypeReport90Days: "90-day report",
+    formTypeVisaRun: "Visa run",
     formTypeOther: "Other",
     formTypeOtherDetailLabel: "Specify other details",
     formTypeOtherDetailPlaceholder: "Specify other work category",
     personalInfoTitle: "Foreign worker personal information",
+    report90Title: "90-day report",
+    report90StartDateLabel: "Report start date",
+    report90NextDateLabel: "Next 90-day report",
+    report90OverstayLabel: "Over 90 days",
+    visaRunTitle: "Visa run",
+    visaRunPo30Label: "PO.30",
+    visaRunPo60Label: "PO.60",
+    visaRunStartDateLabel: "Visa start date",
+    visaRunEndDateLabel: "Visa end date",
+    visaRunOverstayLabel: "Visa overstay",
     workerFullNameLabel: "Worker name",
     workerFullNamePlaceholder: "Enter worker name",
     workerGenderLabel: "Gender",
@@ -503,7 +560,7 @@ const translations = {
     workerNationalityLabel: "Nationality",
     workerNationalityPlaceholder: "Enter nationality",
     businessTypeLabel: "Business type",
-    businessTypePlaceholder: "e.g. Construction, agriculture",
+    businessTypePlaceholder: "Select business type",
     employerNameLabel: "Employer name",
     employerNamePlaceholder: "Enter employer name",
     documentSenderLabel: "Document sender",
@@ -519,7 +576,10 @@ const translations = {
     documentRequestForm: "Request form",
     documentNameList: "Name list",
     documentPassPage: "Passport page (original)",
+    documentPassCopy: "Passport page (copy)",
     documentVisaPage: "Visa page (original)",
+    documentVisaCopy: "Visa page (copy)",
+    documentWorkPermitCopy: "Work permit (copy)",
     documentHealthCard: "Health card",
     documentExitNotice: "Exit notice",
     documentHouseReg: "Employer house registration",
@@ -601,6 +661,7 @@ const translations = {
     visaNumberPlaceholder: "Enter visa number",
     visaIssueDateLabel: "Visa issue date",
     visaExpiryDateLabel: "Visa expiry date",
+    personalVisaExpiryDateLabel: "Visa expiry date",
     renewalTypeLabel: "Renewal type",
     renewalTypePassport: "Passport/card",
     renewalTypeVisa: "Visa",
@@ -673,6 +734,10 @@ const translations = {
     filterNationalityKhm: "Nationality KHM",
     filterNationalityVnm: "Nationality VNM",
     recordsStatus: "No saved records yet.",
+    restoreBackupButton: "Restore backup",
+    restoreBackupConfirm: "Restore backup records?",
+    restoreBackupEmpty: "No backup records found.",
+    restoreBackupSuccess: "Backup records restored.",
     clearButton: "Clear all records",
     saveDraftSuccess: "Record saved successfully.",
     saveDraftEmpty: "Please fill in the form before saving.",
@@ -683,6 +748,8 @@ const translations = {
     recordsCount: "records found",
     recordStatusDraft: "Draft",
     recordStatusFinal: "Completed",
+    recordExpiryWarning: "Due in {days} days",
+    recordExpiryExpired: "Past due",
     editButton: "Edit",
     deleteButton: "Delete",
     verifyButton: "Verify record",
@@ -728,6 +795,8 @@ const translations = {
     tabLookup: "Lookup",
     tabRecords: "Records",
     tabForm: "Task page",
+    tabReport90: "90-day report",
+    tabVisaRun: "Visa run",
     recordedByLabel: "Recorded by",
     recordedByPlaceholder: "Enter recorder name",
     workerCountSuffix: "workers",
@@ -739,6 +808,52 @@ const translations = {
 let currentLanguage = "th";
 const isNextFormPage = window.location.pathname.endsWith("/nextform.html") || window.location.pathname.endsWith("nextform.html");
 let currentFormStep = isNextFormPage ? 2 : 1;
+const allowedFormTypes = new Set([
+  "changeEmployer",
+  "residence37_38",
+  "visaStamp",
+  "ciReport",
+  "workPermitRenewal",
+  "mouLaos",
+  "laosRegular",
+  "mouLaosRenew",
+  "noDocsRegister",
+  "exitNotice",
+  "report90Days",
+  "visaRun",
+  "other",
+]);
+
+const initFormTypeFromQuery = () => {
+  const params = new URLSearchParams(window.location.search || "");
+  const formType = params.get("formType");
+  if (!formType || !allowedFormTypes.has(formType)) return;
+  if (formTypeInputs?.length) {
+    formTypeInputs.forEach((input) => {
+      const isMatch = input.value === formType;
+      input.checked = isMatch;
+      input.disabled = !isMatch;
+    });
+  }
+  if (formTypeRow) {
+    formTypeRow.classList.add("is-hidden");
+  }
+  if (formTypeOtherDetail && formType !== "other") {
+    formTypeOtherDetail.value = "";
+  }
+  updateFormTypeOtherVisibility();
+  updateSections();
+};
+
+const initRecordFilterFromQuery = () => {
+  if (!recordFilter) return;
+  const params = new URLSearchParams(window.location.search || "");
+  const formType = params.get("formType");
+  if (!formType || !allowedFormTypes.has(formType)) return;
+  recordFilter.value = formType;
+  recordFilter.disabled = true;
+  renderRecords();
+};
 
 const setStatus = (element, message, type = "") => {
   if (!element) return;
@@ -785,6 +900,34 @@ const formatExpiryLabel = (state, days) => {
     return translations[currentLanguage].expiryWarning.replace("{days}", days);
   }
   return translations[currentLanguage].expiryValid;
+};
+
+const RECORD_WARNING_DAYS = 7;
+
+const getRecordExpiryState = (dateValue) => {
+  if (!dateValue) return { state: "none", days: null };
+  const selectedDate = new Date(dateValue);
+  if (Number.isNaN(selectedDate.getTime())) {
+    return { state: "none", days: null };
+  }
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  selectedDate.setHours(0, 0, 0, 0);
+  const diffMs = selectedDate - today;
+  const days = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  if (days < 0) return { state: "expired", days };
+  if (days <= RECORD_WARNING_DAYS) return { state: "warning", days };
+  return { state: "ok", days };
+};
+
+const formatRecordExpiryLabel = (state, days) => {
+  if (state === "expired") {
+    return translations[currentLanguage].recordExpiryExpired;
+  }
+  if (state === "warning") {
+    return translations[currentLanguage].recordExpiryWarning.replace("{days}", days);
+  }
+  return "";
 };
 
 const formatExpiryDisplay = (dateValue) => {
@@ -1004,6 +1147,128 @@ const readJsonStorage = (key, fallback) => {
   }
 };
 
+const loadLinkedStore = () => {
+  const store = readJsonStorage(LINKED_STORE_KEY, { employers: {}, workers: {} });
+  const employers = store?.employers && typeof store.employers === "object" ? store.employers : {};
+  const workers = store?.workers && typeof store.workers === "object" ? store.workers : {};
+  return { employers, workers };
+};
+
+const saveLinkedStore = (store) => {
+  localStorage.setItem(LINKED_STORE_KEY, JSON.stringify(store));
+};
+
+const buildEmployerKey = (formData) => {
+  const employerIdValue = formData?.employerId?.trim?.() || "";
+  if (employerIdValue) {
+    return `employer:${employerIdValue.toLowerCase()}`;
+  }
+  const employerNameValue = formData?.personalInfo?.employerName?.trim?.() || "";
+  if (employerNameValue) {
+    return `employer-name:${employerNameValue.toLowerCase()}`;
+  }
+  return "";
+};
+
+const buildWorkerKey = (worker = {}, fallbackIndex = 0) => {
+  const workerIdValue = worker.workerId?.trim?.() || "";
+  if (workerIdValue) {
+    return `worker-id:${workerIdValue.toLowerCase()}`;
+  }
+  const passportValue = worker.passport?.trim?.() || "";
+  if (passportValue) {
+    return `passport:${passportValue.toLowerCase()}`;
+  }
+  const alienIdValue = worker.alienId?.trim?.() || "";
+  if (alienIdValue) {
+    return `alien:${alienIdValue.toLowerCase()}`;
+  }
+  const ciValue = worker.ciNumber?.trim?.() || "";
+  if (ciValue) {
+    return `ci:${ciValue.toLowerCase()}`;
+  }
+  const fullNameValue = worker.fullName?.trim?.() || "";
+  const nationalityValue = worker.nationality?.trim?.() || "";
+  if (fullNameValue || nationalityValue) {
+    return `worker:${fullNameValue.toLowerCase()}-${nationalityValue.toLowerCase()}`;
+  }
+  return `worker:unknown-${fallbackIndex}`;
+};
+
+const buildLinkedWorkerList = (formData) => {
+  const workers = Array.isArray(formData?.workers) ? formData.workers : [];
+  if (workers.length) {
+    return workers;
+  }
+  const personalInfo = formData?.personalInfo || {};
+  const fallbackWorker = {
+    fullName: personalInfo.fullName || "",
+    passport: personalInfo.passNumber || "",
+    alienId: personalInfo.alienId || "",
+    nationality: personalInfo.nationality || "",
+    gender: personalInfo.gender || "",
+    email: personalInfo.email || "",
+  };
+  return hasWorkerValue(fallbackWorker) ? [fallbackWorker] : [];
+};
+
+const upsertLinkedEntities = (formData) => {
+  const store = loadLinkedStore();
+  const employerKey = buildEmployerKey(formData);
+  if (employerKey) {
+    store.employers[employerKey] = {
+      employerId: formData?.employerId || "",
+      name: formData?.personalInfo?.employerName || "",
+      businessType: formData?.personalInfo?.businessType || "",
+      company: formData?.company || "",
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  const linkedWorkers = buildLinkedWorkerList(formData);
+  const workerKeys = linkedWorkers.map((worker, index) => {
+    const key = buildWorkerKey(worker, index);
+    store.workers[key] = {
+      ...worker,
+      updatedAt: new Date().toISOString(),
+    };
+    return key;
+  });
+
+  saveLinkedStore(store);
+  return { employerKey, workerKeys };
+};
+
+const resolveLinkedEmployer = (record) => {
+  const store = loadLinkedStore();
+  const key = record?.data?.linked?.employerKey || "";
+  if (!key) return null;
+  return store.employers?.[key] || null;
+};
+
+const resolveLinkedWorkers = (record) => {
+  const store = loadLinkedStore();
+  const keys = Array.isArray(record?.data?.linked?.workerKeys) ? record.data.linked.workerKeys : [];
+  return keys.map((key) => store.workers?.[key]).filter(Boolean);
+};
+
+const buildLinkedRecordView = (record) => {
+  if (!record || !record.data) return record;
+  const linkedEmployer = resolveLinkedEmployer(record);
+  const linkedWorkers = resolveLinkedWorkers(record);
+  const personalInfo = { ...(record.data.personalInfo || {}) };
+  if (linkedEmployer) {
+    if (linkedEmployer.name) personalInfo.employerName = linkedEmployer.name;
+    if (linkedEmployer.businessType) personalInfo.businessType = linkedEmployer.businessType;
+  }
+  const data = {
+    ...record.data,
+    personalInfo,
+    workers: linkedWorkers.length ? linkedWorkers : record.data.workers,
+  };
+  return { ...record, data };
+};
+
 const loadRecords = () => {
   const records = readJsonStorage("workerRecords", []);
   if (!Array.isArray(records)) {
@@ -1202,9 +1467,13 @@ const renderLatestRecordCard = () => {
     return;
   }
   const latest = [...records].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))[0];
-  latestRecordTitle.textContent = `${latest.formId} • ${latest.formTypeLabel || "-"}`;
-  latestRecordMeta.textContent = `${formatDateTime(latest.updatedAt)} • ${
-    latest.data?.personalInfo?.fullName || latest.data?.personalInfo?.employerName || latest.displayName || "-"
+  const linkedLatest = buildLinkedRecordView(latest);
+  latestRecordTitle.textContent = `${linkedLatest.formId} • ${linkedLatest.formTypeLabel || "-"}`;
+  latestRecordMeta.textContent = `${formatDateTime(linkedLatest.updatedAt)} • ${
+    linkedLatest.data?.personalInfo?.fullName ||
+    linkedLatest.data?.personalInfo?.employerName ||
+    linkedLatest.displayName ||
+    "-"
   }`;
 };
 
@@ -1216,9 +1485,12 @@ const getFormTypeLabel = (value) => {
     ciReport: translations[currentLanguage].formTypeCiReport,
     workPermitRenewal: translations[currentLanguage].formTypeWorkPermitRenewal,
     mouLaos: translations[currentLanguage].formTypeMouLaos,
+    laosRegular: translations[currentLanguage].formTypeLaosRegular,
     mouLaosRenew: translations[currentLanguage].formTypeMouLaosRenew,
     noDocsRegister: translations[currentLanguage].formTypeNoDocsRegister,
     exitNotice: translations[currentLanguage].formTypeExit,
+    report90Days: translations[currentLanguage].formTypeReport90Days,
+    visaRun: translations[currentLanguage].formTypeVisaRun,
     other: translations[currentLanguage].formTypeOther,
   };
   return map[value] || value;
@@ -1549,8 +1821,41 @@ const getAggregatedExpiryState = (workers, field) => {
   return { state: "ok", days: null };
 };
 
+const getRecordTimeSensitiveStatus = (record) => {
+  if (!record) return null;
+  const data = record.data || {};
+  let dateValue = "";
+  if (record.formType === "report90Days") {
+    dateValue = data.report90Days?.nextReportDate || "";
+    if (data.report90Days?.overstay) {
+      return { state: "expired", days: -1 };
+    }
+  } else if (record.formType === "visaRun") {
+    dateValue = data.visaRun?.visaEndDate || "";
+    if (data.visaRun?.overstay) {
+      return { state: "expired", days: -1 };
+    }
+  }
+  if (!dateValue) return null;
+  const { state, days } = getRecordExpiryState(dateValue);
+  if (state === "warning" || state === "expired") {
+    return { state, days };
+  }
+  return null;
+};
+
+const getRecordTimeSensitiveLabel = (record, status) => {
+  if (!status) return "";
+  const label = formatRecordExpiryLabel(status.state, status.days);
+  if (!label) return "";
+  const formTypeLabel = record.formTypeLabel || getFormTypeLabel(record.formType);
+  return `${formTypeLabel} • ${label}`;
+};
+
 const getRecordStatusSummary = (record) => {
-  const workers = normalizeWorkers(record.data);
+  const linkedRecord = buildLinkedRecordView(record);
+  const workers = normalizeWorkers(linkedRecord.data);
+  const timeStatus = getRecordTimeSensitiveStatus(linkedRecord);
   const hasCompleted = workers.some((worker) => worker.scheduleStatus === "completed");
   const hasPendingSchedule = workers.some((worker) => worker.scheduleStatus !== "completed");
   const hasExpiryWarning =
@@ -1561,11 +1866,11 @@ const getRecordStatusSummary = (record) => {
     getAggregatedExpiryState(workers, "cardExpiryDate").state === "expired" ||
     getAggregatedExpiryState(workers, "visaExpiryDate").state === "expired" ||
     getAggregatedExpiryState(workers, "expiry").state === "expired";
-  const hasPaymentPending = record.data.paymentStatus === "pending";
+  const hasPaymentPending = linkedRecord.data.paymentStatus === "pending";
   return {
     hasCompleted,
-    hasPending: hasPendingSchedule || hasExpiryWarning,
-    hasAlert: hasExpired || hasPaymentPending,
+    hasPending: hasPendingSchedule || hasExpiryWarning || timeStatus?.state === "warning",
+    hasAlert: hasExpired || hasPaymentPending || timeStatus?.state === "expired",
   };
 };
 
@@ -1626,6 +1931,7 @@ const collectFormData = () => {
       passNumber: passNumber?.value?.trim() || "",
       passIssueDate: passIssueDate?.value || "",
       passExpiryDate: passExpiryDate?.value || "",
+      visaExpiryDate: visaExpiryDate?.value || "",
       businessType: businessType?.value?.trim() || "",
       employerName: employerName?.value?.trim() || "",
       documentSender: documentSender?.value?.trim() || "",
@@ -1634,13 +1940,34 @@ const collectFormData = () => {
       documentReceivedDate: documentReceivedDate?.value || "",
       documentReturnDate: documentReturnDate?.value || "",
     },
+    report90Days: {
+      fullName: report90FullName?.value?.trim() || "",
+      nationality: report90Nationality?.value?.trim() || "",
+      employerName: report90EmployerName?.value?.trim() || "",
+      reportStartDate: report90StartDate?.value || "",
+      nextReportDate: report90NextDate?.value || "",
+      overstay: report90Overstay?.checked || false,
+    },
+    visaRun: {
+      po30: visaRunPo30?.checked || false,
+      po60: visaRunPo60?.checked || false,
+      fullName: visaRunFullName?.value?.trim() || "",
+      nationality: visaRunNationality?.value?.trim() || "",
+      employerName: visaRunEmployerName?.value?.trim() || "",
+      visaStartDate: visaRunStartDate?.value || "",
+      visaEndDate: visaRunEndDate?.value || "",
+      overstay: visaRunOverstay?.checked || false,
+    },
     documents: {
       workPermit: docWorkPermit?.checked || false,
+      workPermitCopy: docWorkPermitCopy?.checked || false,
       receipt: docReceipt?.checked || false,
       requestForm: docRequestForm?.checked || false,
       nameList: docNameList?.checked || false,
       passPage: docPassPage?.checked || false,
+      passCopy: docPassCopy?.checked || false,
       visaPage: docVisaPage?.checked || false,
+      visaCopy: docVisaCopy?.checked || false,
       healthCard: docHealthCard?.checked || false,
       exitNotice: docExitNotice?.checked || false,
       houseReg: docHouseReg?.checked || false,
@@ -1721,29 +2048,6 @@ function clearFormDraft() {
   setStatus(formSaveStatus, translations[currentLanguage].formDraftCleared, "ok");
 }
 
-const applyTheme = (theme, { persist = true } = {}) => {
-  document.body.classList.toggle("theme-dark", theme === "dark");
-  if (persist) {
-    localStorage.setItem(THEME_KEY, theme);
-  }
-};
-
-const initTheme = () => {
-  const storedTheme = localStorage.getItem(THEME_KEY);
-  if (storedTheme) {
-    applyTheme(storedTheme);
-    return;
-  }
-  const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-  applyTheme(mediaQuery.matches ? "dark" : "light", { persist: false });
-  mediaQuery.addEventListener("change", (event) => {
-    if (localStorage.getItem(THEME_KEY)) {
-      return;
-    }
-    applyTheme(event.matches ? "dark" : "light", { persist: false });
-  });
-};
-
 const renderRecords = () => {
   if (!recordsList || !recordsStatus || !recordSearch || !recordFilter) {
     return;
@@ -1752,23 +2056,24 @@ const renderRecords = () => {
   const query = recordSearch.value.trim().toLowerCase();
   const filter = recordFilter.value;
   const filtered = records.filter((record) => {
-    const matchesFilter = filter === "all" || record.formType === filter;
+    const linkedRecord = buildLinkedRecordView(record);
+    const matchesFilter = filter === "all" || linkedRecord.formType === filter;
     if (!query) return matchesFilter;
-    const workers = normalizeWorkers(record.data);
-    const personalInfo = record.data.personalInfo || {};
+    const workers = normalizeWorkers(linkedRecord.data);
+    const personalInfo = linkedRecord.data.personalInfo || {};
     const searchable = [
-      record.formId,
-      record.formTypeLabel,
-      record.displayName,
-      record.data.company,
-      record.data.employerId,
+      linkedRecord.formId,
+      linkedRecord.formTypeLabel,
+      linkedRecord.displayName,
+      linkedRecord.data.company,
+      linkedRecord.data.employerId,
       personalInfo.fullName,
       personalInfo.employerName,
       personalInfo.documentSender,
       personalInfo.documentReceiver,
       personalInfo.documentReturnDate,
-      record.data.recordedBy,
-      record.data.formTypeOtherDetail,
+      linkedRecord.data.recordedBy,
+      linkedRecord.data.formTypeOtherDetail,
       getWorkerSearchText(workers),
     ]
       .filter(Boolean)
@@ -1790,25 +2095,33 @@ const renderRecords = () => {
   }
 
   scoped.forEach((record) => {
+    const linkedRecord = buildLinkedRecordView(record);
     const row = document.createElement("tr");
-    const personalInfo = record.data.personalInfo || {};
-    const workers = normalizeWorkers(record.data);
+    const personalInfo = linkedRecord.data.personalInfo || {};
+    const workers = normalizeWorkers(linkedRecord.data);
     const workerName = personalInfo.fullName || workers[0]?.fullName || "-";
-    const employerLabel = personalInfo.employerName || record.data.company || record.data.employerId || "-";
+    const employerLabel =
+      personalInfo.employerName || linkedRecord.data.company || linkedRecord.data.employerId || "-";
     const formIdCell = document.createElement("td");
-    formIdCell.textContent = record.formId;
+    formIdCell.textContent = linkedRecord.formId;
     const formTypeCell = document.createElement("td");
-    formTypeCell.textContent = record.formTypeLabel;
+    formTypeCell.textContent = linkedRecord.formTypeLabel;
     const employerCell = document.createElement("td");
     employerCell.textContent = employerLabel;
     const workerCell = document.createElement("td");
     workerCell.textContent = workerName;
     const recordedByCell = document.createElement("td");
-    recordedByCell.textContent = record.data.recordedBy || "-";
+    recordedByCell.textContent = linkedRecord.data.recordedBy || "-";
     const updatedCell = document.createElement("td");
-    updatedCell.textContent = formatDateTime(record.updatedAt);
+    updatedCell.textContent = formatDateTime(linkedRecord.updatedAt);
     const statusCell = document.createElement("td");
-    statusCell.textContent = getCaseStatusDisplay(record.data.caseStatus || {});
+    const timeStatus = getRecordTimeSensitiveStatus(linkedRecord);
+    if (timeStatus) {
+      statusCell.textContent = getRecordTimeSensitiveLabel(linkedRecord, timeStatus);
+      statusCell.classList.add(timeStatus.state === "expired" ? "status-error" : "status-warn");
+    } else {
+      statusCell.textContent = getCaseStatusDisplay(linkedRecord.data.caseStatus || {});
+    }
     const actionsCell = document.createElement("td");
     const actionsWrapper = document.createElement("div");
     actionsWrapper.className = "table-actions";
@@ -1878,18 +2191,24 @@ const exportRecordsToCsv = () => {
   ];
   const lines = [headers.map(toCsvValue).join(",")];
   rows.forEach((record) => {
-    const personalInfo = record.data.personalInfo || {};
-    const workers = normalizeWorkers(record.data);
+    const linkedRecord = buildLinkedRecordView(record);
+    const personalInfo = linkedRecord.data.personalInfo || {};
+    const workers = normalizeWorkers(linkedRecord.data);
     const workerName = personalInfo.fullName || workers[0]?.fullName || "-";
-    const employerLabel = personalInfo.employerName || record.data.company || record.data.employerId || "-";
+    const employerLabel =
+      personalInfo.employerName || linkedRecord.data.company || linkedRecord.data.employerId || "-";
+    const timeStatus = getRecordTimeSensitiveStatus(linkedRecord);
+    const statusLabel = timeStatus
+      ? getRecordTimeSensitiveLabel(linkedRecord, timeStatus)
+      : getCaseStatusDisplay(linkedRecord.data.caseStatus || {});
     const cols = [
-      record.formId,
-      record.formTypeLabel,
+      linkedRecord.formId,
+      linkedRecord.formTypeLabel,
       employerLabel,
       workerName,
-      record.data.recordedBy || "-",
-      formatDateTime(record.updatedAt),
-      getCaseStatusDisplay(record.data.caseStatus || {}),
+      linkedRecord.data.recordedBy || "-",
+      formatDateTime(linkedRecord.updatedAt),
+      statusLabel,
     ];
     lines.push(cols.map(toCsvValue).join(","));
   });
@@ -1906,6 +2225,20 @@ const exportRecordsToCsv = () => {
   URL.revokeObjectURL(url);
 };
 
+const restoreRecordsFromBackup = () => {
+  const backup = readJsonStorage(RECORDS_BACKUP_KEY, []);
+  if (!Array.isArray(backup) || !backup.length) {
+    setStatus(recordsStatus, translations[currentLanguage].restoreBackupEmpty, "warn");
+    return;
+  }
+  const shouldRestore = window.confirm(translations[currentLanguage].restoreBackupConfirm);
+  if (!shouldRestore) return;
+  saveRecords(backup);
+  renderRecords();
+  renderLatestRecordCard();
+  setStatus(recordsStatus, translations[currentLanguage].restoreBackupSuccess, "ok");
+};
+
 const openRecordModal = (record) => {
   recordModalTitle.textContent = translations[currentLanguage].recordModalTitle;
   recordModalBody.innerHTML = "";
@@ -1914,6 +2247,7 @@ const openRecordModal = (record) => {
     message.textContent = translations[currentLanguage].recordNotFound;
     recordModalBody.appendChild(message);
   } else {
+    const linkedRecord = buildLinkedRecordView(record);
     const title = document.createElement("h4");
     title.textContent = translations[currentLanguage].recordDetailsTitle;
     const table = document.createElement("table");
@@ -1929,38 +2263,47 @@ const openRecordModal = (record) => {
       row.appendChild(td);
       body.appendChild(row);
     };
-    const personalInfo = record.data.personalInfo || {};
-    const documents = record.data.documents || {};
-    const caseStatus = record.data.caseStatus || {};
+    const personalInfo = linkedRecord.data.personalInfo || {};
+    const documents = linkedRecord.data.documents || {};
+    const caseStatus = linkedRecord.data.caseStatus || {};
     const documentParts = [];
     if (documents.workPermit) documentParts.push(translations[currentLanguage].documentWorkPermit);
+    if (documents.workPermitCopy) documentParts.push(translations[currentLanguage].documentWorkPermitCopy);
     if (documents.receipt) documentParts.push(translations[currentLanguage].documentReceipt);
     if (documents.requestForm) documentParts.push(translations[currentLanguage].documentRequestForm);
     if (documents.nameList) documentParts.push(translations[currentLanguage].documentNameList);
     if (documents.passPage) documentParts.push(translations[currentLanguage].documentPassPage);
+    if (documents.passCopy) documentParts.push(translations[currentLanguage].documentPassCopy);
     if (documents.visaPage) documentParts.push(translations[currentLanguage].documentVisaPage);
+    if (documents.visaCopy) documentParts.push(translations[currentLanguage].documentVisaCopy);
     if (documents.healthCard) documentParts.push(translations[currentLanguage].documentHealthCard);
     if (documents.exitNotice) documentParts.push(translations[currentLanguage].documentExitNotice);
     if (documents.houseReg) documentParts.push(translations[currentLanguage].documentHouseReg);
     if (documents.employerIdCard) documentParts.push(translations[currentLanguage].documentEmployerIdCard);
     if (documents.companyCert) documentParts.push(translations[currentLanguage].documentCompanyCert);
-    addRow(translations[currentLanguage].recordFormId, record.formId);
-    addRow(translations[currentLanguage].recordFormTypeLabel, record.formTypeLabel);
+    addRow(translations[currentLanguage].recordFormId, linkedRecord.formId);
+    addRow(translations[currentLanguage].recordFormTypeLabel, linkedRecord.formTypeLabel);
     addRow(
       translations[currentLanguage].recordEmployerLabel,
-      record.data.personalInfo?.employerName || record.data.company || record.data.employerId || "-"
+      personalInfo?.employerName || linkedRecord.data.company || linkedRecord.data.employerId || "-"
     );
-    addRow(translations[currentLanguage].statusTitle, getCaseStatusDisplay(record.data.caseStatus || {}));
+    const modalTimeStatus = getRecordTimeSensitiveStatus(linkedRecord);
+    const modalStatusLabel = modalTimeStatus
+      ? getRecordTimeSensitiveLabel(linkedRecord, modalTimeStatus)
+      : getCaseStatusDisplay(linkedRecord.data.caseStatus || {});
+    addRow(translations[currentLanguage].statusTitle, modalStatusLabel);
     addRow(
       translations[currentLanguage].paymentStatusLabel,
-      record.data.paymentStatus === "paid" ? translations[currentLanguage].paymentPaid : translations[currentLanguage].paymentPending
+      linkedRecord.data.paymentStatus === "paid"
+        ? translations[currentLanguage].paymentPaid
+        : translations[currentLanguage].paymentPending
     );
-    addRow(translations[currentLanguage].paymentDateLabel, record.data.paymentDate || "-");
-    addRow(translations[currentLanguage].recordedByLabel, record.data.recordedBy || "-");
-    addRow(translations[currentLanguage].renewalTypeLabel, getRenewalTypeLabel(record.data.renewalType));
-    addRow(translations[currentLanguage].renewalStatusLabel, getRenewalStatusLabel(record.data.renewalStatus));
-    if (record.data.caseType) {
-      addRow(translations[currentLanguage].recordCaseTypeLabel, getCaseTypeLabel(record.data.caseType));
+    addRow(translations[currentLanguage].paymentDateLabel, linkedRecord.data.paymentDate || "-");
+    addRow(translations[currentLanguage].recordedByLabel, linkedRecord.data.recordedBy || "-");
+    addRow(translations[currentLanguage].renewalTypeLabel, getRenewalTypeLabel(linkedRecord.data.renewalType));
+    addRow(translations[currentLanguage].renewalStatusLabel, getRenewalStatusLabel(linkedRecord.data.renewalStatus));
+    if (linkedRecord.data.caseType) {
+      addRow(translations[currentLanguage].recordCaseTypeLabel, getCaseTypeLabel(linkedRecord.data.caseType));
     }
     if (personalInfo.fullName) {
       addRow(translations[currentLanguage].workerFullNameLabel, personalInfo.fullName);
@@ -1976,6 +2319,56 @@ const openRecordModal = (record) => {
     if (personalInfo.nationality) {
       addRow(translations[currentLanguage].workerNationalityLabel, personalInfo.nationality);
     }
+    if (linkedRecord.formType === "report90Days") {
+      const report90 = linkedRecord.data.report90Days || {};
+      addRow(translations[currentLanguage].report90Title, "");
+      if (report90.fullName) {
+        addRow(translations[currentLanguage].workerFullNameLabel, report90.fullName);
+      }
+      if (report90.nationality) {
+        addRow(translations[currentLanguage].workerNationalityLabel, report90.nationality);
+      }
+      if (report90.employerName) {
+        addRow(translations[currentLanguage].recordEmployerLabel, report90.employerName);
+      }
+      if (report90.reportStartDate) {
+        addRow(translations[currentLanguage].report90StartDateLabel, report90.reportStartDate);
+      }
+      if (report90.nextReportDate) {
+        addRow(translations[currentLanguage].report90NextDateLabel, report90.nextReportDate);
+      }
+      if (report90.overstay) {
+        addRow(translations[currentLanguage].report90OverstayLabel, translations[currentLanguage].healthStatusYes);
+      }
+    }
+    if (linkedRecord.formType === "visaRun") {
+      const visaRun = linkedRecord.data.visaRun || {};
+      addRow(translations[currentLanguage].visaRunTitle, "");
+      if (visaRun.po30) {
+        addRow(translations[currentLanguage].visaRunPo30Label, translations[currentLanguage].healthStatusYes);
+      }
+      if (visaRun.po60) {
+        addRow(translations[currentLanguage].visaRunPo60Label, translations[currentLanguage].healthStatusYes);
+      }
+      if (visaRun.fullName) {
+        addRow(translations[currentLanguage].workerFullNameLabel, visaRun.fullName);
+      }
+      if (visaRun.nationality) {
+        addRow(translations[currentLanguage].workerNationalityLabel, visaRun.nationality);
+      }
+      if (visaRun.employerName) {
+        addRow(translations[currentLanguage].recordEmployerLabel, visaRun.employerName);
+      }
+      if (visaRun.visaStartDate) {
+        addRow(translations[currentLanguage].visaRunStartDateLabel, visaRun.visaStartDate);
+      }
+      if (visaRun.visaEndDate) {
+        addRow(translations[currentLanguage].visaRunEndDateLabel, visaRun.visaEndDate);
+      }
+      if (visaRun.overstay) {
+        addRow(translations[currentLanguage].visaRunOverstayLabel, translations[currentLanguage].healthStatusYes);
+      }
+    }
     if (personalInfo.email) {
       addRow("Email", personalInfo.email);
     }
@@ -1984,6 +2377,9 @@ const openRecordModal = (record) => {
     }
     if (personalInfo.passNumber) {
       addRow("เลข Pass", personalInfo.passNumber);
+    }
+    if (personalInfo.visaExpiryDate) {
+      addRow(translations[currentLanguage].personalVisaExpiryDateLabel, personalInfo.visaExpiryDate);
     }
     if (personalInfo.businessType) {
       addRow(translations[currentLanguage].businessTypeLabel, personalInfo.businessType);
@@ -2021,7 +2417,12 @@ const openRecordModal = (record) => {
     table.appendChild(body);
     recordModalBody.appendChild(title);
     recordModalBody.appendChild(table);
-    if (record.data.notifications?.length || record.data.supportingDocs?.length || record.data.receivedDocs?.length || record.data.requiredRenewalDocs?.length) {
+    if (
+      linkedRecord.data.notifications?.length ||
+      linkedRecord.data.supportingDocs?.length ||
+      linkedRecord.data.receivedDocs?.length ||
+      linkedRecord.data.requiredRenewalDocs?.length
+    ) {
       const docTitle = document.createElement("h5");
       docTitle.textContent = translations[currentLanguage].receivedDocsLabel;
       const docList = document.createElement("ul");
@@ -2053,80 +2454,80 @@ const openRecordModal = (record) => {
         photo: translations[currentLanguage].renewalDocPhoto,
         employerLetter: translations[currentLanguage].renewalDocEmployerLetter,
       };
-      if (record.data.notifications?.length) {
+      if (linkedRecord.data.notifications?.length) {
         const notificationItem = document.createElement("li");
-        const notificationText = record.data.notifications
+        const notificationText = linkedRecord.data.notifications
           .map((item) => notificationLabels[item] || item)
           .join(", ");
         notificationItem.textContent = `${translations[currentLanguage].notificationTitle}: ${notificationText}`;
         docList.appendChild(notificationItem);
       }
-      if (record.data.supportingDocs?.length) {
+      if (linkedRecord.data.supportingDocs?.length) {
         const supportingItem = document.createElement("li");
-        const supportingText = record.data.supportingDocs
+        const supportingText = linkedRecord.data.supportingDocs
           .map((item) => supportingLabels[item] || item)
           .join(", ");
         supportingItem.textContent = `${translations[currentLanguage].supportingDocsTitle}: ${supportingText}`;
         docList.appendChild(supportingItem);
       }
-      if (record.data.receivedDocs?.length) {
+      if (linkedRecord.data.receivedDocs?.length) {
         const receivedItem = document.createElement("li");
-        const receivedText = record.data.receivedDocs.map((item) => receivedLabels[item] || item).join(", ");
+        const receivedText = linkedRecord.data.receivedDocs.map((item) => receivedLabels[item] || item).join(", ");
         receivedItem.textContent = `${translations[currentLanguage].receivedDocsLabel}: ${receivedText}`;
         docList.appendChild(receivedItem);
       }
-      if (record.data.requiredRenewalDocs?.length) {
+      if (linkedRecord.data.requiredRenewalDocs?.length) {
         const requiredItem = document.createElement("li");
-        const requiredText = record.data.requiredRenewalDocs
+        const requiredText = linkedRecord.data.requiredRenewalDocs
           .map((item) => renewalLabels[item] || item)
           .join(", ");
         requiredItem.textContent = `${translations[currentLanguage].requiredRenewalDocsLabel}: ${requiredText}`;
         docList.appendChild(requiredItem);
       }
-      if (record.data.receivedDocsNote) {
+      if (linkedRecord.data.receivedDocsNote) {
         const noteItem = document.createElement("li");
-        noteItem.textContent = `${translations[currentLanguage].receivedDocsNoteLabel}: ${record.data.receivedDocsNote}`;
+        noteItem.textContent = `${translations[currentLanguage].receivedDocsNoteLabel}: ${linkedRecord.data.receivedDocsNote}`;
         docList.appendChild(noteItem);
       }
-      if (record.data.renewalDocsNote) {
+      if (linkedRecord.data.renewalDocsNote) {
         const noteItem = document.createElement("li");
-        noteItem.textContent = `${translations[currentLanguage].renewalDocsNoteLabel}: ${record.data.renewalDocsNote}`;
+        noteItem.textContent = `${translations[currentLanguage].renewalDocsNoteLabel}: ${linkedRecord.data.renewalDocsNote}`;
         docList.appendChild(noteItem);
       }
       recordModalBody.appendChild(docTitle);
       recordModalBody.appendChild(docList);
     }
     const attachments = [];
-    if (record.data.facePhoto) {
+    if (linkedRecord.data.facePhoto) {
       attachments.push({
         label: translations[currentLanguage].recordFacePhotoLabel,
-        value: record.data.facePhoto,
-        dataUrl: record.data.facePhotoData || "",
+        value: linkedRecord.data.facePhoto,
+        dataUrl: linkedRecord.data.facePhotoData || "",
       });
     }
-    if (record.data.idCard) {
+    if (linkedRecord.data.idCard) {
       attachments.push({
         label: translations[currentLanguage].recordIdCardLabel,
-        value: record.data.idCard,
-        dataUrl: record.data.idCardData || "",
+        value: linkedRecord.data.idCard,
+        dataUrl: linkedRecord.data.idCardData || "",
       });
     }
-    if (record.data.houseDoc) {
+    if (linkedRecord.data.houseDoc) {
       attachments.push({
         label: translations[currentLanguage].recordHouseDocLabel,
-        value: record.data.houseDoc,
-        dataUrl: record.data.houseDocData || "",
+        value: linkedRecord.data.houseDoc,
+        dataUrl: linkedRecord.data.houseDocData || "",
       });
     }
-    if (record.data.paymentSlip) {
+    if (linkedRecord.data.paymentSlip) {
       attachments.push({
         label: translations[currentLanguage].recordPaymentSlipLabel,
-        value: record.data.paymentSlip,
-        dataUrl: record.data.paymentSlipData || "",
+        value: linkedRecord.data.paymentSlip,
+        dataUrl: linkedRecord.data.paymentSlipData || "",
       });
     }
-    if (!attachments.length && Array.isArray(record.data.attachments)) {
-      record.data.attachments.forEach((fileName) => {
+    if (!attachments.length && Array.isArray(linkedRecord.data.attachments)) {
+      linkedRecord.data.attachments.forEach((fileName) => {
         attachments.push({
           label: translations[currentLanguage].recordAttachmentsTitle,
           value: fileName,
@@ -2167,7 +2568,8 @@ const openEmployerModal = (query) => {
   recordModalTitle.textContent = translations[currentLanguage].recordModalTitle;
   recordModalBody.innerHTML = "";
   const records = loadRecords().filter((record) => {
-    const employer = `${record.data.company || ""} ${record.data.employerId || ""}`.toLowerCase();
+    const linkedRecord = buildLinkedRecordView(record);
+    const employer = `${linkedRecord.data.company || ""} ${linkedRecord.data.employerId || ""}`.toLowerCase();
     return employer.includes(query.toLowerCase());
   });
   if (!records.length) {
@@ -2177,7 +2579,8 @@ const openEmployerModal = (query) => {
   } else {
     const list = document.createElement("ul");
     records.forEach((record) => {
-      const workers = normalizeWorkers(record.data);
+      const linkedRecord = buildLinkedRecordView(record);
+      const workers = normalizeWorkers(linkedRecord.data);
       workers.forEach((worker) => {
         const item = document.createElement("li");
         const name = worker.fullName || "-";
@@ -2206,10 +2609,11 @@ const closeRecordModal = () => {
 };
 
 const buildRecordSearchText = (record) => {
-  const personalInfo = record.data.personalInfo || {};
-  const documents = record.data.documents || {};
-  const caseStatus = record.data.caseStatus || {};
-  const workers = normalizeWorkers(record.data);
+  const linkedRecord = buildLinkedRecordView(record);
+  const personalInfo = linkedRecord.data.personalInfo || {};
+  const documents = linkedRecord.data.documents || {};
+  const caseStatus = linkedRecord.data.caseStatus || {};
+  const workers = normalizeWorkers(linkedRecord.data);
   const workerText = workers
     .map((worker) =>
       [
@@ -2228,24 +2632,24 @@ const buildRecordSearchText = (record) => {
     .join(" ");
 
   return [
-    record.formId,
-    record.formType,
-    record.formTypeLabel,
-    record.displayName,
-    record.updatedAt,
-    record.data.company,
-    record.data.caseType,
-    record.data.position,
-    record.data.workSite,
-    record.data.startDate,
-    record.data.employerId,
-    record.data.recordedBy,
-    record.data.formTypeOtherDetail,
-    record.data.renewalType,
-    record.data.renewalStatus,
-    record.data.paymentStatus,
-    record.data.paymentDate,
-    record.data.paymentNotes,
+    linkedRecord.formId,
+    linkedRecord.formType,
+    linkedRecord.formTypeLabel,
+    linkedRecord.displayName,
+    linkedRecord.updatedAt,
+    linkedRecord.data.company,
+    linkedRecord.data.caseType,
+    linkedRecord.data.position,
+    linkedRecord.data.workSite,
+    linkedRecord.data.startDate,
+    linkedRecord.data.employerId,
+    linkedRecord.data.recordedBy,
+    linkedRecord.data.formTypeOtherDetail,
+    linkedRecord.data.renewalType,
+    linkedRecord.data.renewalStatus,
+    linkedRecord.data.paymentStatus,
+    linkedRecord.data.paymentDate,
+    linkedRecord.data.paymentNotes,
     personalInfo.fullName,
     personalInfo.gender,
     personalInfo.nationality,
@@ -2256,6 +2660,7 @@ const buildRecordSearchText = (record) => {
     personalInfo.passNumber,
     personalInfo.passIssueDate,
     personalInfo.passExpiryDate,
+    personalInfo.visaExpiryDate,
     personalInfo.businessType,
     personalInfo.employerName,
     personalInfo.documentSender,
@@ -2263,6 +2668,16 @@ const buildRecordSearchText = (record) => {
     personalInfo.documentReceiver,
     personalInfo.documentReceivedDate,
     personalInfo.documentReturnDate,
+    linkedRecord.data.report90Days?.fullName,
+    linkedRecord.data.report90Days?.nationality,
+    linkedRecord.data.report90Days?.employerName,
+    linkedRecord.data.report90Days?.reportStartDate,
+    linkedRecord.data.report90Days?.nextReportDate,
+    linkedRecord.data.visaRun?.fullName,
+    linkedRecord.data.visaRun?.nationality,
+    linkedRecord.data.visaRun?.employerName,
+    linkedRecord.data.visaRun?.visaStartDate,
+    linkedRecord.data.visaRun?.visaEndDate,
     caseStatus.status,
     caseStatus.appointmentDate,
     caseStatus.appointmentNote,
@@ -2309,16 +2724,21 @@ const openGeneralSearchResultsModal = (records, query) => {
     </tr>`;
     const tbody = document.createElement("tbody");
     records.forEach((record) => {
-      const personalInfo = record.data.personalInfo || {};
-      const workers = normalizeWorkers(record.data);
+      const linkedRecord = buildLinkedRecordView(record);
+      const personalInfo = linkedRecord.data.personalInfo || {};
+      const workers = normalizeWorkers(linkedRecord.data);
+      const timeStatus = getRecordTimeSensitiveStatus(linkedRecord);
+      const statusLabel = timeStatus
+        ? getRecordTimeSensitiveLabel(linkedRecord, timeStatus)
+        : getCaseStatusDisplay(linkedRecord.data.caseStatus || {});
       const tr = document.createElement("tr");
-      const employer = personalInfo.employerName || record.data.company || record.data.employerId || "-";
+      const employer = personalInfo.employerName || linkedRecord.data.company || linkedRecord.data.employerId || "-";
       const workerName = personalInfo.fullName || workers[0]?.fullName || "-";
-      tr.innerHTML = `<td>${record.formId || "-"}</td>
-        <td>${record.formTypeLabel || "-"}</td>
+      tr.innerHTML = `<td>${linkedRecord.formId || "-"}</td>
+        <td>${linkedRecord.formTypeLabel || "-"}</td>
         <td>${employer}</td>
         <td>${workerName}</td>
-        <td>${getCaseStatusDisplay(record.data.caseStatus || {})}</td>`;
+        <td>${statusLabel}</td>`;
       const actionTd = document.createElement("td");
       const button = document.createElement("button");
       button.type = "button";
@@ -2353,6 +2773,8 @@ const saveRecord = async (status = "draft") => {
     setStatus(formSaveStatus, formatExpiryLabel(cardExpiryState.state, cardExpiryState.days), "warn");
   }
   const records = loadRecords();
+  const linkedKeys = upsertLinkedEntities(formData);
+  formData.linked = linkedKeys;
   const formId = currentEditId || "";
   const workerNames = (formData.workers || []).map((worker) => worker.fullName).filter(Boolean);
   const workerCountLabel = workerNames.length
@@ -2399,7 +2821,7 @@ const saveRecord = async (status = "draft") => {
   localStorage.removeItem(EDIT_KEY);
   renderRecords();
   renderLatestRecordCard();
-if (workerForm) {
+  if (workerForm) {
     localStorage.setItem(RECORD_SEARCH_KEY, finalRecord.formId);
     window.location.href = "records.html";
   }
@@ -2407,54 +2829,73 @@ if (workerForm) {
 
 const populateForm = (record) => {
   if (!record) return;
-if (formTypeInputs?.length) {
+  const linkedRecord = buildLinkedRecordView(record);
+  if (formTypeInputs?.length) {
     formTypeInputs.forEach((input) => {
-      input.checked = input.value === record.formType;
+      input.checked = input.value === linkedRecord.formType;
     });
   }
-  if (formTypeOtherDetail) formTypeOtherDetail.value = record.data.formTypeOtherDetail || "";
-  if (recordedBy) recordedBy.value = record.data.recordedBy || "";
-  if (workerFullName) workerFullName.value = record.data.personalInfo?.fullName || "";
-  if (workerGender) workerGender.value = record.data.personalInfo?.gender || "";
-  if (workerNationality) workerNationality.value = record.data.personalInfo?.nationality || "";
-  if (workerEmail) workerEmail.value = record.data.personalInfo?.email || "";
-  if (workerCode) workerCode.value = record.data.personalInfo?.code || "";
-  if (workerAlienId) workerAlienId.value = record.data.personalInfo?.alienId || "";
-  if (workPermitExpiry) workPermitExpiry.value = record.data.personalInfo?.workPermitExpiry || "";
-  if (passNumber) passNumber.value = record.data.personalInfo?.passNumber || "";
-  if (passIssueDate) passIssueDate.value = record.data.personalInfo?.passIssueDate || "";
-  if (passExpiryDate) passExpiryDate.value = record.data.personalInfo?.passExpiryDate || "";
-  if (businessType) businessType.value = record.data.personalInfo?.businessType || "";
-  if (employerName) employerName.value = record.data.personalInfo?.employerName || "";
-  if (documentSender) documentSender.value = record.data.personalInfo?.documentSender || "";
-  if (documentSentDate) documentSentDate.value = record.data.personalInfo?.documentSentDate || "";
-  if (documentReceiver) documentReceiver.value = record.data.personalInfo?.documentReceiver || "";
-  if (documentReceivedDate) documentReceivedDate.value = record.data.personalInfo?.documentReceivedDate || "";
-  if (documentReturnDate) documentReturnDate.value = record.data.personalInfo?.documentReturnDate || "";
-  if (docWorkPermit) docWorkPermit.checked = record.data.documents?.workPermit || false;
-  if (docReceipt) docReceipt.checked = record.data.documents?.receipt || false;
-  if (docRequestForm) docRequestForm.checked = record.data.documents?.requestForm || false;
-  if (docNameList) docNameList.checked = record.data.documents?.nameList || false;
-  if (docPassPage) docPassPage.checked = record.data.documents?.passPage || false;
-  if (docVisaPage) docVisaPage.checked = record.data.documents?.visaPage || false;
-  if (docHealthCard) docHealthCard.checked = record.data.documents?.healthCard || false;
-  if (docExitNotice) docExitNotice.checked = record.data.documents?.exitNotice || false;
-  if (docHouseReg) docHouseReg.checked = record.data.documents?.houseReg || false;
-  if (docEmployerIdCard) docEmployerIdCard.checked = record.data.documents?.employerIdCard || false;
-  if (docCompanyCert) docCompanyCert.checked = record.data.documents?.companyCert || false;
-  if (documentsNote) documentsNote.value = record.data.documents?.note || "";
+  if (formTypeOtherDetail) formTypeOtherDetail.value = linkedRecord.data.formTypeOtherDetail || "";
+  if (recordedBy) recordedBy.value = linkedRecord.data.recordedBy || "";
+  if (workerFullName) workerFullName.value = linkedRecord.data.personalInfo?.fullName || "";
+  if (workerGender) workerGender.value = linkedRecord.data.personalInfo?.gender || "";
+  if (workerNationality) workerNationality.value = linkedRecord.data.personalInfo?.nationality || "";
+  if (workerEmail) workerEmail.value = linkedRecord.data.personalInfo?.email || "";
+  if (workerCode) workerCode.value = linkedRecord.data.personalInfo?.code || "";
+  if (workerAlienId) workerAlienId.value = linkedRecord.data.personalInfo?.alienId || "";
+  if (workPermitExpiry) workPermitExpiry.value = linkedRecord.data.personalInfo?.workPermitExpiry || "";
+  if (passNumber) passNumber.value = linkedRecord.data.personalInfo?.passNumber || "";
+  if (passIssueDate) passIssueDate.value = linkedRecord.data.personalInfo?.passIssueDate || "";
+  if (passExpiryDate) passExpiryDate.value = linkedRecord.data.personalInfo?.passExpiryDate || "";
+  if (visaExpiryDate) visaExpiryDate.value = linkedRecord.data.personalInfo?.visaExpiryDate || "";
+  if (businessType) businessType.value = linkedRecord.data.personalInfo?.businessType || "";
+  if (employerName) employerName.value = linkedRecord.data.personalInfo?.employerName || "";
+  if (documentSender) documentSender.value = linkedRecord.data.personalInfo?.documentSender || "";
+  if (documentSentDate) documentSentDate.value = linkedRecord.data.personalInfo?.documentSentDate || "";
+  if (documentReceiver) documentReceiver.value = linkedRecord.data.personalInfo?.documentReceiver || "";
+  if (documentReceivedDate) documentReceivedDate.value = linkedRecord.data.personalInfo?.documentReceivedDate || "";
+  if (documentReturnDate) documentReturnDate.value = linkedRecord.data.personalInfo?.documentReturnDate || "";
+  if (report90FullName) report90FullName.value = linkedRecord.data.report90Days?.fullName || "";
+  if (report90Nationality) report90Nationality.value = linkedRecord.data.report90Days?.nationality || "";
+  if (report90EmployerName) report90EmployerName.value = linkedRecord.data.report90Days?.employerName || "";
+  if (report90StartDate) report90StartDate.value = linkedRecord.data.report90Days?.reportStartDate || "";
+  if (report90NextDate) report90NextDate.value = linkedRecord.data.report90Days?.nextReportDate || "";
+  if (report90Overstay) report90Overstay.checked = linkedRecord.data.report90Days?.overstay || false;
+  if (visaRunPo30) visaRunPo30.checked = linkedRecord.data.visaRun?.po30 || false;
+  if (visaRunPo60) visaRunPo60.checked = linkedRecord.data.visaRun?.po60 || false;
+  if (visaRunFullName) visaRunFullName.value = linkedRecord.data.visaRun?.fullName || "";
+  if (visaRunNationality) visaRunNationality.value = linkedRecord.data.visaRun?.nationality || "";
+  if (visaRunEmployerName) visaRunEmployerName.value = linkedRecord.data.visaRun?.employerName || "";
+  if (visaRunStartDate) visaRunStartDate.value = linkedRecord.data.visaRun?.visaStartDate || "";
+  if (visaRunEndDate) visaRunEndDate.value = linkedRecord.data.visaRun?.visaEndDate || "";
+  if (visaRunOverstay) visaRunOverstay.checked = linkedRecord.data.visaRun?.overstay || false;
+  if (docWorkPermit) docWorkPermit.checked = linkedRecord.data.documents?.workPermit || false;
+  if (docWorkPermitCopy) docWorkPermitCopy.checked = linkedRecord.data.documents?.workPermitCopy || false;
+  if (docReceipt) docReceipt.checked = linkedRecord.data.documents?.receipt || false;
+  if (docRequestForm) docRequestForm.checked = linkedRecord.data.documents?.requestForm || false;
+  if (docNameList) docNameList.checked = linkedRecord.data.documents?.nameList || false;
+  if (docPassPage) docPassPage.checked = linkedRecord.data.documents?.passPage || false;
+  if (docPassCopy) docPassCopy.checked = linkedRecord.data.documents?.passCopy || false;
+  if (docVisaPage) docVisaPage.checked = linkedRecord.data.documents?.visaPage || false;
+  if (docVisaCopy) docVisaCopy.checked = linkedRecord.data.documents?.visaCopy || false;
+  if (docHealthCard) docHealthCard.checked = linkedRecord.data.documents?.healthCard || false;
+  if (docExitNotice) docExitNotice.checked = linkedRecord.data.documents?.exitNotice || false;
+  if (docHouseReg) docHouseReg.checked = linkedRecord.data.documents?.houseReg || false;
+  if (docEmployerIdCard) docEmployerIdCard.checked = linkedRecord.data.documents?.employerIdCard || false;
+  if (docCompanyCert) docCompanyCert.checked = linkedRecord.data.documents?.companyCert || false;
+  if (documentsNote) documentsNote.value = linkedRecord.data.documents?.note || "";
   if (caseStatusInputs?.length) {
     caseStatusInputs.forEach((input) => {
-      input.checked = input.value === record.data.caseStatus?.status;
+      input.checked = input.value === linkedRecord.data.caseStatus?.status;
     });
   }
-  if (appointmentDate) appointmentDate.value = record.data.caseStatus?.appointmentDate || "";
-  if (appointmentNote) appointmentNote.value = record.data.caseStatus?.appointmentNote || "";
+  if (appointmentDate) appointmentDate.value = linkedRecord.data.caseStatus?.appointmentDate || "";
+  if (appointmentNote) appointmentNote.value = linkedRecord.data.caseStatus?.appointmentNote || "";
   updateFormTypeOtherVisibility();
   updateAppointmentVisibility();
   if (workerList) {
     workerList.innerHTML = "";
-    const workers = normalizeWorkers(record.data);
+    const workers = normalizeWorkers(linkedRecord.data);
     if (workers.length) {
       workers.forEach((worker) => {
         const card = createWorkerCard(worker);
@@ -2464,54 +2905,54 @@ if (formTypeInputs?.length) {
     ensureWorkerCards();
     refreshWorkerStatuses();
   }
-  if (company) company.value = record.data.company || "";
-  if (caseType) caseType.value = record.data.caseType || "changeEmployer";
-  if (position) position.value = record.data.position || "";
-  if (workSite) workSite.value = record.data.workSite || "";
-  if (startDate) startDate.value = record.data.startDate || "";
-  if (employerId) employerId.value = record.data.employerId || "";
-  if (renewalType) renewalType.value = record.data.renewalType || "passport";
-  if (renewalStatus) renewalStatus.value = record.data.renewalStatus || "none";
-  if (receivedFacePhoto) receivedFacePhoto.checked = record.data.receivedDocs?.includes("facePhoto") || false;
-  if (receivedIdCard) receivedIdCard.checked = record.data.receivedDocs?.includes("idCard") || false;
-  if (receivedHouseDoc) receivedHouseDoc.checked = record.data.receivedDocs?.includes("houseDoc") || false;
-  if (receivedPaymentSlip) receivedPaymentSlip.checked = record.data.receivedDocs?.includes("paymentSlip") || false;
+  if (company) company.value = linkedRecord.data.company || "";
+  if (caseType) caseType.value = linkedRecord.data.caseType || "changeEmployer";
+  if (position) position.value = linkedRecord.data.position || "";
+  if (workSite) workSite.value = linkedRecord.data.workSite || "";
+  if (startDate) startDate.value = linkedRecord.data.startDate || "";
+  if (employerId) employerId.value = linkedRecord.data.employerId || "";
+  if (renewalType) renewalType.value = linkedRecord.data.renewalType || "passport";
+  if (renewalStatus) renewalStatus.value = linkedRecord.data.renewalStatus || "none";
+  if (receivedFacePhoto) receivedFacePhoto.checked = linkedRecord.data.receivedDocs?.includes("facePhoto") || false;
+  if (receivedIdCard) receivedIdCard.checked = linkedRecord.data.receivedDocs?.includes("idCard") || false;
+  if (receivedHouseDoc) receivedHouseDoc.checked = linkedRecord.data.receivedDocs?.includes("houseDoc") || false;
+  if (receivedPaymentSlip) receivedPaymentSlip.checked = linkedRecord.data.receivedDocs?.includes("paymentSlip") || false;
   if (notificationItems?.length) {
     notificationItems.forEach((checkbox) => {
-      checkbox.checked = record.data.notifications?.includes(checkbox.value) || false;
+      checkbox.checked = linkedRecord.data.notifications?.includes(checkbox.value) || false;
     });
   }
   if (supportingDocs?.length) {
     supportingDocs.forEach((checkbox) => {
-      checkbox.checked = record.data.supportingDocs?.includes(checkbox.value) || false;
+      checkbox.checked = linkedRecord.data.supportingDocs?.includes(checkbox.value) || false;
     });
   }
   if (requiredRenewalDocs?.length) {
     requiredRenewalDocs.forEach((checkbox) => {
-      checkbox.checked = record.data.requiredRenewalDocs?.includes(checkbox.value) || false;
+      checkbox.checked = linkedRecord.data.requiredRenewalDocs?.includes(checkbox.value) || false;
     });
   }
-  if (receivedDocsNote) receivedDocsNote.value = record.data.receivedDocsNote || "";
-  if (renewalDocsNote) renewalDocsNote.value = record.data.renewalDocsNote || "";
-  if (verification) verification.value = record.data.verification || "";
-  if (paymentStatus) paymentStatus.value = record.data.paymentStatus || "pending";
-  if (paymentDate) paymentDate.value = record.data.paymentDate || "";
-  if (paymentNotes) paymentNotes.value = record.data.paymentNotes || "";
+  if (receivedDocsNote) receivedDocsNote.value = linkedRecord.data.receivedDocsNote || "";
+  if (renewalDocsNote) renewalDocsNote.value = linkedRecord.data.renewalDocsNote || "";
+  if (verification) verification.value = linkedRecord.data.verification || "";
+  if (paymentStatus) paymentStatus.value = linkedRecord.data.paymentStatus || "pending";
+  if (paymentDate) paymentDate.value = linkedRecord.data.paymentDate || "";
+  if (paymentNotes) paymentNotes.value = linkedRecord.data.paymentNotes || "";
   uploadCache.facePhoto = {
-    name: record.data.facePhoto || "",
-    dataUrl: record.data.facePhotoData || "",
+    name: linkedRecord.data.facePhoto || "",
+    dataUrl: linkedRecord.data.facePhotoData || "",
   };
   uploadCache.idCard = {
-    name: record.data.idCard || "",
-    dataUrl: record.data.idCardData || "",
+    name: linkedRecord.data.idCard || "",
+    dataUrl: linkedRecord.data.idCardData || "",
   };
   uploadCache.houseDoc = {
-    name: record.data.houseDoc || "",
-    dataUrl: record.data.houseDocData || "",
+    name: linkedRecord.data.houseDoc || "",
+    dataUrl: linkedRecord.data.houseDocData || "",
   };
   uploadCache.paymentSlip = {
-    name: record.data.paymentSlip || "",
-    dataUrl: record.data.paymentSlipData || "",
+    name: linkedRecord.data.paymentSlip || "",
+    dataUrl: linkedRecord.data.paymentSlipData || "",
   };
   updateSections();
   updateUploadPreview();
@@ -2527,6 +2968,8 @@ const updateFormStepVisibility = () => {
 };
 
 updateFormStepVisibility();
+initFormTypeFromQuery();
+initRecordFilterFromQuery();
 
 if (nextStepLink) {
   nextStepLink.addEventListener("click", () => {
@@ -2602,7 +3045,6 @@ ensureWorkerCards();
 updateUploadPreview();
 updatePaymentSlipPreview();
 loadFormDraft();
-initTheme();
 renderRecords();
 renderLatestRecordCard();
 syncRecordsFromServer();
@@ -2682,17 +3124,22 @@ if (draftButton) {
 if (clearFormDraftButton) {
   clearFormDraftButton.addEventListener("click", clearFormDraft);
 }
-if (themeToggle) {
-  themeToggle.addEventListener("click", () => {
-    const nextTheme = document.body.classList.contains("theme-dark") ? "light" : "dark";
-    applyTheme(nextTheme);
-  });
-}
 if (recordSearch) {
   recordSearch.addEventListener("input", renderRecords);
 }
 if (recordFilter) {
   recordFilter.addEventListener("change", renderRecords);
+}
+const applyRecordFilter = (value) => {
+  if (!recordFilter) return;
+  recordFilter.value = value;
+  renderRecords();
+};
+if (filterReport90DaysButton) {
+  filterReport90DaysButton.addEventListener("click", () => applyRecordFilter("report90Days"));
+}
+if (filterVisaRunButton) {
+  filterVisaRunButton.addEventListener("click", () => applyRecordFilter("visaRun"));
 }
 if (clearRecordsButton) {
   clearRecordsButton.addEventListener("click", () => {
@@ -2701,6 +3148,7 @@ if (clearRecordsButton) {
       return;
     }
     saveRecords([]);
+    localStorage.removeItem(LINKED_STORE_KEY);
     clearRecordsFromServer();
     renderRecords();
     renderLatestRecordCard();
@@ -2709,6 +3157,9 @@ if (clearRecordsButton) {
 }
 if (exportRecordsButton) {
   exportRecordsButton.addEventListener("click", exportRecordsToCsv);
+}
+if (restoreRecordsButton) {
+  restoreRecordsButton.addEventListener("click", restoreRecordsFromBackup);
 }
 if (passportCheckButton) {
   passportCheckButton.addEventListener("click", () => {

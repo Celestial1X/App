@@ -25,6 +25,8 @@
         <a class="tab-btn" href="index.html" data-i18n="tabLookup">ค้นหาข้อมูล</a>
         <a class="tab-btn is-active" href="records.html" data-i18n="tabRecords">ข้อมูลบันทึก</a>
         <a class="tab-btn" href="form.html" data-i18n="tabForm">กรอกแบบฟอร์ม</a>
+        <a class="tab-btn" href="form.html?formType=report90Days" data-i18n="tabReport90">รายงานตัว 90 วัน</a>
+        <a class="tab-btn" href="form.html?formType=visaRun" data-i18n="tabVisaRun">Visa Run</a>
       </nav>
 
       <section class="panel">
@@ -32,6 +34,14 @@
         <p class="subtitle" data-i18n="recordsSubtitle">
           บันทึกข้อมูลจากแบบฟอร์มและค้นหาด้วยเลขฟอร์มหรือหัวข้อ
         </p>
+        <div class="records-type-tabs">
+          <button type="button" class="tab-btn" id="filterReport90Days" data-i18n="formTypeReport90Days">
+            รายงานตัว 90 วัน
+          </button>
+          <button type="button" class="tab-btn" id="filterVisaRun" data-i18n="formTypeVisaRun">
+            Visa Run
+          </button>
+        </div>
         <div class="grid-2">
           <div class="form-row">
             <label for="recordSearch" data-i18n="recordsSearchLabel">ค้นหาด้วยเลขฟอร์ม/หัวข้อ</label>
@@ -49,12 +59,15 @@
               <option value="changeEmployer" data-i18n="formTypeChangeEmployer">เปลี่ยนนายจ้าง</option>
               <option value="residence37_38" data-i18n="formTypeResidence">แจ้งที่พัก 37,38</option>
               <option value="visaStamp" data-i18n="formTypeVisaStamp">ลงตรา Visa</option>
-              <option value="ciReport" data-i18n="formTypeCiReport">รายงานทำเล่ม CI</option>
+              <option value="ciReport" data-i18n="formTypeCiReport">ทำเล่ม CI</option>
               <option value="workPermitRenewal" data-i18n="formTypeWorkPermitRenewal">ต่ออนุญาตทำงานแรงงานต่างด้าว</option>
               <option value="mouLaos" data-i18n="formTypeMouLaos">MOU ลาว</option>
+              <option value="laosRegular" data-i18n="formTypeLaosRegular">ลาวธรรมดา</option>
               <option value="mouLaosRenew" data-i18n="formTypeMouLaosRenew">MOU ลาว 2 ปีหลัง</option>
               <option value="noDocsRegister" data-i18n="formTypeNoDocsRegister">ขึ้นทะเบียนคนไม่มีเอกสาร</option>
               <option value="exitNotice" data-i18n="formTypeExit">แจ้งออก</option>
+              <option value="report90Days" data-i18n="formTypeReport90Days">รายงานตัว 90 วัน</option>
+              <option value="visaRun" data-i18n="formTypeVisaRun">Visa Run</option>
               <option value="other" data-i18n="formTypeOther">อื่น ๆ</option>
             </select>
           </div>
@@ -63,6 +76,9 @@
           <span class="status-text" id="recordsStatus" data-i18n="recordsStatus">ยังไม่มีข้อมูลที่บันทึก</span>
           <div class="table-actions">
             <button type="button" class="secondary" id="exportRecords">ส่งออก Excel (CSV)</button>
+            <button type="button" class="secondary" id="restoreRecords" data-i18n="restoreBackupButton">
+              กู้คืนข้อมูลสำรอง
+            </button>
             <button type="button" class="secondary" id="clearRecords" data-i18n="clearButton">
               ลบข้อมูลทั้งหมด
             </button>

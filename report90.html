@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>รายงานตัว 90 วัน</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css?v=20260211" />
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero__content">
+        <div class="hero__top"></div>
+        <h1>รายงานตัว 90 วัน</h1>
+      </div>
+    </header>
+
+    <main class="container">
+      <nav class="page-tabs">
+        <a class="tab-btn" href="index.html">ค้นหาข้อมูล</a>
+        <a class="tab-btn" href="records.html">ข้อมูลบันทึก</a>
+        <a class="tab-btn" href="form.html">กรอกแบบฟอร์ม</a>
+        <a class="tab-btn is-active" href="report90.html">รายงานตัว 90 วัน</a>
+        <a class="tab-btn" href="visa-run.html">Visa Run</a>
+      </nav>
+
+      <section class="panel">
+        <h2>รายงานตัว 90 วัน</h2>
+        <form class="form-grid" id="report90Form">
+          <div class="grid-3">
+            <div class="form-row">
+              <label for="report90FullName">ชื่อต่างด้าว</label>
+              <input id="report90FullName" type="text" placeholder="กรอกชื่อต่างด้าว" required />
+            </div>
+            <div class="form-row">
+              <label for="report90Nationality">สัญชาติ</label>
+              <input id="report90Nationality" type="text" placeholder="กรอกสัญชาติ" required />
+            </div>
+            <div class="form-row">
+              <label for="report90EmployerName">ชื่อนายจ้าง</label>
+              <input id="report90EmployerName" type="text" placeholder="กรอกชื่อนายจ้าง" required />
+            </div>
+          </div>
+          <div class="grid-3">
+            <div class="form-row">
+              <label for="report90StartDate">วันที่เริ่มรายงานตัว</label>
+              <input id="report90StartDate" type="date" required />
+            </div>
+            <div class="form-row">
+              <label for="report90NextDate">90 วันถัดไป</label>
+              <input id="report90NextDate" type="date" required />
+            </div>
+            <div class="form-row">
+              <label class="checkbox-item" for="report90Overstay">
+                <input id="report90Overstay" type="checkbox" />
+                <span>ปรับ 90 เกิน</span>
+              </label>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="primary">บันทึกข้อมูล</button>
+          </div>
+          <p class="status-text" id="report90Status"></p>
+        </form>
+
+        <div class="records-table-wrapper">
+          <table class="records-table">
+            <thead>
+              <tr>
+                <th>ชื่อต่างด้าว</th>
+                <th>สัญชาติ</th>
+                <th>ชื่อนายจ้าง</th>
+                <th>วันที่เริ่มรายงานตัว</th>
+                <th>90 วันถัดไป</th>
+                <th>ปรับ 90 เกิน</th>
+              </tr>
+            </thead>
+            <tbody id="report90List"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const form = document.getElementById("report90Form");
+      const list = document.getElementById("report90List");
+      const status = document.getElementById("report90Status");
+      const KEY = "report90Records";
+
+      const loadRecords = () => {
+        try {
+          const raw = localStorage.getItem(KEY);
+          const parsed = JSON.parse(raw || "[]");
+          return Array.isArray(parsed) ? parsed : [];
+        } catch {
+          return [];
+        }
+      };
+
+      const saveRecords = (records) => {
+        localStorage.setItem(KEY, JSON.stringify(records));
+      };
+
+      const renderRecords = () => {
+        const records = loadRecords();
+        list.innerHTML = "";
+        records.forEach((record) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${record.fullName}</td>
+            <td>${record.nationality}</td>
+            <td>${record.employerName}</td>
+            <td>${record.reportStartDate}</td>
+            <td>${record.nextReportDate}</td>
+            <td>${record.overstay ? "มี" : "-"}</td>
+          `;
+          list.appendChild(row);
+        });
+      };
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const record = {
+          fullName: document.getElementById("report90FullName").value.trim(),
+          nationality: document.getElementById("report90Nationality").value.trim(),
+          employerName: document.getElementById("report90EmployerName").value.trim(),
+          reportStartDate: document.getElementById("report90StartDate").value,
+          nextReportDate: document.getElementById("report90NextDate").value,
+          overstay: document.getElementById("report90Overstay").checked,
+        };
+        const records = loadRecords();
+        records.unshift(record);
+        saveRecords(records);
+        form.reset();
+        status.textContent = "บันทึกข้อมูลเรียบร้อยแล้ว";
+        renderRecords();
+      });
+
+      renderRecords();
+    </script>
+  </body>
+</html>

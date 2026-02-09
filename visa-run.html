@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Visa Run</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css?v=20260211" />
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero__content">
+        <div class="hero__top"></div>
+        <h1>Visa Run</h1>
+      </div>
+    </header>
+
+    <main class="container">
+      <nav class="page-tabs">
+        <a class="tab-btn" href="index.html">ค้นหาข้อมูล</a>
+        <a class="tab-btn" href="records.html">ข้อมูลบันทึก</a>
+        <a class="tab-btn" href="form.html">กรอกแบบฟอร์ม</a>
+        <a class="tab-btn" href="report90.html">รายงานตัว 90 วัน</a>
+        <a class="tab-btn is-active" href="visa-run.html">Visa Run</a>
+      </nav>
+
+      <section class="panel">
+        <h2>Visa Run</h2>
+        <form class="form-grid" id="visaRunForm">
+          <div class="grid-3">
+            <div class="form-row">
+              <label class="checkbox-item" for="visaRunPo30">
+                <input id="visaRunPo30" type="checkbox" />
+                <span>ผ.30</span>
+              </label>
+            </div>
+            <div class="form-row">
+              <label class="checkbox-item" for="visaRunPo60">
+                <input id="visaRunPo60" type="checkbox" />
+                <span>ผ.60</span>
+              </label>
+            </div>
+          </div>
+          <div class="grid-3">
+            <div class="form-row">
+              <label for="visaRunFullName">ชื่อต่างด้าว</label>
+              <input id="visaRunFullName" type="text" placeholder="กรอกชื่อต่างด้าว" required />
+            </div>
+            <div class="form-row">
+              <label for="visaRunNationality">สัญชาติ</label>
+              <input id="visaRunNationality" type="text" placeholder="กรอกสัญชาติ" required />
+            </div>
+            <div class="form-row">
+              <label for="visaRunEmployerName">ชื่อนายจ้าง</label>
+              <input id="visaRunEmployerName" type="text" placeholder="กรอกชื่อนายจ้าง" required />
+            </div>
+          </div>
+          <div class="grid-3">
+            <div class="form-row">
+              <label for="visaRunStartDate">วันเริ่ม Visa</label>
+              <input id="visaRunStartDate" type="date" required />
+            </div>
+            <div class="form-row">
+              <label for="visaRunEndDate">วันหมด Visa</label>
+              <input id="visaRunEndDate" type="date" required />
+            </div>
+            <div class="form-row">
+              <label class="checkbox-item" for="visaRunOverstay">
+                <input id="visaRunOverstay" type="checkbox" />
+                <span>Visa เกิน</span>
+              </label>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="primary">บันทึกข้อมูล</button>
+          </div>
+          <p class="status-text" id="visaRunStatus"></p>
+        </form>
+
+        <div class="records-table-wrapper">
+          <table class="records-table">
+            <thead>
+              <tr>
+                <th>ผ.30</th>
+                <th>ผ.60</th>
+                <th>ชื่อต่างด้าว</th>
+                <th>สัญชาติ</th>
+                <th>ชื่อนายจ้าง</th>
+                <th>วันเริ่ม Visa</th>
+                <th>วันหมด Visa</th>
+                <th>Visa เกิน</th>
+              </tr>
+            </thead>
+            <tbody id="visaRunList"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const form = document.getElementById("visaRunForm");
+      const list = document.getElementById("visaRunList");
+      const status = document.getElementById("visaRunStatus");
+      const KEY = "visaRunRecords";
+
+      const loadRecords = () => {
+        try {
+          const raw = localStorage.getItem(KEY);
+          const parsed = JSON.parse(raw || "[]");
+          return Array.isArray(parsed) ? parsed : [];
+        } catch {
+          return [];
+        }
+      };
+
+      const saveRecords = (records) => {
+        localStorage.setItem(KEY, JSON.stringify(records));
+      };
+
+      const renderRecords = () => {
+        const records = loadRecords();
+        list.innerHTML = "";
+        records.forEach((record) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${record.po30 ? "มี" : "-"}</td>
+            <td>${record.po60 ? "มี" : "-"}</td>
+            <td>${record.fullName}</td>
+            <td>${record.nationality}</td>
+            <td>${record.employerName}</td>
+            <td>${record.visaStartDate}</td>
+            <td>${record.visaEndDate}</td>
+            <td>${record.overstay ? "มี" : "-"}</td>
+          `;
+          list.appendChild(row);
+        });
+      };
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const record = {
+          po30: document.getElementById("visaRunPo30").checked,
+          po60: document.getElementById("visaRunPo60").checked,
+          fullName: document.getElementById("visaRunFullName").value.trim(),
+          nationality: document.getElementById("visaRunNationality").value.trim(),
+          employerName: document.getElementById("visaRunEmployerName").value.trim(),
+          visaStartDate: document.getElementById("visaRunStartDate").value,
+          visaEndDate: document.getElementById("visaRunEndDate").value,
+          overstay: document.getElementById("visaRunOverstay").checked,
+        };
+        const records = loadRecords();
+        records.unshift(record);
+        saveRecords(records);
+        form.reset();
+        status.textContent = "บันทึกข้อมูลเรียบร้อยแล้ว";
+        renderRecords();
+      });
+
+      renderRecords();
+    </script>
+  </body>
+</html>

@@ -165,15 +165,99 @@
                 <label class="radio-item"><input type="radio" name="formType" value="ciReport" /><span>ทำเล่ม CI</span></label>
                 <label class="radio-item"><input type="radio" name="formType" value="workPermitRenewal" /><span>ต่ออนุญาตทำงานแรงงานต่างด้าว</span></label>
                 <label class="radio-item"><input type="radio" name="formType" value="mouLaos" /><span>MOU ลาว</span></label>
+                <label class="radio-item"><input type="radio" name="formType" value="laosRegular" /><span>ลาวธรรมดา</span></label>
                 <label class="radio-item"><input type="radio" name="formType" value="mouLaosRenew" /><span>MOU ลาว 2 ปีหลัง</span></label>
                 <label class="radio-item"><input type="radio" name="formType" value="noDocsRegister" /><span>ขึ้นทะเบียนคนไม่มีเอกสาร</span></label>
                 <label class="radio-item"><input type="radio" name="formType" value="exitNotice" /><span>แจ้งออก</span></label>
-                <label class="radio-item"><input type="radio" name="formType" value="report90Days" /><span>ต่อ 90 วัน</span></label>
+                <label class="radio-item"><input type="radio" name="formType" value="report90Days" /><span>รายงานตัว 90 วัน</span></label>
+                <label class="radio-item"><input type="radio" name="formType" value="visaRun" /><span>Visa Run</span></label>
                 <label class="radio-item"><input type="radio" name="formType" value="other" /><span>อื่น ๆ</span></label>
               </div>
               <div class="form-row is-hidden" id="formTypeOtherRow">
                 <label for="formTypeOtherDetail">ระบุรายละเอียดอื่น ๆ</label>
                 <input id="formTypeOtherDetail" type="text" placeholder="ระบุประเภทงานอื่น ๆ" />
+              </div>
+            </div>
+
+            <div class="form-section" data-section="report90Days">
+              <h3>รายงานตัว 90 วัน</h3>
+              <div class="grid-3">
+                <div class="form-row">
+                  <label for="report90FullName">ชื่อต่างด้าว</label>
+                  <input id="report90FullName" type="text" placeholder="กรอกชื่อต่างด้าว" />
+                </div>
+                <div class="form-row">
+                  <label for="report90Nationality">สัญชาติ</label>
+                  <input id="report90Nationality" type="text" placeholder="กรอกสัญชาติ" />
+                </div>
+                <div class="form-row">
+                  <label for="report90EmployerName">ชื่อนายจ้าง</label>
+                  <input id="report90EmployerName" type="text" placeholder="กรอกชื่อนายจ้าง" />
+                </div>
+              </div>
+              <div class="grid-3">
+                <div class="form-row">
+                  <label for="report90StartDate">วันที่เริ่มรายงานตัว</label>
+                  <input id="report90StartDate" type="date" />
+                </div>
+                <div class="form-row">
+                  <label for="report90NextDate">90 วันถัดไป</label>
+                  <input id="report90NextDate" type="date" />
+                </div>
+                <div class="form-row">
+                  <label class="checkbox-item" for="report90Overstay">
+                    <input id="report90Overstay" type="checkbox" />
+                    <span>ปรับ 90 เกิน</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section" data-section="visaRun">
+              <h3>Visa Run</h3>
+              <div class="grid-3">
+                <div class="form-row">
+                  <label class="checkbox-item" for="visaRunPo30">
+                    <input id="visaRunPo30" type="checkbox" />
+                    <span>ผ.30</span>
+                  </label>
+                </div>
+                <div class="form-row">
+                  <label class="checkbox-item" for="visaRunPo60">
+                    <input id="visaRunPo60" type="checkbox" />
+                    <span>ผ.60</span>
+                  </label>
+                </div>
+              </div>
+              <div class="grid-3">
+                <div class="form-row">
+                  <label for="visaRunFullName">ชื่อต่างด้าว</label>
+                  <input id="visaRunFullName" type="text" placeholder="กรอกชื่อต่างด้าว" />
+                </div>
+                <div class="form-row">
+                  <label for="visaRunNationality">สัญชาติ</label>
+                  <input id="visaRunNationality" type="text" placeholder="กรอกสัญชาติ" />
+                </div>
+                <div class="form-row">
+                  <label for="visaRunEmployerName">ชื่อนายจ้าง</label>
+                  <input id="visaRunEmployerName" type="text" placeholder="กรอกชื่อนายจ้าง" />
+                </div>
+              </div>
+              <div class="grid-3">
+                <div class="form-row">
+                  <label for="visaRunStartDate">วันเริ่ม Visa</label>
+                  <input id="visaRunStartDate" type="date" />
+                </div>
+                <div class="form-row">
+                  <label for="visaRunEndDate">วันหมด Visa</label>
+                  <input id="visaRunEndDate" type="date" />
+                </div>
+                <div class="form-row">
+                  <label class="checkbox-item" for="visaRunOverstay">
+                    <input id="visaRunOverstay" type="checkbox" />
+                    <span>Visa เกิน</span>
+                  </label>
+                </div>
               </div>
             </div>
 

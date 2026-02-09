@@ -32,6 +32,14 @@
         <p class="subtitle" data-i18n="recordsSubtitle">
           บันทึกข้อมูลจากแบบฟอร์มและค้นหาด้วยเลขฟอร์มหรือหัวข้อ
         </p>
+        <div class="records-type-tabs">
+          <button type="button" class="tab-btn" id="filterReport90Days" data-i18n="formTypeReport90Days">
+            รายงานตัว 90 วัน
+          </button>
+          <button type="button" class="tab-btn" id="filterVisaRun" data-i18n="formTypeVisaRun">
+            Visa Run
+          </button>
+        </div>
         <div class="grid-2">
           <div class="form-row">
             <label for="recordSearch" data-i18n="recordsSearchLabel">ค้นหาด้วยเลขฟอร์ม/หัวข้อ</label>
@@ -52,10 +60,12 @@
               <option value="ciReport" data-i18n="formTypeCiReport">ทำเล่ม CI</option>
               <option value="workPermitRenewal" data-i18n="formTypeWorkPermitRenewal">ต่ออนุญาตทำงานแรงงานต่างด้าว</option>
               <option value="mouLaos" data-i18n="formTypeMouLaos">MOU ลาว</option>
+              <option value="laosRegular" data-i18n="formTypeLaosRegular">ลาวธรรมดา</option>
               <option value="mouLaosRenew" data-i18n="formTypeMouLaosRenew">MOU ลาว 2 ปีหลัง</option>
               <option value="noDocsRegister" data-i18n="formTypeNoDocsRegister">ขึ้นทะเบียนคนไม่มีเอกสาร</option>
               <option value="exitNotice" data-i18n="formTypeExit">แจ้งออก</option>
-              <option value="report90Days" data-i18n="formTypeReport90Days">ต่อ 90 วัน</option>
+              <option value="report90Days" data-i18n="formTypeReport90Days">รายงานตัว 90 วัน</option>
+              <option value="visaRun" data-i18n="formTypeVisaRun">Visa Run</option>
               <option value="other" data-i18n="formTypeOther">อื่น ๆ</option>
             </select>
           </div>

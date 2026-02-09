@@ -619,6 +619,19 @@ button {
   margin-top: 12px;
 }
 
+.records-type-tabs {
+  display: flex;
+  gap: 12px;
+  margin: 12px 0 20px;
+  flex-wrap: wrap;
+}
+
+.records-type-tabs .tab-btn {
+  font-size: 1rem;
+  padding: 10px 18px;
+  border-radius: 999px;
+}
+
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -753,6 +766,16 @@ button {
   border-bottom: 1px solid rgba(148, 163, 184, 0.2);
   font-size: 0.9rem;
   color: #1f2a44;
+}
+
+.records-table td.status-warn {
+  color: #b3541e;
+  font-weight: 600;
+}
+
+.records-table td.status-error {
+  color: #b42318;
+  font-weight: 600;
 }
 
 .records-table thead th {

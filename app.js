@@ -86,6 +86,7 @@ const recordFilter = document.getElementById("recordFilter");
 const recordsStatus = document.getElementById("recordsStatus");
 const recordsList = document.getElementById("recordsList");
 const exportRecordsButton = document.getElementById("exportRecords");
+const restoreRecordsButton = document.getElementById("restoreRecords");
 const summaryTodayCount = document.getElementById("summaryTodayCount");
 const summaryYesterdayCount = document.getElementById("summaryYesterdayCount");
 const summaryMonthCount = document.getElementById("summaryMonthCount");
@@ -408,6 +409,10 @@ const translations = {
     filterNationalityKhm: "สัญชาติ KHM",
     filterNationalityVnm: "สัญชาติ VNM",
     recordsStatus: "ยังไม่มีข้อมูลที่บันทึก",
+    restoreBackupButton: "กู้คืนข้อมูลสำรอง",
+    restoreBackupConfirm: "ยืนยันการกู้คืนข้อมูลสำรองหรือไม่?",
+    restoreBackupEmpty: "ยังไม่พบข้อมูลสำรอง",
+    restoreBackupSuccess: "กู้คืนข้อมูลสำรองเรียบร้อยแล้ว",
     clearButton: "ลบข้อมูลทั้งหมด",
     saveDraftSuccess: "บันทึกข้อมูลเรียบร้อยแล้ว",
     saveDraftEmpty: "กรุณากรอกข้อมูลก่อนบันทึก",
@@ -682,6 +687,10 @@ const translations = {
     filterNationalityKhm: "Nationality KHM",
     filterNationalityVnm: "Nationality VNM",
     recordsStatus: "No saved records yet.",
+    restoreBackupButton: "Restore backup",
+    restoreBackupConfirm: "Restore backup records?",
+    restoreBackupEmpty: "No backup records found.",
+    restoreBackupSuccess: "Backup records restored.",
     clearButton: "Clear all records",
     saveDraftSuccess: "Record saved successfully.",
     saveDraftEmpty: "Please fill in the form before saving.",
@@ -2028,6 +2037,20 @@ const exportRecordsToCsv = () => {
   URL.revokeObjectURL(url);
 };
 
+const restoreRecordsFromBackup = () => {
+  const backup = readJsonStorage(RECORDS_BACKUP_KEY, []);
+  if (!Array.isArray(backup) || !backup.length) {
+    setStatus(recordsStatus, translations[currentLanguage].restoreBackupEmpty, "warn");
+    return;
+  }
+  const shouldRestore = window.confirm(translations[currentLanguage].restoreBackupConfirm);
+  if (!shouldRestore) return;
+  saveRecords(backup);
+  renderRecords();
+  renderLatestRecordCard();
+  setStatus(recordsStatus, translations[currentLanguage].restoreBackupSuccess, "ok");
+};
+
 const openRecordModal = (record) => {
   recordModalTitle.textContent = translations[currentLanguage].recordModalTitle;
   recordModalBody.innerHTML = "";
@@ -2851,6 +2874,9 @@ if (clearRecordsButton) {
 }
 if (exportRecordsButton) {
   exportRecordsButton.addEventListener("click", exportRecordsToCsv);
+}
+if (restoreRecordsButton) {
+  restoreRecordsButton.addEventListener("click", restoreRecordsFromBackup);
 }
 if (passportCheckButton) {
   passportCheckButton.addEventListener("click", () => {

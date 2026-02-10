@@ -11,6 +11,9 @@ const STORAGE_ROOT = process.env.RECORDS_DATA_DIR
 const DATA_FILE = process.env.RECORDS_DATA_FILE
   ? path.resolve(process.env.RECORDS_DATA_FILE)
   : path.join(STORAGE_ROOT, "records.json");
+const FOLLOWUPS_DATA_FILE = process.env.FOLLOWUPS_DATA_FILE
+  ? path.resolve(process.env.FOLLOWUPS_DATA_FILE)
+  : path.join(STORAGE_ROOT, "followups.json");
 const MOUNT_PATH = process.env.RENDER_DISK_PATH
   ? path.resolve(process.env.RENDER_DISK_PATH)
   : STORAGE_ROOT;
@@ -36,8 +39,7 @@ app.use(express.static(__dirname));
 
 const appendServerLog = async (message) => {
   const timestamp = new Date().toISOString();
-  const line = `[${timestamp}] ${message}
-`;
+  const line = `[${timestamp}] ${message}\n`;
   const logDir = path.dirname(SERVER_LOG_FILE);
   await fs.mkdir(logDir, { recursive: true });
   await fs.appendFile(SERVER_LOG_FILE, line, "utf-8");
@@ -48,6 +50,7 @@ const logStorageContext = async () => {
     `mountPath=${MOUNT_PATH}`,
     `storageRoot=${STORAGE_ROOT}`,
     `recordsFile=${DATA_FILE}`,
+    `followupsFile=${FOLLOWUPS_DATA_FILE}`,
     `logFile=${SERVER_LOG_FILE}`,
     `renderService=${process.env.RENDER_SERVICE_NAME || ""}`,
   ].join(" | ");
@@ -59,26 +62,51 @@ const logStorageContext = async () => {
   }
 };
 
-const ensureDataFile = async () => {
-  const dataDir = path.dirname(DATA_FILE);
+const ensureJsonFile = async (filePath, initialPayload) => {
+  const dataDir = path.dirname(filePath);
   await fs.mkdir(dataDir, { recursive: true });
   try {
-    await fs.access(DATA_FILE);
+    await fs.access(filePath);
   } catch {
-    await fs.writeFile(DATA_FILE, JSON.stringify({ records: [] }, null, 2));
+    await fs.writeFile(filePath, JSON.stringify(initialPayload, null, 2));
   }
 };
 
+const readJsonFile = async (filePath, fallbackPayload) => {
+  await ensureJsonFile(filePath, fallbackPayload);
+  const raw = await fs.readFile(filePath, "utf-8");
+  return JSON.parse(raw || "{}");
+};
+
+const writeJsonFile = async (filePath, payload) => {
+  await ensureJsonFile(filePath, payload);
+  await fs.writeFile(filePath, JSON.stringify(payload, null, 2));
+};
+
 const readRecords = async () => {
-  await ensureDataFile();
-  const raw = await fs.readFile(DATA_FILE, "utf-8");
-  const parsed = JSON.parse(raw || "{}");
+  const parsed = await readJsonFile(DATA_FILE, { records: [] });
   return Array.isArray(parsed.records) ? parsed.records : [];
 };
 
 const writeRecords = async (records) => {
-  await ensureDataFile();
-  await fs.writeFile(DATA_FILE, JSON.stringify({ records }, null, 2));
+  await writeJsonFile(DATA_FILE, { records });
+};
+
+const FOLLOWUP_TYPES = new Set(["report90", "visarun"]);
+
+const readFollowups = async () => {
+  const parsed = await readJsonFile(FOLLOWUPS_DATA_FILE, { report90: [], visarun: [] });
+  return {
+    report90: Array.isArray(parsed.report90) ? parsed.report90 : [],
+    visarun: Array.isArray(parsed.visarun) ? parsed.visarun : [],
+  };
+};
+
+const writeFollowups = async (followups) => {
+  await writeJsonFile(FOLLOWUPS_DATA_FILE, {
+    report90: Array.isArray(followups.report90) ? followups.report90 : [],
+    visarun: Array.isArray(followups.visarun) ? followups.visarun : [],
+  });
 };
 
 app.get("/api/records", async (_req, res) => {
@@ -131,9 +159,52 @@ app.delete("/api/records/:id", async (req, res) => {
   res.json({ status: "ok" });
 });
 
+app.get("/api/followups/:type", async (req, res) => {
+  const { type } = req.params;
+  if (!FOLLOWUP_TYPES.has(type)) {
+    res.status(400).json({ message: "Invalid followup type" });
+    return;
+  }
+  const followups = await readFollowups();
+  res.json(followups[type]);
+});
+
+app.post("/api/followups/:type", async (req, res) => {
+  const { type } = req.params;
+  if (!FOLLOWUP_TYPES.has(type)) {
+    res.status(400).json({ message: "Invalid followup type" });
+    return;
+  }
+  const payload = req.body || {};
+  const followups = await readFollowups();
+  const rows = followups[type];
+  const incomingId = String(payload.id || "").trim();
+  const now = new Date().toISOString();
+
+  if (incomingId) {
+    const index = rows.findIndex((item) => String(item.id) === incomingId);
+    if (index >= 0) {
+      const updated = { ...rows[index], ...payload, id: incomingId, updatedAt: now };
+      rows[index] = updated;
+      followups[type] = rows;
+      await writeFollowups(followups);
+      res.json(updated);
+      return;
+    }
+  }
+
+  const nextId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const created = { ...payload, id: nextId, createdAt: now, updatedAt: now };
+  rows.unshift(created);
+  followups[type] = rows;
+  await writeFollowups(followups);
+  res.json(created);
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, async () => {
   console.log(`Server running at http://localhost:${PORT}`);
   console.log(`Records storage file: ${DATA_FILE}`);
+  console.log(`Followups storage file: ${FOLLOWUPS_DATA_FILE}`);
   await logStorageContext();
 });

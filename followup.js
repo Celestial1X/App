@@ -1,5 +1,21 @@
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WARNING_DAYS = 7;
+const API_BASE_KEY = "recordsApiBaseUrl";
+
+const normalizeApiBaseUrl = (value) => String(value || "").trim().replace(/\/+$/, "");
+const resolveApiBaseUrl = () => {
+  const params = new URLSearchParams(window.location.search || "");
+  const queryBase = normalizeApiBaseUrl(params.get("apiBase"));
+  if (queryBase) {
+    localStorage.setItem(API_BASE_KEY, queryBase);
+    return queryBase;
+  }
+  const storedBase = normalizeApiBaseUrl(localStorage.getItem(API_BASE_KEY));
+  return storedBase || "";
+};
+
+const API_BASE_URL = resolveApiBaseUrl();
+const FOLLOWUP_API_URL = API_BASE_URL ? `${API_BASE_URL}/api/followups` : "/api/followups";
 
 const toDateOnly = (value) => (value ? new Date(`${value}T00:00:00`) : null);
 const addDays = (value, days) => {
@@ -67,8 +83,29 @@ const setupModal = () => {
   return { open };
 };
 
+const fetchFollowups = async (type) => {
+  const response = await fetch(`${FOLLOWUP_API_URL}/${type}`);
+  if (!response.ok) {
+    throw new Error(`Cannot load ${type}`);
+  }
+  const rows = await response.json();
+  return Array.isArray(rows) ? rows : [];
+};
+
+const saveFollowup = async (type, payload) => {
+  const response = await fetch(`${FOLLOWUP_API_URL}/${type}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw new Error(`Cannot save ${type}`);
+  }
+  return response.json();
+};
+
 const runReport90Page = () => {
-  const KEY = "report90Records";
+  const type = "report90";
   const form = document.getElementById("report90Form");
   const startDate = document.getElementById("r90StartDate");
   const nextDate = document.getElementById("r90NextDate");
@@ -76,17 +113,15 @@ const runReport90Page = () => {
   const list = document.getElementById("report90List");
   const alert = document.getElementById("report90Alert");
   const modal = setupModal();
-  let editIndex = null;
-
-  const load = () => JSON.parse(localStorage.getItem(KEY) || "[]");
-  const save = (rows) => localStorage.setItem(KEY, JSON.stringify(rows));
+  let rows = [];
+  let editId = "";
 
   const resetForm = () => {
     form.reset();
-    editIndex = null;
+    editId = "";
   };
 
-  const fillForEdit = (item, index) => {
+  const fillForEdit = (item) => {
     document.getElementById("r90WorkerName").value = item.workerName || "";
     document.getElementById("r90Nationality").value = item.nationality || "";
     document.getElementById("r90Employer").value = item.employerName || "";
@@ -95,7 +130,7 @@ const runReport90Page = () => {
     document.getElementById("r90Overdue").checked = !!item.overdueFine;
     document.getElementById("r90SentImm").checked = !!item.sentImmigration;
     document.getElementById("r90ReturnBook").checked = !!item.returnBook;
-    editIndex = index;
+    editId = String(item.id || "");
     status.textContent = "กำลังแก้ไขข้อมูลรายการเดิม";
   };
 
@@ -112,8 +147,7 @@ const runReport90Page = () => {
     ]);
   };
 
-  const show = () => {
-    const rows = load();
+  const renderRows = () => {
     list.innerHTML = "";
     const alerts = rows.filter((item) => renderWarning(diffDays(item.nextDate), "ใกล้ถึง 90 วันถัดไป", "เกินกำหนด 90 วัน").alert);
     if (alerts.length) {
@@ -123,10 +157,10 @@ const runReport90Page = () => {
       alert.classList.add("is-hidden");
     }
 
-    rows.forEach((item, index) => {
+    rows.forEach((item) => {
       const w = renderWarning(diffDays(item.nextDate), "ใกล้ถึง 90 วันถัดไป", "เกินกำหนด 90 วัน");
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${item.workerName}</td><td>${item.nationality}</td><td>${item.employerName}</td><td>${fmtDate(item.startDate)}</td><td>${fmtDate(item.nextDate)}</td><td class="${w.alert ? "text-alert" : ""}">${w.text}</td>`;
+      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.nationality || "-"}</td><td>${item.employerName || "-"}</td><td>${fmtDate(item.startDate)}</td><td>${fmtDate(item.nextDate)}</td><td class="${w.alert ? "text-alert" : ""}">${w.text}</td>`;
       const actionCell = document.createElement("td");
       const actionWrap = document.createElement("div");
       actionWrap.className = "table-actions";
@@ -141,7 +175,7 @@ const runReport90Page = () => {
       editButton.type = "button";
       editButton.className = "secondary";
       editButton.textContent = "แก้ไข";
-      editButton.addEventListener("click", () => fillForEdit(item, index));
+      editButton.addEventListener("click", () => fillForEdit(item));
 
       actionWrap.appendChild(verifyButton);
       actionWrap.appendChild(editButton);
@@ -151,14 +185,19 @@ const runReport90Page = () => {
     });
   };
 
+  const refreshRows = async () => {
+    rows = await fetchFollowups(type);
+    renderRows();
+  };
+
   startDate?.addEventListener("change", () => {
     nextDate.value = addDays(startDate.value, 90);
   });
 
-  form?.addEventListener("submit", (event) => {
+  form?.addEventListener("submit", async (event) => {
     event.preventDefault();
-    const rows = load();
     const payload = {
+      id: editId,
       workerName: document.getElementById("r90WorkerName").value.trim(),
       nationality: document.getElementById("r90Nationality").value,
       employerName: document.getElementById("r90Employer").value.trim(),
@@ -167,27 +206,27 @@ const runReport90Page = () => {
       overdueFine: document.getElementById("r90Overdue").checked,
       sentImmigration: document.getElementById("r90SentImm").checked,
       returnBook: document.getElementById("r90ReturnBook").checked,
-      savedAt: new Date().toISOString(),
     };
 
-    if (editIndex !== null && rows[editIndex]) {
-      rows[editIndex] = payload;
-      status.textContent = "แก้ไขข้อมูลเรียบร้อย";
-    } else {
-      rows.unshift(payload);
-      status.textContent = "บันทึกข้อมูลเรียบร้อย";
+    try {
+      await saveFollowup(type, payload);
+      status.textContent = editId ? "แก้ไขข้อมูลเรียบร้อย" : "บันทึกข้อมูลเรียบร้อย";
+      resetForm();
+      await refreshRows();
+    } catch {
+      status.textContent = "ไม่สามารถบันทึกข้อมูลได้ กรุณาตรวจสอบเซิร์ฟเวอร์";
+      status.classList.add("error");
     }
-
-    save(rows);
-    resetForm();
-    show();
   });
 
-  show();
+  refreshRows().catch(() => {
+    status.textContent = "ไม่สามารถโหลดข้อมูลกลางได้ กรุณาตรวจสอบการเชื่อมต่อเซิร์ฟเวอร์";
+    status.classList.add("error");
+  });
 };
 
 const runVisaPage = () => {
-  const KEY = "visaRunRecords";
+  const type = "visarun";
   const form = document.getElementById("visaRunForm");
   const startDate = document.getElementById("visaStartDate");
   const endDate = document.getElementById("visaEndDate");
@@ -195,17 +234,15 @@ const runVisaPage = () => {
   const list = document.getElementById("visaList");
   const alert = document.getElementById("visaAlert");
   const modal = setupModal();
-  let editIndex = null;
-
-  const load = () => JSON.parse(localStorage.getItem(KEY) || "[]");
-  const save = (rows) => localStorage.setItem(KEY, JSON.stringify(rows));
+  let rows = [];
+  let editId = "";
 
   const resetForm = () => {
     form.reset();
-    editIndex = null;
+    editId = "";
   };
 
-  const fillForEdit = (item, index) => {
+  const fillForEdit = (item) => {
     document.getElementById("visaWorkerName").value = item.workerName || "";
     document.getElementById("visaNationality").value = item.nationality || "";
     document.getElementById("visaEmployer").value = item.employerName || "";
@@ -216,7 +253,7 @@ const runVisaPage = () => {
     document.getElementById("visaReturnBook").checked = !!item.returnBook;
     document.getElementById("visaP60").checked = !!item.p60;
     document.getElementById("visaP30").checked = !!item.p30;
-    editIndex = index;
+    editId = String(item.id || "");
     status.textContent = "กำลังแก้ไขข้อมูลรายการเดิม";
   };
 
@@ -235,8 +272,7 @@ const runVisaPage = () => {
     ]);
   };
 
-  const show = () => {
-    const rows = load();
+  const renderRows = () => {
     list.innerHTML = "";
     const alerts = rows.filter((item) => renderWarning(diffDays(item.endDate), "Visa ใกล้หมดอายุ", "Visa หมดอายุแล้ว").alert);
     if (alerts.length) {
@@ -246,10 +282,10 @@ const runVisaPage = () => {
       alert.classList.add("is-hidden");
     }
 
-    rows.forEach((item, index) => {
+    rows.forEach((item) => {
       const w = renderWarning(diffDays(item.endDate), "Visa ใกล้หมดอายุ", "Visa หมดอายุแล้ว");
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${item.workerName}</td><td>${item.nationality}</td><td>${item.employerName}</td><td>${fmtDate(item.startDate)}</td><td>${fmtDate(item.endDate)}</td><td class="${w.alert ? "text-alert" : ""}">${w.text}</td>`;
+      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.nationality || "-"}</td><td>${item.employerName || "-"}</td><td>${fmtDate(item.startDate)}</td><td>${fmtDate(item.endDate)}</td><td class="${w.alert ? "text-alert" : ""}">${w.text}</td>`;
       const actionCell = document.createElement("td");
       const actionWrap = document.createElement("div");
       actionWrap.className = "table-actions";
@@ -264,7 +300,7 @@ const runVisaPage = () => {
       editButton.type = "button";
       editButton.className = "secondary";
       editButton.textContent = "แก้ไข";
-      editButton.addEventListener("click", () => fillForEdit(item, index));
+      editButton.addEventListener("click", () => fillForEdit(item));
 
       actionWrap.appendChild(verifyButton);
       actionWrap.appendChild(editButton);
@@ -274,14 +310,19 @@ const runVisaPage = () => {
     });
   };
 
+  const refreshRows = async () => {
+    rows = await fetchFollowups(type);
+    renderRows();
+  };
+
   startDate?.addEventListener("change", () => {
     endDate.value = addDays(startDate.value, 90);
   });
 
-  form?.addEventListener("submit", (event) => {
+  form?.addEventListener("submit", async (event) => {
     event.preventDefault();
-    const rows = load();
     const payload = {
+      id: editId,
       workerName: document.getElementById("visaWorkerName").value.trim(),
       nationality: document.getElementById("visaNationality").value,
       employerName: document.getElementById("visaEmployer").value.trim(),
@@ -292,23 +333,23 @@ const runVisaPage = () => {
       returnBook: document.getElementById("visaReturnBook").checked,
       p60: document.getElementById("visaP60").checked,
       p30: document.getElementById("visaP30").checked,
-      savedAt: new Date().toISOString(),
     };
 
-    if (editIndex !== null && rows[editIndex]) {
-      rows[editIndex] = payload;
-      status.textContent = "แก้ไขข้อมูลเรียบร้อย";
-    } else {
-      rows.unshift(payload);
-      status.textContent = "บันทึกข้อมูลเรียบร้อย";
+    try {
+      await saveFollowup(type, payload);
+      status.textContent = editId ? "แก้ไขข้อมูลเรียบร้อย" : "บันทึกข้อมูลเรียบร้อย";
+      resetForm();
+      await refreshRows();
+    } catch {
+      status.textContent = "ไม่สามารถบันทึกข้อมูลได้ กรุณาตรวจสอบเซิร์ฟเวอร์";
+      status.classList.add("error");
     }
-
-    save(rows);
-    resetForm();
-    show();
   });
 
-  show();
+  refreshRows().catch(() => {
+    status.textContent = "ไม่สามารถโหลดข้อมูลกลางได้ กรุณาตรวจสอบการเชื่อมต่อเซิร์ฟเวอร์";
+    status.classList.add("error");
+  });
 };
 
 if (document.body.dataset.page === "report90") {

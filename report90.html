@@ -52,12 +52,25 @@
         <div id="report90Alert" class="warning-banner is-hidden"></div>
         <div class="records-table-wrapper">
           <table class="records-table">
-            <thead><tr><th>ชื่อต่างด้าว</th><th>สัญชาติ</th><th>ชื่อนายจ้าง</th><th>วันที่เริ่ม</th><th>90 วันถัดไป</th><th>สถานะเตือน</th></tr></thead>
+            <thead><tr><th>ชื่อต่างด้าว</th><th>สัญชาติ</th><th>ชื่อนายจ้าง</th><th>วันที่เริ่ม</th><th>90 วันถัดไป</th><th>สถานะเตือน</th><th>การจัดการ</th></tr></thead>
             <tbody id="report90List"></tbody>
           </table>
         </div>
       </section>
     </main>
+
+    <div class="modal" id="followupModal" aria-hidden="true">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="followupModalTitle">ตรวจสอบข้อมูล</h3>
+          <button type="button" class="modal-close" id="followupModalClose" aria-label="ปิด">✕</button>
+        </div>
+        <div id="followupModalBody" class="modal-body"></div>
+        <div class="modal-actions">
+          <button type="button" class="secondary" id="followupModalCloseButton">ปิดหน้าต่าง</button>
+        </div>
+      </div>
+    </div>
 
     <script src="followup.js?v=20260211"></script>
   </body>

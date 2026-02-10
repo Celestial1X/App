@@ -110,7 +110,6 @@ const prevStepButton = document.getElementById("prevStepButton");
 const EDIT_KEY = "editRecordId";
 const RECORD_SEARCH_KEY = "recordSearchQuery";
 const FORM_DRAFT_KEY = "workerFormDraft";
-const THEME_KEY = "uiTheme";
 const API_BASE_KEY = "recordsApiBaseUrl";
 
 const normalizeApiBaseUrl = (value) => String(value || "").trim().replace(/\/+$/, "");
@@ -1721,27 +1720,8 @@ function clearFormDraft() {
   setStatus(formSaveStatus, translations[currentLanguage].formDraftCleared, "ok");
 }
 
-const applyTheme = (theme, { persist = true } = {}) => {
-  document.body.classList.toggle("theme-dark", theme === "dark");
-  if (persist) {
-    localStorage.setItem(THEME_KEY, theme);
-  }
-};
-
 const initTheme = () => {
-  const storedTheme = localStorage.getItem(THEME_KEY);
-  if (storedTheme) {
-    applyTheme(storedTheme);
-    return;
-  }
-  const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-  applyTheme(mediaQuery.matches ? "dark" : "light", { persist: false });
-  mediaQuery.addEventListener("change", (event) => {
-    if (localStorage.getItem(THEME_KEY)) {
-      return;
-    }
-    applyTheme(event.matches ? "dark" : "light", { persist: false });
-  });
+  document.body.classList.remove("theme-dark");
 };
 
 const renderRecords = () => {
@@ -2684,12 +2664,6 @@ if (draftButton) {
 }
 if (clearFormDraftButton) {
   clearFormDraftButton.addEventListener("click", clearFormDraft);
-}
-if (themeToggle) {
-  themeToggle.addEventListener("click", () => {
-    const nextTheme = document.body.classList.contains("theme-dark") ? "light" : "dark";
-    applyTheme(nextTheme);
-  });
 }
 if (recordSearch) {
   recordSearch.addEventListener("input", renderRecords);

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>รายงานตัว 90 วัน - ระบบตรวจสอบข้อมูลแรงงานต่างด้าว</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css?v=20260211" />
+  </head>
+  <body data-page="report90">
+    <header class="hero">
+      <div class="hero__content">
+        <div class="hero__top"></div>
+        <h1>ระบบตรวจสอบข้อมูลแรงงานต่างด้าว</h1>
+      </div>
+    </header>
+
+    <main class="container">
+      <nav class="page-tabs">
+        <a class="tab-btn" href="index.html">ค้นหาข้อมูล</a>
+        <a class="tab-btn" href="records.html">ข้อมูลบันทึก</a>
+        <a class="tab-btn" href="form.html">กรอกแบบฟอร์ม</a>
+        <a class="tab-btn is-active" href="report90.html">รายงานตัว 90 วัน</a>
+        <a class="tab-btn" href="visarun.html">Visa run</a>
+      </nav>
+
+      <section class="panel">
+        <h2>รายงานตัว 90 วัน</h2>
+        <form id="report90Form" class="form-grid">
+          <div class="grid-3">
+            <div class="form-row"><label for="r90WorkerName">ชื่อต่างด้าว</label><input id="r90WorkerName" required type="text" /></div>
+            <div class="form-row"><label for="r90Nationality">สัญชาติ</label><select id="r90Nationality" required><option value="">เลือก</option><option value="female">female</option><option value="male">male</option><option value="other">other</option></select></div>
+            <div class="form-row"><label for="r90Employer">ชื่อนายจ้าง</label><input id="r90Employer" required type="text" /></div>
+          </div>
+          <div class="grid-3">
+            <div class="form-row"><label for="r90StartDate">วันที่เริ่มรายงานตัว</label><input id="r90StartDate" required type="date" /></div>
+            <div class="form-row"><label for="r90NextDate">90 วันถัดไป</label><input id="r90NextDate" required type="date" /></div>
+            <div class="form-row checklist-col">
+              <label class="checkbox-item"><input id="r90Overdue" type="checkbox" /><span>ปรับ 90 เกิน</span></label>
+              <label class="checkbox-item"><input id="r90SentImm" type="checkbox" /><span>ส่งเล่มไป ตม.</span></label>
+              <label class="checkbox-item"><input id="r90ReturnBook" type="checkbox" /><span>ส่งเล่มคืน</span></label>
+            </div>
+          </div>
+          <div class="form-actions"><span class="status-text" id="report90Status"></span><button class="primary" type="submit">บันทึกข้อมูล</button></div>
+        </form>
+      </section>
+
+      <section class="panel">
+        <h3>ข้อมูลบันทึก รายงานตัว 90 วัน</h3>
+        <div id="report90Alert" class="warning-banner is-hidden"></div>
+        <div class="records-table-wrapper">
+          <table class="records-table">
+            <thead><tr><th>ชื่อต่างด้าว</th><th>สัญชาติ</th><th>ชื่อนายจ้าง</th><th>วันที่เริ่ม</th><th>90 วันถัดไป</th><th>สถานะเตือน</th></tr></thead>
+            <tbody id="report90List"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script src="followup.js?v=20260211"></script>
+  </body>
+</html>

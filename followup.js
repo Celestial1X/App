@@ -15,7 +15,7 @@ const resolveApiBaseUrl = () => {
 };
 
 const API_BASE_URL = resolveApiBaseUrl();
-const FOLLOWUP_API_URL = API_BASE_URL ? `${API_BASE_URL}/api/followups` : "/api/followups";
+const RECORDS_API_URL = API_BASE_URL ? `${API_BASE_URL}/api/records` : "/api/records";
 
 const toDateOnly = (value) => (value ? new Date(`${value}T00:00:00`) : null);
 const addDays = (value, days) => {
@@ -83,26 +83,87 @@ const setupModal = () => {
   return { open };
 };
 
-const fetchFollowups = async (type) => {
-  const response = await fetch(`${FOLLOWUP_API_URL}/${type}`);
-  if (!response.ok) {
-    throw new Error(`Cannot load ${type}`);
-  }
+const fetchRecordsByType = async (type) => {
+  const response = await fetch(RECORDS_API_URL);
+  if (!response.ok) throw new Error("Cannot load records");
   const rows = await response.json();
-  return Array.isArray(rows) ? rows : [];
+  if (!Array.isArray(rows)) return [];
+  return rows.filter((record) => record.formType === type);
 };
 
-const saveFollowup = async (type, payload) => {
-  const response = await fetch(`${FOLLOWUP_API_URL}/${type}`, {
+const saveRecord = async (payload) => {
+  const response = await fetch(RECORDS_API_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
-  if (!response.ok) {
-    throw new Error(`Cannot save ${type}`);
-  }
+  if (!response.ok) throw new Error("Cannot save record");
   return response.json();
 };
+
+const toReport90Payload = (values, formId = "") => ({
+  formId,
+  formType: "report90",
+  formTypeLabel: "รายงานตัว 90 วัน",
+  displayName: `รายงานตัว 90 วัน - ${values.workerName || "-"}`,
+  status: "final",
+  updatedAt: new Date().toISOString(),
+  data: {
+    recordedBy: "",
+    company: "",
+    personalInfo: {
+      fullName: values.workerName,
+      nationality: values.nationality,
+      employerName: values.employerName,
+    },
+    caseStatus: {
+      status: "registered",
+      appointmentDate: "",
+      appointmentNote: "",
+    },
+    followupType: "report90",
+    followup: {
+      startDate: values.startDate,
+      nextDate: values.nextDate,
+      overdueFine: values.overdueFine,
+      sentImmigration: values.sentImmigration,
+      returnBook: values.returnBook,
+    },
+  },
+});
+
+const toVisaRunPayload = (values, formId = "") => ({
+  formId,
+  formType: "visarun",
+  formTypeLabel: "Visa run",
+  displayName: `Visa run - ${values.workerName || "-"}`,
+  status: "final",
+  updatedAt: new Date().toISOString(),
+  data: {
+    recordedBy: "",
+    company: "",
+    personalInfo: {
+      fullName: values.workerName,
+      nationality: values.nationality,
+      employerName: values.employerName,
+    },
+    caseStatus: {
+      status: "registered",
+      appointmentDate: "",
+      appointmentNote: "",
+    },
+    followupType: "visarun",
+    followup: {
+      startDate: values.startDate,
+      endDate: values.endDate,
+      visaOverdue: values.visaOverdue,
+      sentImmigration: values.sentImmigration,
+      returnBook: values.returnBook,
+      p60: values.p60,
+      p30: values.p30,
+    },
+  },
+});
 
 const runReport90Page = () => {
   const type = "report90";
@@ -114,11 +175,27 @@ const runReport90Page = () => {
   const alert = document.getElementById("report90Alert");
   const modal = setupModal();
   let rows = [];
-  let editId = "";
+  let editFormId = "";
 
   const resetForm = () => {
     form.reset();
-    editId = "";
+    editFormId = "";
+  };
+
+  const mapRecord = (record) => {
+    const info = record?.data?.personalInfo || {};
+    const followup = record?.data?.followup || {};
+    return {
+      id: record.formId,
+      workerName: info.fullName || "",
+      nationality: info.nationality || "",
+      employerName: info.employerName || "",
+      startDate: followup.startDate || "",
+      nextDate: followup.nextDate || "",
+      overdueFine: !!followup.overdueFine,
+      sentImmigration: !!followup.sentImmigration,
+      returnBook: !!followup.returnBook,
+    };
   };
 
   const fillForEdit = (item) => {
@@ -130,7 +207,7 @@ const runReport90Page = () => {
     document.getElementById("r90Overdue").checked = !!item.overdueFine;
     document.getElementById("r90SentImm").checked = !!item.sentImmigration;
     document.getElementById("r90ReturnBook").checked = !!item.returnBook;
-    editId = String(item.id || "");
+    editFormId = String(item.id || "");
     status.textContent = "กำลังแก้ไขข้อมูลรายการเดิม";
   };
 
@@ -186,7 +263,8 @@ const runReport90Page = () => {
   };
 
   const refreshRows = async () => {
-    rows = await fetchFollowups(type);
+    const serverRows = await fetchRecordsByType(type);
+    rows = serverRows.map(mapRecord);
     renderRows();
   };
 
@@ -196,8 +274,7 @@ const runReport90Page = () => {
 
   form?.addEventListener("submit", async (event) => {
     event.preventDefault();
-    const payload = {
-      id: editId,
+    const values = {
       workerName: document.getElementById("r90WorkerName").value.trim(),
       nationality: document.getElementById("r90Nationality").value,
       employerName: document.getElementById("r90Employer").value.trim(),
@@ -209,8 +286,8 @@ const runReport90Page = () => {
     };
 
     try {
-      await saveFollowup(type, payload);
-      status.textContent = editId ? "แก้ไขข้อมูลเรียบร้อย" : "บันทึกข้อมูลเรียบร้อย";
+      await saveRecord(toReport90Payload(values, editFormId));
+      status.textContent = editFormId ? "แก้ไขข้อมูลเรียบร้อย" : "บันทึกข้อมูลเรียบร้อย";
       resetForm();
       await refreshRows();
     } catch {
@@ -235,11 +312,29 @@ const runVisaPage = () => {
   const alert = document.getElementById("visaAlert");
   const modal = setupModal();
   let rows = [];
-  let editId = "";
+  let editFormId = "";
 
   const resetForm = () => {
     form.reset();
-    editId = "";
+    editFormId = "";
+  };
+
+  const mapRecord = (record) => {
+    const info = record?.data?.personalInfo || {};
+    const followup = record?.data?.followup || {};
+    return {
+      id: record.formId,
+      workerName: info.fullName || "",
+      nationality: info.nationality || "",
+      employerName: info.employerName || "",
+      startDate: followup.startDate || "",
+      endDate: followup.endDate || "",
+      visaOverdue: !!followup.visaOverdue,
+      sentImmigration: !!followup.sentImmigration,
+      returnBook: !!followup.returnBook,
+      p60: !!followup.p60,
+      p30: !!followup.p30,
+    };
   };
 
   const fillForEdit = (item) => {
@@ -253,7 +348,7 @@ const runVisaPage = () => {
     document.getElementById("visaReturnBook").checked = !!item.returnBook;
     document.getElementById("visaP60").checked = !!item.p60;
     document.getElementById("visaP30").checked = !!item.p30;
-    editId = String(item.id || "");
+    editFormId = String(item.id || "");
     status.textContent = "กำลังแก้ไขข้อมูลรายการเดิม";
   };
 
@@ -311,7 +406,8 @@ const runVisaPage = () => {
   };
 
   const refreshRows = async () => {
-    rows = await fetchFollowups(type);
+    const serverRows = await fetchRecordsByType(type);
+    rows = serverRows.map(mapRecord);
     renderRows();
   };
 
@@ -321,8 +417,7 @@ const runVisaPage = () => {
 
   form?.addEventListener("submit", async (event) => {
     event.preventDefault();
-    const payload = {
-      id: editId,
+    const values = {
       workerName: document.getElementById("visaWorkerName").value.trim(),
       nationality: document.getElementById("visaNationality").value,
       employerName: document.getElementById("visaEmployer").value.trim(),
@@ -336,8 +431,8 @@ const runVisaPage = () => {
     };
 
     try {
-      await saveFollowup(type, payload);
-      status.textContent = editId ? "แก้ไขข้อมูลเรียบร้อย" : "บันทึกข้อมูลเรียบร้อย";
+      await saveRecord(toVisaRunPayload(values, editFormId));
+      status.textContent = editFormId ? "แก้ไขข้อมูลเรียบร้อย" : "บันทึกข้อมูลเรียบร้อย";
       resetForm();
       await refreshRows();
     } catch {

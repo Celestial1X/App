@@ -1080,30 +1080,31 @@ const upsertRecordToServer = async (record) => {
     const savedRecord = await response.json();
     return savedRecord && typeof savedRecord === "object" ? savedRecord : null;
   } catch (_error) {
-    // keep local save success even if server is unavailable
     return null;
   }
 };
 
 const deleteRecordFromServer = async (formId) => {
   if (!canUseServerSync()) {
-    return;
+    return false;
   }
   try {
-    await fetch(`${RECORDS_API_URL}/${encodeURIComponent(formId)}`, { method: "DELETE" });
+    const response = await fetch(`${RECORDS_API_URL}/${encodeURIComponent(formId)}`, { method: "DELETE" });
+    return response.ok;
   } catch (_error) {
-    // keep local delete success even if server is unavailable
+    return false;
   }
 };
 
 const clearRecordsFromServer = async () => {
   if (!canUseServerSync()) {
-    return;
+    return false;
   }
   try {
-    await fetch(RECORDS_API_URL, { method: "DELETE" });
+    const response = await fetch(RECORDS_API_URL, { method: "DELETE" });
+    return response.ok;
   } catch (_error) {
-    // keep local clear success even if server is unavailable
+    return false;
   }
 };
 
@@ -1810,13 +1811,17 @@ const renderRecords = () => {
     deleteButton.type = "button";
     deleteButton.className = "danger";
     deleteButton.textContent = translations[currentLanguage].deleteButton;
-    deleteButton.addEventListener("click", () => {
+    deleteButton.addEventListener("click", async () => {
       const shouldDelete = window.confirm(translations[currentLanguage].confirmDeleteRecord);
       if (!shouldDelete) return;
+      const deleted = await deleteRecordFromServer(record.formId);
+      if (!deleted) {
+        setStatus(recordsStatus, "ไม่สามารถลบข้อมูลจากเซิร์ฟเวอร์ได้", "error");
+        return;
+      }
       const records = loadRecords();
       const nextRecords = records.filter((item) => item.formId !== record.formId);
       saveRecords(nextRecords);
-      deleteRecordFromServer(record.formId);
       renderRecords();
       renderLatestRecordCard();
     });
@@ -2355,18 +2360,18 @@ const saveRecord = async (status = "draft") => {
     data: formData,
   };
 
-  let finalRecord = null;
   const savedServerRecord = await upsertRecordToServer(recordPayload);
-  if (savedServerRecord) {
-    finalRecord = {
-      ...recordPayload,
-      ...savedServerRecord,
-      formId: String(savedServerRecord.formId || ""),
-    };
-  } else {
-    const fallbackFormId = formId || buildFormId();
-    finalRecord = { ...recordPayload, formId: fallbackFormId };
+  if (!savedServerRecord) {
+    hideLoader();
+    setStatus(formSaveStatus, "ไม่สามารถบันทึกข้อมูลลงเซิร์ฟเวอร์ได้ กรุณาตรวจสอบระบบก่อน", "error");
+    return;
   }
+
+  const finalRecord = {
+    ...recordPayload,
+    ...savedServerRecord,
+    formId: String(savedServerRecord.formId || ""),
+  };
 
   const existingIndex = records.findIndex((record) => record.formId === finalRecord.formId);
   if (existingIndex >= 0) {
@@ -2672,13 +2677,17 @@ if (recordFilter) {
   recordFilter.addEventListener("change", renderRecords);
 }
 if (clearRecordsButton) {
-  clearRecordsButton.addEventListener("click", () => {
+  clearRecordsButton.addEventListener("click", async () => {
     const shouldClear = window.confirm(translations[currentLanguage].confirmClearRecords);
     if (!shouldClear) {
       return;
     }
+    const cleared = await clearRecordsFromServer();
+    if (!cleared) {
+      setStatus(recordsStatus, "ไม่สามารถลบข้อมูลจากเซิร์ฟเวอร์ได้", "error");
+      return;
+    }
     saveRecords([]);
-    clearRecordsFromServer();
     renderRecords();
     renderLatestRecordCard();
     setStatus(formSaveStatus, translations[currentLanguage].recordsStatus);

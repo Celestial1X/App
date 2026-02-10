@@ -5,8 +5,12 @@ import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const DATA_DIR = path.join(__dirname, "data");
-const DATA_FILE = path.join(DATA_DIR, "records.json");
+const STORAGE_ROOT = process.env.RECORDS_DATA_DIR
+  ? path.resolve(process.env.RECORDS_DATA_DIR)
+  : path.join(__dirname, "data");
+const DATA_FILE = process.env.RECORDS_DATA_FILE
+  ? path.resolve(process.env.RECORDS_DATA_FILE)
+  : path.join(STORAGE_ROOT, "records.json");
 
 const app = express();
 
@@ -25,7 +29,8 @@ app.use(express.json({ limit: "2mb" }));
 app.use(express.static(__dirname));
 
 const ensureDataFile = async () => {
-  await fs.mkdir(DATA_DIR, { recursive: true });
+  const dataDir = path.dirname(DATA_FILE);
+  await fs.mkdir(dataDir, { recursive: true });
   try {
     await fs.access(DATA_FILE);
   } catch {
@@ -98,4 +103,5 @@ app.delete("/api/records/:id", async (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
+  console.log(`Records storage file: ${DATA_FILE}`);
 });

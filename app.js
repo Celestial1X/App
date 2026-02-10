@@ -2166,9 +2166,12 @@ const openRecordModal = (record) => {
 const openEmployerModal = (query) => {
   recordModalTitle.textContent = translations[currentLanguage].recordModalTitle;
   recordModalBody.innerHTML = "";
+  const normalizedQuery = query.toLowerCase().trim();
   const records = loadRecords().filter((record) => {
-    const employer = `${record.data.company || ""} ${record.data.employerId || ""}`.toLowerCase();
-    return employer.includes(query.toLowerCase());
+    const employer = `${record.data.company || ""} ${record.data.employerId || ""} ${record.data.personalInfo?.employerName || ""}`
+      .toLowerCase()
+      .trim();
+    return employer.includes(normalizedQuery);
   });
   if (!records.length) {
     const message = document.createElement("p");

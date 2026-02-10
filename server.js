@@ -11,6 +11,12 @@ const STORAGE_ROOT = process.env.RECORDS_DATA_DIR
 const DATA_FILE = process.env.RECORDS_DATA_FILE
   ? path.resolve(process.env.RECORDS_DATA_FILE)
   : path.join(STORAGE_ROOT, "records.json");
+const MOUNT_PATH = process.env.RENDER_DISK_PATH
+  ? path.resolve(process.env.RENDER_DISK_PATH)
+  : STORAGE_ROOT;
+const SERVER_LOG_FILE = process.env.SERVER_LOG_FILE
+  ? path.resolve(process.env.SERVER_LOG_FILE)
+  : path.join(MOUNT_PATH, "server.log");
 
 const app = express();
 
@@ -27,6 +33,31 @@ app.use((req, res, next) => {
 
 app.use(express.json({ limit: "2mb" }));
 app.use(express.static(__dirname));
+
+const appendServerLog = async (message) => {
+  const timestamp = new Date().toISOString();
+  const line = `[${timestamp}] ${message}
+`;
+  const logDir = path.dirname(SERVER_LOG_FILE);
+  await fs.mkdir(logDir, { recursive: true });
+  await fs.appendFile(SERVER_LOG_FILE, line, "utf-8");
+};
+
+const logStorageContext = async () => {
+  const report = [
+    `mountPath=${MOUNT_PATH}`,
+    `storageRoot=${STORAGE_ROOT}`,
+    `recordsFile=${DATA_FILE}`,
+    `logFile=${SERVER_LOG_FILE}`,
+    `renderService=${process.env.RENDER_SERVICE_NAME || ""}`,
+  ].join(" | ");
+  console.log(`Storage context: ${report}`);
+  try {
+    await appendServerLog(`Storage context: ${report}`);
+  } catch (error) {
+    console.error(`Unable to write server log: ${error.message}`);
+  }
+};
 
 const ensureDataFile = async () => {
   const dataDir = path.dirname(DATA_FILE);
@@ -101,7 +132,8 @@ app.delete("/api/records/:id", async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`Server running at http://localhost:${PORT}`);
   console.log(`Records storage file: ${DATA_FILE}`);
+  await logStorageContext();
 });

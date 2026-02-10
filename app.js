@@ -4,6 +4,7 @@ const formTypeOtherDetail = document.getElementById("formTypeOtherDetail");
 const caseStatusInputs = document.querySelectorAll('input[name="caseStatus"]');
 const appointmentDateRow = document.getElementById("appointmentDateRow");
 const appointmentDate = document.getElementById("appointmentDate");
+const appointmentNote = document.getElementById("appointmentNote");
 const sections = document.querySelectorAll(".form-section");
 const passportCheckInput = document.getElementById("passportCheck");
 const passportStatus = document.getElementById("passportStatus");
@@ -31,6 +32,13 @@ const verification = document.getElementById("verification");
 const workerFullName = document.getElementById("workerFullName");
 const workerGender = document.getElementById("workerGender");
 const workerNationality = document.getElementById("workerNationality");
+const workerEmail = document.getElementById("workerEmail");
+const workerCode = document.getElementById("workerCode");
+const workerAlienId = document.getElementById("workerAlienId");
+const workPermitExpiry = document.getElementById("workPermitExpiry");
+const passNumber = document.getElementById("passNumber");
+const passIssueDate = document.getElementById("passIssueDate");
+const passExpiryDate = document.getElementById("passExpiryDate");
 const businessType = document.getElementById("businessType");
 const employerName = document.getElementById("employerName");
 const documentSender = document.getElementById("documentSender");
@@ -73,12 +81,18 @@ const recordSearch = document.getElementById("recordSearch");
 const recordFilter = document.getElementById("recordFilter");
 const recordsStatus = document.getElementById("recordsStatus");
 const recordsList = document.getElementById("recordsList");
+const exportRecordsButton = document.getElementById("exportRecords");
+const summaryTodayCount = document.getElementById("summaryTodayCount");
+const summaryYesterdayCount = document.getElementById("summaryYesterdayCount");
+const summaryMonthCount = document.getElementById("summaryMonthCount");
 const clearRecordsButton = document.getElementById("clearRecords");
 const passportCheckButton = document.getElementById("passportCheckButton");
 const employerCheckButton = document.getElementById("employerCheckButton");
 const generalSearchInput = document.getElementById("generalSearch");
 const generalSearchButton = document.getElementById("generalSearchButton");
 const generalSearchStatus = document.getElementById("generalSearchStatus");
+const latestRecordTitle = document.getElementById("latestRecordTitle");
+const latestRecordMeta = document.getElementById("latestRecordMeta");
 const verifyRecordButton = document.getElementById("verifyRecord");
 const recordModal = document.getElementById("recordModal");
 const recordModalTitle = document.getElementById("recordModalTitle");
@@ -89,11 +103,38 @@ const draftButton = document.getElementById("draftButton");
 const clearFormDraftButton = document.getElementById("clearFormDraft");
 const themeToggle = document.getElementById("themeToggle");
 const recordedBy = document.getElementById("recordedBy");
+const formSteps = document.querySelectorAll(".form-step");
+const nextStepButton = document.getElementById("nextStepButton");
+const nextStepLink = document.getElementById("nextStepLink");
+const prevStepButton = document.getElementById("prevStepButton");
 const EDIT_KEY = "editRecordId";
 const RECORD_SEARCH_KEY = "recordSearchQuery";
 const FORM_DRAFT_KEY = "workerFormDraft";
 const THEME_KEY = "uiTheme";
+const API_BASE_KEY = "recordsApiBaseUrl";
+
+const normalizeApiBaseUrl = (value) => String(value || "").trim().replace(/\/+$/, "");
+
+const resolveApiBaseUrl = () => {
+  const params = new URLSearchParams(window.location.search || "");
+  const queryBase = normalizeApiBaseUrl(params.get("apiBase"));
+  if (queryBase) {
+    localStorage.setItem(API_BASE_KEY, queryBase);
+    return queryBase;
+  }
+
+  const storedBase = normalizeApiBaseUrl(localStorage.getItem(API_BASE_KEY));
+  if (storedBase) {
+    return storedBase;
+  }
+
+  return normalizeApiBaseUrl(window.RECORDS_API_BASE_URL);
+};
+
+const API_BASE_URL = resolveApiBaseUrl();
+const RECORDS_API_URL = API_BASE_URL ? `${API_BASE_URL}/api/records` : "/api/records";
 let currentEditId = null;
+let latestRenderedRecords = [];
 const uploadCache = {
   facePhoto: { name: "", dataUrl: "" },
   idCard: { name: "", dataUrl: "" },
@@ -124,7 +165,7 @@ const updateSections = () => {
   const selected = getSelectedFormType();
   sections.forEach((section) => {
     const sectionKey = section.dataset.section;
-    const shouldShow = sectionKey === "all" || sectionKey === selected;
+    const shouldShow = !sectionKey || sectionKey === "all" || sectionKey === selected;
     section.style.display = shouldShow ? "block" : "none";
   });
 };
@@ -144,6 +185,9 @@ const updateAppointmentVisibility = () => {
   appointmentDateRow.classList.toggle("is-hidden", !isAppointment);
   if (!isAppointment && appointmentDate) {
     appointmentDate.value = "";
+  }
+  if (!isAppointment && appointmentNote) {
+    appointmentNote.value = "";
   }
 };
 
@@ -203,8 +247,8 @@ const translations = {
     documentReceipt: "ใบเสร็จ",
     documentRequestForm: "ใบคำขอ",
     documentNameList: "เนมลิส",
-    documentPassPage: "หน้า Pass",
-    documentVisaPage: "หน้า Visa",
+    documentPassPage: "หน้า Pass (ตัวจริง)",
+    documentVisaPage: "หน้า Visa (ตัวจริง)",
     documentHealthCard: "บัตรสุขภาพ",
     documentExitNotice: "ใบแจ้งออก",
     documentHouseReg: "ทะเบียนบ้านนายจ้าง",
@@ -412,7 +456,7 @@ const translations = {
     paymentNotesPlaceholder: "รายละเอียดเพิ่มเติม",
     tabLookup: "การค้นหาข้อมูล",
     tabRecords: "รายการบันทึก",
-    tabForm: "บันทึกแบบฟอร์ม",
+    tabForm: "หน้าทำรายการต่างๆ",
     recordedByLabel: "ผู้บันทึกข้อมูล",
     recordedByPlaceholder: "กรอกชื่อผู้บันทึกข้อมูล",
     workerCountSuffix: "คน",
@@ -474,8 +518,8 @@ const translations = {
     documentReceipt: "Receipt",
     documentRequestForm: "Request form",
     documentNameList: "Name list",
-    documentPassPage: "Passport page",
-    documentVisaPage: "Visa page",
+    documentPassPage: "Passport page (original)",
+    documentVisaPage: "Visa page (original)",
     documentHealthCard: "Health card",
     documentExitNotice: "Exit notice",
     documentHouseReg: "Employer house registration",
@@ -683,7 +727,7 @@ const translations = {
     paymentNotesPlaceholder: "Additional details",
     tabLookup: "Lookup",
     tabRecords: "Records",
-    tabForm: "Form entry",
+    tabForm: "Task page",
     recordedByLabel: "Recorded by",
     recordedByPlaceholder: "Enter recorder name",
     workerCountSuffix: "workers",
@@ -693,6 +737,8 @@ const translations = {
 };
 
 let currentLanguage = "th";
+const isNextFormPage = window.location.pathname.endsWith("/nextform.html") || window.location.pathname.endsWith("nextform.html");
+let currentFormStep = isNextFormPage ? 2 : 1;
 
 const setStatus = (element, message, type = "") => {
   if (!element) return;
@@ -946,29 +992,220 @@ const updatePaymentSlipPreview = () => {
   saveFormDraft();
 };
 
+const readJsonStorage = (key, fallback) => {
+  const raw = localStorage.getItem(key);
+  if (!raw) return fallback;
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed ?? fallback;
+  } catch (_error) {
+    localStorage.removeItem(key);
+    return fallback;
+  }
+};
+
 const loadRecords = () => {
-  const stored = localStorage.getItem("workerRecords");
-  return stored ? JSON.parse(stored) : [];
+  const records = readJsonStorage("workerRecords", []);
+  if (!Array.isArray(records)) {
+    localStorage.removeItem("workerRecords");
+    return [];
+  }
+  const normalized = records
+    .filter((record) => record && typeof record === "object")
+    .map((record) => ({
+      ...record,
+      data: record.data && typeof record.data === "object" ? record.data : {},
+    }));
+
+  const used = new Set();
+  let nextId = 1;
+  const withSequentialIds = normalized.map((record) => {
+    const parsed = Number.parseInt(String(record.formId || ""), 10);
+    let formId = Number.isNaN(parsed) || parsed <= 0 ? "" : String(parsed);
+    if (!formId || used.has(formId)) {
+      while (used.has(String(nextId))) {
+        nextId += 1;
+      }
+      formId = String(nextId);
+    }
+    used.add(formId);
+    return { ...record, formId };
+  });
+
+  if (JSON.stringify(withSequentialIds) !== JSON.stringify(normalized)) {
+    saveRecords(withSequentialIds);
+  }
+
+  return withSequentialIds;
 };
 
 const saveRecords = (records) => {
   localStorage.setItem("workerRecords", JSON.stringify(records));
 };
 
+const canUseServerSync = () => Boolean(API_BASE_URL) || window.location.protocol.startsWith("http");
+
+const syncRecordsFromServer = async () => {
+  if (!canUseServerSync()) {
+    return;
+  }
+  try {
+    const response = await fetch(RECORDS_API_URL, { method: "GET" });
+    if (!response.ok) {
+      return;
+    }
+    const records = await response.json();
+    if (Array.isArray(records)) {
+      saveRecords(records);
+      renderRecords();
+      renderLatestRecordCard();
+    }
+  } catch (_error) {
+    // fallback to localStorage-only mode when API is unavailable
+  }
+};
+
+const upsertRecordToServer = async (record) => {
+  if (!canUseServerSync()) {
+    return null;
+  }
+  try {
+    const response = await fetch(RECORDS_API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(record),
+    });
+    if (!response.ok) {
+      return null;
+    }
+    const savedRecord = await response.json();
+    return savedRecord && typeof savedRecord === "object" ? savedRecord : null;
+  } catch (_error) {
+    // keep local save success even if server is unavailable
+    return null;
+  }
+};
+
+const deleteRecordFromServer = async (formId) => {
+  if (!canUseServerSync()) {
+    return;
+  }
+  try {
+    await fetch(`${RECORDS_API_URL}/${encodeURIComponent(formId)}`, { method: "DELETE" });
+  } catch (_error) {
+    // keep local delete success even if server is unavailable
+  }
+};
+
+const clearRecordsFromServer = async () => {
+  if (!canUseServerSync()) {
+    return;
+  }
+  try {
+    await fetch(RECORDS_API_URL, { method: "DELETE" });
+  } catch (_error) {
+    // keep local clear success even if server is unavailable
+  }
+};
+
+const startServerSyncPolling = () => {
+  if (!canUseServerSync()) {
+    return;
+  }
+  setInterval(() => {
+    syncRecordsFromServer();
+  }, 15000);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      syncRecordsFromServer();
+    }
+  });
+};
+
 
 const buildFormId = () => {
-  const date = new Date();
-  const month = `${date.getMonth() + 1}`.padStart(2, "0");
-  const day = `${date.getDate()}`.padStart(2, "0");
-  const year = date.getFullYear();
-  const random = Math.floor(Math.random() * 9000 + 1000);
-  return `FORM-${year}${month}${day}-${random}`;
+  const records = loadRecords();
+  const maxId = records.reduce((max, record) => {
+    const value = Number.parseInt(String(record.formId || ""), 10);
+    if (Number.isNaN(value)) {
+      return max;
+    }
+    return Math.max(max, value);
+  }, 0);
+  return String(maxId + 1);
 };
 
 const formatDateTime = (value) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "-";
   return date.toLocaleString(currentLanguage === "th" ? "th-TH" : "en-US");
+};
+
+const toDateOnlyKey = (value) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+  date.setHours(0, 0, 0, 0);
+  return date.toISOString().slice(0, 10);
+};
+
+const renderRecordsSummary = (records) => {
+  if (!summaryTodayCount || !summaryYesterdayCount || !summaryMonthCount) {
+    return;
+  }
+  const now = new Date();
+  const today = new Date(now);
+  today.setHours(0, 0, 0, 0);
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const month = today.getMonth();
+  const year = today.getFullYear();
+
+  const todayKey = toDateOnlyKey(today);
+  const yesterdayKey = toDateOnlyKey(yesterday);
+
+  let todayCount = 0;
+  let yesterdayCount = 0;
+  let monthCount = 0;
+
+  records.forEach((record) => {
+    const recordDate = new Date(record.updatedAt);
+    if (Number.isNaN(recordDate.getTime())) {
+      return;
+    }
+    const key = toDateOnlyKey(recordDate);
+    if (key === todayKey) {
+      todayCount += 1;
+    }
+    if (key === yesterdayKey) {
+      yesterdayCount += 1;
+    }
+    if (recordDate.getFullYear() === year && recordDate.getMonth() === month) {
+      monthCount += 1;
+    }
+  });
+
+  summaryTodayCount.textContent = String(todayCount);
+  summaryYesterdayCount.textContent = String(yesterdayCount);
+  summaryMonthCount.textContent = String(monthCount);
+};
+
+const renderLatestRecordCard = () => {
+  if (!latestRecordTitle || !latestRecordMeta) {
+    return;
+  }
+  const records = loadRecords();
+  if (!records.length) {
+    latestRecordTitle.textContent = "-";
+    latestRecordMeta.textContent = "ยังไม่มีข้อมูล";
+    return;
+  }
+  const latest = [...records].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))[0];
+  latestRecordTitle.textContent = `${latest.formId} • ${latest.formTypeLabel || "-"}`;
+  latestRecordMeta.textContent = `${formatDateTime(latest.updatedAt)} • ${
+    latest.data?.personalInfo?.fullName || latest.data?.personalInfo?.employerName || latest.displayName || "-"
+  }`;
 };
 
 const getFormTypeLabel = (value) => {
@@ -1011,6 +1248,18 @@ const getCaseStatusLabel = (value) => {
     appointment: translations[currentLanguage].statusAppointment,
   };
   return map[value] || value || "-";
+};
+
+const getCaseStatusDisplay = (caseStatus = {}) => {
+  const status = caseStatus.status || "";
+  if (status === "appointment") {
+    if (caseStatus.appointmentDate) {
+      const waitingLabel = currentLanguage === "th" ? "รอวันนัด" : "Awaiting appointment";
+      return `${waitingLabel} (${caseStatus.appointmentDate})`;
+    }
+    return getCaseStatusLabel(status);
+  }
+  return getCaseStatusLabel(status);
 };
 
 const getPassportTypeLabel = (value) => {
@@ -1319,6 +1568,20 @@ const getRecordStatusSummary = (record) => {
     hasAlert: hasExpired || hasPaymentPending,
   };
 };
+
+const hasMeaningfulValue = (value) => {
+  if (Array.isArray(value)) {
+    return value.some((item) => hasMeaningfulValue(item));
+  }
+  if (value && typeof value === "object") {
+    return Object.values(value).some((item) => hasMeaningfulValue(item));
+  }
+  if (typeof value === "string") {
+    return value.trim().length > 0;
+  }
+  return Boolean(value);
+};
+
 const collectFormData = () => {
   const receivedDocs = [];
   if (receivedFacePhoto?.checked) receivedDocs.push("facePhoto");
@@ -1356,6 +1619,13 @@ const collectFormData = () => {
       fullName: workerFullName?.value?.trim() || "",
       gender: workerGender?.value || "",
       nationality: workerNationality?.value?.trim() || "",
+      email: workerEmail?.value?.trim() || "",
+      code: workerCode?.value?.trim() || "",
+      alienId: workerAlienId?.value?.trim() || "",
+      workPermitExpiry: workPermitExpiry?.value || "",
+      passNumber: passNumber?.value?.trim() || "",
+      passIssueDate: passIssueDate?.value || "",
+      passExpiryDate: passExpiryDate?.value || "",
       businessType: businessType?.value?.trim() || "",
       employerName: employerName?.value?.trim() || "",
       documentSender: documentSender?.value?.trim() || "",
@@ -1381,6 +1651,7 @@ const collectFormData = () => {
     caseStatus: {
       status: getSelectedCaseStatus(),
       appointmentDate: appointmentDate?.value || "",
+      appointmentNote: appointmentNote?.value?.trim() || "",
     },
     receivedDocs,
     notifications,
@@ -1399,9 +1670,10 @@ const collectFormData = () => {
     paymentSlipData: uploadCache.paymentSlip.dataUrl || "",
   };
   const hasAnyValue = Object.entries(formData).some(([key, value]) => {
-    if (key === "formType" || key === "attachments") return false;
-    if (Array.isArray(value)) return value.length > 0;
-    return value;
+    if (key === "formType" || key === "attachments") {
+      return false;
+    }
+    return hasMeaningfulValue(value);
   });
   return { formData, hasAnyValue };
 };
@@ -1418,9 +1690,11 @@ function saveFormDraft() {
 
 function loadFormDraft() {
   if (!workerForm || currentEditId) return;
-  const stored = localStorage.getItem(FORM_DRAFT_KEY);
-  if (!stored) return;
-  const formData = JSON.parse(stored);
+  const formData = readJsonStorage(FORM_DRAFT_KEY, null);
+  if (!formData || typeof formData !== "object") {
+    localStorage.removeItem(FORM_DRAFT_KEY);
+    return;
+  }
   populateForm({ formType: formData.formType || "changeEmployer", data: formData });
 }
 
@@ -1442,6 +1716,8 @@ function clearFormDraft() {
   updateUploadPreview();
   updatePaymentSlipPreview();
   refreshWorkerStatuses();
+  currentFormStep = 1;
+  updateFormStepVisibility();
   setStatus(formSaveStatus, translations[currentLanguage].formDraftCleared, "ok");
 }
 
@@ -1501,6 +1777,8 @@ const renderRecords = () => {
     return matchesFilter && searchable.includes(query);
   });
   const scoped = filtered;
+  latestRenderedRecords = scoped;
+  renderRecordsSummary(scoped);
 
   recordsList.innerHTML = "";
   if (!records.length) {
@@ -1530,10 +1808,7 @@ const renderRecords = () => {
     const updatedCell = document.createElement("td");
     updatedCell.textContent = formatDateTime(record.updatedAt);
     const statusCell = document.createElement("td");
-    statusCell.textContent =
-      record.status === "final"
-        ? translations[currentLanguage].recordStatusFinal
-        : translations[currentLanguage].recordStatusDraft;
+    statusCell.textContent = getCaseStatusDisplay(record.data.caseStatus || {});
     const actionsCell = document.createElement("td");
     const actionsWrapper = document.createElement("div");
     actionsWrapper.className = "table-actions";
@@ -1561,7 +1836,9 @@ const renderRecords = () => {
       const records = loadRecords();
       const nextRecords = records.filter((item) => item.formId !== record.formId);
       saveRecords(nextRecords);
+      deleteRecordFromServer(record.formId);
       renderRecords();
+      renderLatestRecordCard();
     });
     actionsWrapper.appendChild(editButton);
     actionsWrapper.appendChild(verifyButton);
@@ -1579,6 +1856,56 @@ const renderRecords = () => {
   });
 };
 
+const toCsvValue = (value) => {
+  const text = String(value ?? "").replace(/\r?\n|\r/g, " ").trim();
+  return `"${text.replace(/"/g, '""')}"`;
+};
+
+const exportRecordsToCsv = () => {
+  const rows = latestRenderedRecords.length ? latestRenderedRecords : loadRecords();
+  if (!rows.length) {
+    setStatus(recordsStatus, translations[currentLanguage].recordsStatus, "warn");
+    return;
+  }
+  const headers = [
+    translations[currentLanguage].recordsTableFormId,
+    translations[currentLanguage].recordsTableFormType,
+    translations[currentLanguage].recordsTableEmployer,
+    translations[currentLanguage].recordsTableWorker,
+    translations[currentLanguage].recordsTableRecordedBy,
+    translations[currentLanguage].recordsTableUpdated,
+    translations[currentLanguage].recordsTableStatus,
+  ];
+  const lines = [headers.map(toCsvValue).join(",")];
+  rows.forEach((record) => {
+    const personalInfo = record.data.personalInfo || {};
+    const workers = normalizeWorkers(record.data);
+    const workerName = personalInfo.fullName || workers[0]?.fullName || "-";
+    const employerLabel = personalInfo.employerName || record.data.company || record.data.employerId || "-";
+    const cols = [
+      record.formId,
+      record.formTypeLabel,
+      employerLabel,
+      workerName,
+      record.data.recordedBy || "-",
+      formatDateTime(record.updatedAt),
+      getCaseStatusDisplay(record.data.caseStatus || {}),
+    ];
+    lines.push(cols.map(toCsvValue).join(","));
+  });
+  const csv = `\uFEFF${lines.join("\n")}`;
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  const stamp = new Date().toISOString().slice(0, 10);
+  anchor.download = `records-${stamp}.csv`;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+};
+
 const openRecordModal = (record) => {
   recordModalTitle.textContent = translations[currentLanguage].recordModalTitle;
   recordModalBody.innerHTML = "";
@@ -1589,45 +1916,19 @@ const openRecordModal = (record) => {
   } else {
     const title = document.createElement("h4");
     title.textContent = translations[currentLanguage].recordDetailsTitle;
-    const list = document.createElement("ul");
-    const employerItem = document.createElement("li");
-    employerItem.textContent = `${translations[currentLanguage].recordEmployerLabel}: ${
-      record.data.personalInfo?.employerName || record.data.company || record.data.employerId || "-"
-    }`;
-    const caseTypeItem = document.createElement("li");
-    caseTypeItem.textContent = `${translations[currentLanguage].recordCaseTypeLabel}: ${getCaseTypeLabel(
-      record.data.caseType
-    )}`;
-    const typeItem = document.createElement("li");
-    typeItem.textContent = `${translations[currentLanguage].recordFormTypeLabel}: ${record.formTypeLabel}`;
-    const statusItem = document.createElement("li");
-    statusItem.textContent = `${translations[currentLanguage].verificationLabel}: ${
-      record.status === "final"
-        ? translations[currentLanguage].recordStatusFinal
-        : translations[currentLanguage].recordStatusDraft
-    }`;
-    const renewalTypeItem = document.createElement("li");
-    renewalTypeItem.textContent = `${translations[currentLanguage].renewalTypeLabel}: ${getRenewalTypeLabel(
-      record.data.renewalType
-    )}`;
-    const renewalStatusItem = document.createElement("li");
-    renewalStatusItem.textContent = `${translations[currentLanguage].renewalStatusLabel}: ${getRenewalStatusLabel(
-      record.data.renewalStatus
-    )}`;
-    const paymentItem = document.createElement("li");
-    paymentItem.textContent = `${translations[currentLanguage].paymentStatusLabel}: ${
-      record.data.paymentStatus === "paid"
-        ? translations[currentLanguage].paymentPaid
-        : translations[currentLanguage].paymentPending
-    }`;
-    const paymentDateItem = document.createElement("li");
-    paymentDateItem.textContent = `${translations[currentLanguage].paymentDateLabel}: ${
-      record.data.paymentDate || "-"
-    }`;
-    const recordedByItem = document.createElement("li");
-    recordedByItem.textContent = `${translations[currentLanguage].recordedByLabel}: ${
-      record.data.recordedBy || "-"
-    }`;
+    const table = document.createElement("table");
+    table.className = "result-grid-table";
+    const body = document.createElement("tbody");
+    const addRow = (label, value) => {
+      const row = document.createElement("tr");
+      const th = document.createElement("th");
+      const td = document.createElement("td");
+      th.textContent = label;
+      td.textContent = value || "-";
+      row.appendChild(th);
+      row.appendChild(td);
+      body.appendChild(row);
+    };
     const personalInfo = record.data.personalInfo || {};
     const documents = record.data.documents || {};
     const caseStatus = record.data.caseStatus || {};
@@ -1643,21 +1944,26 @@ const openRecordModal = (record) => {
     if (documents.houseReg) documentParts.push(translations[currentLanguage].documentHouseReg);
     if (documents.employerIdCard) documentParts.push(translations[currentLanguage].documentEmployerIdCard);
     if (documents.companyCert) documentParts.push(translations[currentLanguage].documentCompanyCert);
-    list.appendChild(employerItem);
+    addRow(translations[currentLanguage].recordFormId, record.formId);
+    addRow(translations[currentLanguage].recordFormTypeLabel, record.formTypeLabel);
+    addRow(
+      translations[currentLanguage].recordEmployerLabel,
+      record.data.personalInfo?.employerName || record.data.company || record.data.employerId || "-"
+    );
+    addRow(translations[currentLanguage].statusTitle, getCaseStatusDisplay(record.data.caseStatus || {}));
+    addRow(
+      translations[currentLanguage].paymentStatusLabel,
+      record.data.paymentStatus === "paid" ? translations[currentLanguage].paymentPaid : translations[currentLanguage].paymentPending
+    );
+    addRow(translations[currentLanguage].paymentDateLabel, record.data.paymentDate || "-");
+    addRow(translations[currentLanguage].recordedByLabel, record.data.recordedBy || "-");
+    addRow(translations[currentLanguage].renewalTypeLabel, getRenewalTypeLabel(record.data.renewalType));
+    addRow(translations[currentLanguage].renewalStatusLabel, getRenewalStatusLabel(record.data.renewalStatus));
     if (record.data.caseType) {
-      list.appendChild(caseTypeItem);
+      addRow(translations[currentLanguage].recordCaseTypeLabel, getCaseTypeLabel(record.data.caseType));
     }
-    list.appendChild(typeItem);
-    list.appendChild(statusItem);
-    list.appendChild(paymentItem);
-    list.appendChild(paymentDateItem);
-    list.appendChild(recordedByItem);
-    list.appendChild(renewalTypeItem);
-    list.appendChild(renewalStatusItem);
     if (personalInfo.fullName) {
-      const workerNameItem = document.createElement("li");
-      workerNameItem.textContent = `${translations[currentLanguage].workerFullNameLabel}: ${personalInfo.fullName}`;
-      list.appendChild(workerNameItem);
+      addRow(translations[currentLanguage].workerFullNameLabel, personalInfo.fullName);
     }
     if (personalInfo.gender) {
       const genderMap = {
@@ -1665,201 +1971,56 @@ const openRecordModal = (record) => {
         female: translations[currentLanguage].workerGenderFemale,
         other: translations[currentLanguage].workerGenderOther,
       };
-      const genderItem = document.createElement("li");
-      genderItem.textContent = `${translations[currentLanguage].workerGenderLabel}: ${
-        genderMap[personalInfo.gender] || personalInfo.gender
-      }`;
-      list.appendChild(genderItem);
+      addRow(translations[currentLanguage].workerGenderLabel, genderMap[personalInfo.gender] || personalInfo.gender);
     }
     if (personalInfo.nationality) {
-      const nationalityItem = document.createElement("li");
-      nationalityItem.textContent = `${translations[currentLanguage].workerNationalityLabel}: ${personalInfo.nationality}`;
-      list.appendChild(nationalityItem);
+      addRow(translations[currentLanguage].workerNationalityLabel, personalInfo.nationality);
+    }
+    if (personalInfo.email) {
+      addRow("Email", personalInfo.email);
+    }
+    if (personalInfo.alienId) {
+      addRow("เลขประจำตัวต่างด้าว", personalInfo.alienId);
+    }
+    if (personalInfo.passNumber) {
+      addRow("เลข Pass", personalInfo.passNumber);
     }
     if (personalInfo.businessType) {
-      const businessItem = document.createElement("li");
-      businessItem.textContent = `${translations[currentLanguage].businessTypeLabel}: ${personalInfo.businessType}`;
-      list.appendChild(businessItem);
+      addRow(translations[currentLanguage].businessTypeLabel, personalInfo.businessType);
     }
     if (personalInfo.employerName) {
-      const employerNameItem = document.createElement("li");
-      employerNameItem.textContent = `${translations[currentLanguage].employerNameLabel}: ${personalInfo.employerName}`;
-      list.appendChild(employerNameItem);
+      addRow(translations[currentLanguage].employerNameLabel, personalInfo.employerName);
     }
     if (personalInfo.documentSender) {
-      const senderItem = document.createElement("li");
-      senderItem.textContent = `${translations[currentLanguage].documentSenderLabel}: ${personalInfo.documentSender}`;
-      list.appendChild(senderItem);
+      addRow(translations[currentLanguage].documentSenderLabel, personalInfo.documentSender);
     }
     if (personalInfo.documentSentDate) {
-      const sentItem = document.createElement("li");
-      sentItem.textContent = `${translations[currentLanguage].documentSentDateLabel}: ${personalInfo.documentSentDate}`;
-      list.appendChild(sentItem);
+      addRow(translations[currentLanguage].documentSentDateLabel, personalInfo.documentSentDate);
     }
     if (personalInfo.documentReceiver) {
-      const receiverItem = document.createElement("li");
-      receiverItem.textContent = `${translations[currentLanguage].documentReceiverLabel}: ${personalInfo.documentReceiver}`;
-      list.appendChild(receiverItem);
+      addRow(translations[currentLanguage].documentReceiverLabel, personalInfo.documentReceiver);
     }
     if (personalInfo.documentReceivedDate) {
-      const receivedItem = document.createElement("li");
-      receivedItem.textContent = `${translations[currentLanguage].documentReceivedDateLabel}: ${personalInfo.documentReceivedDate}`;
-      list.appendChild(receivedItem);
+      addRow(translations[currentLanguage].documentReceivedDateLabel, personalInfo.documentReceivedDate);
     }
     if (personalInfo.documentReturnDate) {
-      const returnItem = document.createElement("li");
-      returnItem.textContent = `${translations[currentLanguage].documentReturnDateLabel}: ${personalInfo.documentReturnDate}`;
-      list.appendChild(returnItem);
+      addRow(translations[currentLanguage].documentReturnDateLabel, personalInfo.documentReturnDate);
     }
     if (documentParts.length) {
-      const documentsItem = document.createElement("li");
-      documentsItem.textContent = `${translations[currentLanguage].documentsTitle}: ${documentParts.join(", ")}`;
-      list.appendChild(documentsItem);
+      addRow(translations[currentLanguage].documentsTitle, documentParts.join(", "));
     }
     if (documents.note) {
-      const noteItem = document.createElement("li");
-      noteItem.textContent = `${translations[currentLanguage].documentsNoteLabel}: ${documents.note}`;
-      list.appendChild(noteItem);
+      addRow(translations[currentLanguage].documentsNoteLabel, documents.note);
     }
     if (caseStatus.status) {
-      const caseStatusItem = document.createElement("li");
-      caseStatusItem.textContent = `${translations[currentLanguage].statusTitle}: ${getCaseStatusLabel(
-        caseStatus.status
-      )}`;
-      list.appendChild(caseStatusItem);
+      addRow(translations[currentLanguage].statusTitle, getCaseStatusLabel(caseStatus.status));
     }
     if (caseStatus.appointmentDate) {
-      const appointmentItem = document.createElement("li");
-      appointmentItem.textContent = `${translations[currentLanguage].statusAppointmentDateLabel}: ${caseStatus.appointmentDate}`;
-      list.appendChild(appointmentItem);
+      addRow(translations[currentLanguage].statusAppointmentDateLabel, caseStatus.appointmentDate);
     }
+    table.appendChild(body);
     recordModalBody.appendChild(title);
-    recordModalBody.appendChild(list);
-    const workers = normalizeWorkers(record.data);
-    if (workers.length) {
-      const workerTitle = document.createElement("h5");
-      workerTitle.textContent = translations[currentLanguage].workerDetailsTitle;
-      recordModalBody.appendChild(workerTitle);
-      workers.forEach((worker, index) => {
-        const workerCard = document.createElement("div");
-        const cardExpiryState = getExpiryState(worker.cardExpiryDate);
-        const visaExpiryState = getExpiryState(worker.visaExpiryDate);
-        const otherExpiryState = getExpiryState(worker.expiry);
-        const hasAlert =
-          cardExpiryState.state === "expired" ||
-          visaExpiryState.state === "expired" ||
-          otherExpiryState.state === "expired";
-        const hasWarn =
-          !hasAlert &&
-          (cardExpiryState.state === "warning" ||
-            visaExpiryState.state === "warning" ||
-            otherExpiryState.state === "warning");
-        workerCard.className = `worker-detail${hasAlert ? " alert" : hasWarn ? " warn" : ""}`;
-        const workerHeading = document.createElement("h6");
-        workerHeading.textContent = `${translations[currentLanguage].workerCardTitle} ${index + 1}: ${
-          worker.fullName || "-"
-        }`;
-        const workerList = document.createElement("ul");
-        const workerIdItem = document.createElement("li");
-        workerIdItem.textContent = `${translations[currentLanguage].workerIdLabel}: ${worker.workerId || "-"}`;
-        const scheduleItem = document.createElement("li");
-        scheduleItem.textContent = `${translations[currentLanguage].scheduleStatusLabel}: ${getScheduleStatusLabel(
-          worker.scheduleStatus
-        )}`;
-        const scheduleLocationItem = document.createElement("li");
-        scheduleLocationItem.textContent = `${translations[currentLanguage].scheduleLocationLabel}: ${
-          worker.scheduleLocation || "-"
-        }`;
-        const healthRegisteredItem = document.createElement("li");
-        const healthCheckedItem = document.createElement("li");
-        const healthIdentityItem = document.createElement("li");
-        const healthPendingItem = document.createElement("li");
-        const healthCheckDateItem = document.createElement("li");
-        const healthPendingDateItem = document.createElement("li");
-        const yesLabel = translations[currentLanguage].healthStatusYes;
-        const noLabel = translations[currentLanguage].healthStatusNo;
-        healthRegisteredItem.textContent = `${translations[currentLanguage].healthRegisteredLabel}: ${
-          worker.healthRegistered ? yesLabel : noLabel
-        }`;
-        healthCheckedItem.textContent = `${translations[currentLanguage].healthCheckedLabel}: ${
-          worker.healthChecked ? yesLabel : noLabel
-        }`;
-        healthIdentityItem.textContent = `${translations[currentLanguage].healthIdentityLabel}: ${
-          worker.healthIdentity ? yesLabel : noLabel
-        }`;
-        healthPendingItem.textContent = `${translations[currentLanguage].healthPendingLabel}: ${
-          worker.healthPending ? yesLabel : noLabel
-        }`;
-        healthCheckDateItem.textContent = `${translations[currentLanguage].healthCheckDateLabel}: ${
-          worker.healthCheckDate || "-"
-        }`;
-        healthPendingDateItem.textContent = `${translations[currentLanguage].healthPendingDateLabel}: ${
-          worker.healthPendingDate || "-"
-        }`;
-        const docStatusItem = document.createElement("li");
-        const docStatusLabel = hasAlert
-          ? translations[currentLanguage].workerDocStatusExpired
-          : hasWarn
-            ? translations[currentLanguage].workerDocStatusWarning
-            : worker.scheduleStatus === "completed"
-              ? translations[currentLanguage].workerDocStatusOk
-              : translations[currentLanguage].workerDocStatusPending;
-        docStatusItem.textContent = `${translations[currentLanguage].workerDocStatusLabel}: ${docStatusLabel}`;
-        const passportItem = document.createElement("li");
-        passportItem.textContent = `${translations[currentLanguage].recordPassportLabel}: ${worker.passport || "-"}`;
-        const passportTypeItem = document.createElement("li");
-        passportTypeItem.textContent = `${translations[currentLanguage].passportTypeLabel}: ${getPassportTypeLabel(
-          worker.passportType
-        )}`;
-        const ciItem = document.createElement("li");
-        ciItem.textContent = `${translations[currentLanguage].ciNumberLabel}: ${worker.ciNumber || "-"}`;
-        const permitItem = document.createElement("li");
-        permitItem.textContent = `${translations[currentLanguage].permitTypeLabel}: ${worker.permitType || "-"}`;
-        const permitNoItem = document.createElement("li");
-        permitNoItem.textContent = `${translations[currentLanguage].permitNoLabel}: ${worker.permitNo || "-"}`;
-        const cardIssueItem = document.createElement("li");
-        cardIssueItem.textContent = `${translations[currentLanguage].cardIssueDateLabel}: ${
-          worker.cardIssueDate || "-"
-        }`;
-        const cardExpiryItem = document.createElement("li");
-        const cardExpiryLabel = formatExpiryDisplay(worker.cardExpiryDate);
-        cardExpiryItem.textContent = `${translations[currentLanguage].cardExpiryDateLabel}: ${cardExpiryLabel}`;
-        const expiryItem = document.createElement("li");
-        const expiryLabel = formatExpiryDisplay(worker.expiry);
-        expiryItem.textContent = `${translations[currentLanguage].expiryLabel}: ${expiryLabel}`;
-        const visaIssueItem = document.createElement("li");
-        visaIssueItem.textContent = `${translations[currentLanguage].visaIssueDateLabel}: ${worker.visaIssueDate || "-"}`;
-        const visaItem = document.createElement("li");
-        visaItem.textContent = `${translations[currentLanguage].visaNumberLabel}: ${worker.visaNumber || "-"}`;
-        const visaExpiryItem = document.createElement("li");
-        const visaExpiryLabel = formatExpiryDisplay(worker.visaExpiryDate);
-        visaExpiryItem.textContent = `${translations[currentLanguage].visaExpiryDateLabel}: ${visaExpiryLabel}`;
-        workerList.appendChild(workerIdItem);
-        workerList.appendChild(scheduleItem);
-        workerList.appendChild(scheduleLocationItem);
-        workerList.appendChild(healthRegisteredItem);
-        workerList.appendChild(healthCheckedItem);
-        workerList.appendChild(healthIdentityItem);
-        workerList.appendChild(healthPendingItem);
-        workerList.appendChild(healthCheckDateItem);
-        workerList.appendChild(healthPendingDateItem);
-        workerList.appendChild(docStatusItem);
-        workerList.appendChild(passportItem);
-        workerList.appendChild(passportTypeItem);
-        workerList.appendChild(ciItem);
-        workerList.appendChild(permitItem);
-        workerList.appendChild(permitNoItem);
-        workerList.appendChild(cardIssueItem);
-        workerList.appendChild(cardExpiryItem);
-        workerList.appendChild(expiryItem);
-        workerList.appendChild(visaIssueItem);
-        workerList.appendChild(visaItem);
-        workerList.appendChild(visaExpiryItem);
-        workerCard.appendChild(workerHeading);
-        workerCard.appendChild(workerList);
-        recordModalBody.appendChild(workerCard);
-      });
-    }
+    recordModalBody.appendChild(table);
     if (record.data.notifications?.length || record.data.supportingDocs?.length || record.data.receivedDocs?.length || record.data.requiredRenewalDocs?.length) {
       const docTitle = document.createElement("h5");
       docTitle.textContent = translations[currentLanguage].receivedDocsLabel;
@@ -2005,9 +2166,12 @@ const openRecordModal = (record) => {
 const openEmployerModal = (query) => {
   recordModalTitle.textContent = translations[currentLanguage].recordModalTitle;
   recordModalBody.innerHTML = "";
+  const normalizedQuery = query.toLowerCase().trim();
   const records = loadRecords().filter((record) => {
-    const employer = `${record.data.company || ""} ${record.data.employerId || ""}`.toLowerCase();
-    return employer.includes(query.toLowerCase());
+    const employer = `${record.data.company || ""} ${record.data.employerId || ""} ${record.data.personalInfo?.employerName || ""}`
+      .toLowerCase()
+      .trim();
+    return employer.includes(normalizedQuery);
   });
   if (!records.length) {
     const message = document.createElement("p");
@@ -2044,31 +2208,141 @@ const closeRecordModal = () => {
   recordModal.setAttribute("aria-hidden", "true");
 };
 
-const findRecordByQuery = (query) => {
-  if (!query) return null;
-  const records = loadRecords();
-  const normalized = query.trim().toLowerCase();
-  return (
-    records.find((record) => record.formId.toLowerCase() === normalized) ||
-    records.find((record) => record.data.company?.toLowerCase().includes(normalized)) ||
-    records.find((record) => record.data.employerId?.toLowerCase().includes(normalized)) ||
-    records.find((record) =>
-      normalizeWorkers(record.data).some((worker) =>
-        [
-          worker.passport,
-          worker.workerId,
-          worker.ciNumber,
-          worker.visaNumber,
-          worker.fullName,
-        ]
-          .filter(Boolean)
-          .some((value) => value.toLowerCase().includes(normalized))
-      )
+const buildRecordSearchText = (record) => {
+  const personalInfo = record.data.personalInfo || {};
+  const documents = record.data.documents || {};
+  const caseStatus = record.data.caseStatus || {};
+  const workers = normalizeWorkers(record.data);
+  const workerText = workers
+    .map((worker) =>
+      [
+        worker.fullName,
+        worker.passport,
+        worker.workerId,
+        worker.ciNumber,
+        worker.visaNumber,
+        worker.permitNo,
+        worker.scheduleStatus,
+        worker.scheduleLocation,
+      ]
+        .filter(Boolean)
+        .join(" ")
     )
-  );
+    .join(" ");
+
+  return [
+    record.formId,
+    record.formType,
+    record.formTypeLabel,
+    record.displayName,
+    record.updatedAt,
+    record.data.company,
+    record.data.caseType,
+    record.data.position,
+    record.data.workSite,
+    record.data.startDate,
+    record.data.employerId,
+    record.data.recordedBy,
+    record.data.formTypeOtherDetail,
+    record.data.renewalType,
+    record.data.renewalStatus,
+    record.data.paymentStatus,
+    record.data.paymentDate,
+    record.data.paymentNotes,
+    personalInfo.fullName,
+    personalInfo.gender,
+    personalInfo.nationality,
+    personalInfo.email,
+    personalInfo.code,
+    personalInfo.alienId,
+    personalInfo.workPermitExpiry,
+    personalInfo.passNumber,
+    personalInfo.passIssueDate,
+    personalInfo.passExpiryDate,
+    personalInfo.businessType,
+    personalInfo.employerName,
+    personalInfo.documentSender,
+    personalInfo.documentSentDate,
+    personalInfo.documentReceiver,
+    personalInfo.documentReceivedDate,
+    personalInfo.documentReturnDate,
+    caseStatus.status,
+    caseStatus.appointmentDate,
+    caseStatus.appointmentNote,
+    documents.note,
+    workerText,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
 };
 
-const saveRecord = (status = "draft") => {
+const findRecordsByQuery = (query) => {
+  if (!query) return [];
+  const records = loadRecords();
+  const normalized = query.trim().toLowerCase();
+  return records.filter((record) => buildRecordSearchText(record).includes(normalized));
+};
+
+const findRecordByQuery = (query) => {
+  if (!query) return null;
+  return findRecordsByQuery(query)[0] || null;
+};
+
+const openGeneralSearchResultsModal = (records, query) => {
+  recordModalTitle.textContent = `${translations[currentLanguage].recordModalTitle} (${records.length})`;
+  recordModalBody.innerHTML = "";
+  if (!records.length) {
+    const message = document.createElement("p");
+    message.textContent = translations[currentLanguage].recordNotFound;
+    recordModalBody.appendChild(message);
+  } else {
+    const wrapper = document.createElement("div");
+    wrapper.className = "records-table-wrapper";
+    const table = document.createElement("table");
+    table.className = "records-table";
+    const thead = document.createElement("thead");
+    thead.innerHTML = `<tr>
+      <th>${translations[currentLanguage].recordsTableFormId}</th>
+      <th>${translations[currentLanguage].recordsTableFormType}</th>
+      <th>${translations[currentLanguage].recordsTableEmployer}</th>
+      <th>${translations[currentLanguage].recordsTableWorker}</th>
+      <th>${translations[currentLanguage].recordsTableStatus}</th>
+      <th>${translations[currentLanguage].recordsTableActions}</th>
+    </tr>`;
+    const tbody = document.createElement("tbody");
+    records.forEach((record) => {
+      const personalInfo = record.data.personalInfo || {};
+      const workers = normalizeWorkers(record.data);
+      const tr = document.createElement("tr");
+      const employer = personalInfo.employerName || record.data.company || record.data.employerId || "-";
+      const workerName = personalInfo.fullName || workers[0]?.fullName || "-";
+      tr.innerHTML = `<td>${record.formId || "-"}</td>
+        <td>${record.formTypeLabel || "-"}</td>
+        <td>${employer}</td>
+        <td>${workerName}</td>
+        <td>${getCaseStatusDisplay(record.data.caseStatus || {})}</td>`;
+      const actionTd = document.createElement("td");
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "secondary";
+      button.textContent = translations[currentLanguage].verifyButton;
+      button.addEventListener("click", () => openRecordModal(record));
+      actionTd.appendChild(button);
+      tr.appendChild(actionTd);
+      tbody.appendChild(tr);
+    });
+    table.appendChild(thead);
+    table.appendChild(tbody);
+    wrapper.appendChild(table);
+    recordModalBody.appendChild(wrapper);
+  }
+  setStatus(generalSearchStatus, `${translations[currentLanguage].recordsCount}: ${records.length} (${query})`, "ok");
+  recordModal.classList.add("is-open");
+  recordModal.setAttribute("aria-hidden", "false");
+};
+
+const saveRecord = async (status = "draft") => {
   const { formData, hasAnyValue } = collectFormData();
   if (!hasAnyValue) {
     setStatus(formSaveStatus, translations[currentLanguage].saveDraftEmpty, "warn");
@@ -2082,7 +2356,7 @@ const saveRecord = (status = "draft") => {
     setStatus(formSaveStatus, formatExpiryLabel(cardExpiryState.state, cardExpiryState.days), "warn");
   }
   const records = loadRecords();
-  const formId = currentEditId || buildFormId();
+  const formId = currentEditId || "";
   const workerNames = (formData.workers || []).map((worker) => worker.fullName).filter(Boolean);
   const workerCountLabel = workerNames.length
     ? ` (${workerNames.length} ${translations[currentLanguage].workerCountSuffix})`
@@ -2091,9 +2365,8 @@ const saveRecord = (status = "draft") => {
     formData.personalInfo?.employerName?.trim()
       ? `${formData.personalInfo.employerName}${workerCountLabel}`
       : formData.personalInfo?.fullName || workerNames[0] || formData.employerId || formId;
-  const existingIndex = records.findIndex((record) => record.formId === formId);
-  const record = {
-    formId,
+  const recordPayload = {
+    ...(formId ? { formId } : {}),
     formType: formData.formType,
     formTypeLabel: buildFormTypeLabel(formData),
     displayName,
@@ -2101,26 +2374,43 @@ const saveRecord = (status = "draft") => {
     status,
     data: formData,
   };
-  if (existingIndex >= 0) {
-    records.splice(existingIndex, 1, record);
+
+  let finalRecord = null;
+  const savedServerRecord = await upsertRecordToServer(recordPayload);
+  if (savedServerRecord) {
+    finalRecord = {
+      ...recordPayload,
+      ...savedServerRecord,
+      formId: String(savedServerRecord.formId || ""),
+    };
   } else {
-    records.unshift(record);
+    const fallbackFormId = formId || buildFormId();
+    finalRecord = { ...recordPayload, formId: fallbackFormId };
   }
+
+  const existingIndex = records.findIndex((record) => record.formId === finalRecord.formId);
+  if (existingIndex >= 0) {
+    records.splice(existingIndex, 1, finalRecord);
+  } else {
+    records.unshift(finalRecord);
+  }
+
   saveRecords(records);
   localStorage.removeItem(FORM_DRAFT_KEY);
-  setStatus(formSaveStatus, `${translations[currentLanguage].saveDraftSuccess}: ${formId}`, "ok");
-  currentEditId = null;
+  setStatus(formSaveStatus, `${translations[currentLanguage].saveDraftSuccess}: ${finalRecord.formId}`, "ok");
+  currentEditId = finalRecord.formId;
   localStorage.removeItem(EDIT_KEY);
   renderRecords();
-  if (workerForm) {
-    localStorage.setItem(RECORD_SEARCH_KEY, formId);
+  renderLatestRecordCard();
+if (workerForm) {
+    localStorage.setItem(RECORD_SEARCH_KEY, finalRecord.formId);
     window.location.href = "records.html";
   }
 };
 
 const populateForm = (record) => {
   if (!record) return;
-  if (formTypeInputs?.length) {
+if (formTypeInputs?.length) {
     formTypeInputs.forEach((input) => {
       input.checked = input.value === record.formType;
     });
@@ -2130,6 +2420,13 @@ const populateForm = (record) => {
   if (workerFullName) workerFullName.value = record.data.personalInfo?.fullName || "";
   if (workerGender) workerGender.value = record.data.personalInfo?.gender || "";
   if (workerNationality) workerNationality.value = record.data.personalInfo?.nationality || "";
+  if (workerEmail) workerEmail.value = record.data.personalInfo?.email || "";
+  if (workerCode) workerCode.value = record.data.personalInfo?.code || "";
+  if (workerAlienId) workerAlienId.value = record.data.personalInfo?.alienId || "";
+  if (workPermitExpiry) workPermitExpiry.value = record.data.personalInfo?.workPermitExpiry || "";
+  if (passNumber) passNumber.value = record.data.personalInfo?.passNumber || "";
+  if (passIssueDate) passIssueDate.value = record.data.personalInfo?.passIssueDate || "";
+  if (passExpiryDate) passExpiryDate.value = record.data.personalInfo?.passExpiryDate || "";
   if (businessType) businessType.value = record.data.personalInfo?.businessType || "";
   if (employerName) employerName.value = record.data.personalInfo?.employerName || "";
   if (documentSender) documentSender.value = record.data.personalInfo?.documentSender || "";
@@ -2155,6 +2452,7 @@ const populateForm = (record) => {
     });
   }
   if (appointmentDate) appointmentDate.value = record.data.caseStatus?.appointmentDate || "";
+  if (appointmentNote) appointmentNote.value = record.data.caseStatus?.appointmentNote || "";
   updateFormTypeOtherVisibility();
   updateAppointmentVisibility();
   if (workerList) {
@@ -2223,6 +2521,48 @@ const populateForm = (record) => {
   updatePaymentSlipPreview();
 };
 
+const updateFormStepVisibility = () => {
+  if (!formSteps?.length) return;
+  formSteps.forEach((step) => {
+    const stepNo = Number(step.dataset.step || 1);
+    step.classList.toggle("is-hidden", stepNo !== currentFormStep);
+  });
+};
+
+updateFormStepVisibility();
+
+if (nextStepLink) {
+  nextStepLink.addEventListener("click", () => {
+    saveFormDraft();
+    showLoader();
+  });
+} else if (nextStepButton) {
+  nextStepButton.addEventListener("click", () => {
+    saveFormDraft();
+    if (!isNextFormPage && workerForm) {
+      showLoader();
+      setTimeout(() => {
+        window.location.href = "nextform.html";
+      }, 0);
+      return;
+    }
+    currentFormStep = 2;
+    updateFormStepVisibility();
+  });
+}
+if (prevStepButton) {
+  prevStepButton.addEventListener("click", () => {
+    if (isNextFormPage) {
+      saveFormDraft();
+      showLoader();
+      window.location.href = "form.html";
+      return;
+    }
+    currentFormStep = 1;
+    updateFormStepVisibility();
+  });
+}
+
 if (formTypeInputs?.length) {
   formTypeInputs.forEach((input) => {
     input.addEventListener("change", () => {
@@ -2267,6 +2607,9 @@ updatePaymentSlipPreview();
 loadFormDraft();
 initTheme();
 renderRecords();
+renderLatestRecordCard();
+syncRecordsFromServer();
+startServerSyncPolling();
 document.querySelectorAll("a.tab-btn").forEach((link) => {
   link.addEventListener("click", () => {
     showLoader();
@@ -2326,16 +2669,18 @@ const applyTranslations = (lang) => {
 applyTranslations(currentLanguage);
 
 if (workerForm) {
-  workerForm.addEventListener("submit", (event) => {
+  workerForm.addEventListener("submit", async (event) => {
     event.preventDefault();
-    saveRecord("final");
+    await saveRecord("final");
   });
   workerForm.addEventListener("input", saveFormDraft);
   workerForm.addEventListener("change", saveFormDraft);
 }
 
 if (draftButton) {
-  draftButton.addEventListener("click", () => saveRecord("draft"));
+  draftButton.addEventListener("click", async () => {
+    await saveRecord("draft");
+  });
 }
 if (clearFormDraftButton) {
   clearFormDraftButton.addEventListener("click", clearFormDraft);
@@ -2359,9 +2704,14 @@ if (clearRecordsButton) {
       return;
     }
     saveRecords([]);
+    clearRecordsFromServer();
     renderRecords();
+    renderLatestRecordCard();
     setStatus(formSaveStatus, translations[currentLanguage].recordsStatus);
   });
+}
+if (exportRecordsButton) {
+  exportRecordsButton.addEventListener("click", exportRecordsToCsv);
 }
 if (passportCheckButton) {
   passportCheckButton.addEventListener("click", () => {
@@ -2386,13 +2736,20 @@ if (generalSearchButton) {
       setStatus(generalSearchStatus, translations[currentLanguage].generalSearchHint, "warn");
       return;
     }
-    const record = findRecordByQuery(query);
-    if (!record) {
+    const records = findRecordsByQuery(query);
+    if (!records.length) {
       setStatus(generalSearchStatus, translations[currentLanguage].generalSearchNotFound, "warn");
       return;
     }
-    setStatus(generalSearchStatus, `${translations[currentLanguage].employerChecking} ${query}`, "ok");
-    openRecordModal(record);
+    openGeneralSearchResultsModal(records, query);
+  });
+}
+if (generalSearchInput) {
+  generalSearchInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      generalSearchButton?.click();
+    }
   });
 }
 if (verifyRecordButton) {
@@ -2400,7 +2757,7 @@ if (verifyRecordButton) {
     const firstWorker = getWorkerCards()[0];
     const workerPassport = firstWorker?.querySelector('[data-field="passport"]')?.value || "";
     const workerName = firstWorker?.querySelector('[data-field="fullName"]')?.value || "";
-    const query = workerPassport || workerName || company?.value || "";
+    const query = workerPassport || workerName || passNumber?.value || workerFullName?.value || employerName?.value || company?.value || "";
     if (!query) {
       setStatus(formSaveStatus, translations[currentLanguage].recordNotFound, "warn");
       return;

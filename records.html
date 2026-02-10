@@ -10,7 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=20260211" />
   </head>
   <body>
     <header class="hero">
@@ -61,9 +61,26 @@
         </div>
         <div class="records-toolbar">
           <span class="status-text" id="recordsStatus" data-i18n="recordsStatus">ยังไม่มีข้อมูลที่บันทึก</span>
-          <button type="button" class="secondary" id="clearRecords" data-i18n="clearButton">
-            ลบข้อมูลทั้งหมด
-          </button>
+          <div class="table-actions">
+            <button type="button" class="secondary" id="exportRecords">ส่งออก Excel (CSV)</button>
+            <button type="button" class="secondary" id="clearRecords" data-i18n="clearButton">
+              ลบข้อมูลทั้งหมด
+            </button>
+          </div>
+        </div>
+        <div class="summary-grid">
+          <div class="summary-card">
+            <p class="summary-card__label">ทำรายการวันนี้</p>
+            <p class="summary-card__value" id="summaryTodayCount">0</p>
+          </div>
+          <div class="summary-card">
+            <p class="summary-card__label">ทำรายการเมื่อวาน</p>
+            <p class="summary-card__value" id="summaryYesterdayCount">0</p>
+          </div>
+          <div class="summary-card">
+            <p class="summary-card__label">ทำรายการในเดือนนี้</p>
+            <p class="summary-card__value" id="summaryMonthCount">0</p>
+          </div>
         </div>
         <div class="records-table-wrapper">
           <table class="records-table">
@@ -113,6 +130,6 @@
       </div>
     </div>
 
-    <script src="app.js"></script>
+    <script src="app.js?v=20260211"></script>
   </body>
 </html>

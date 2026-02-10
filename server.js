@@ -5,15 +5,63 @@ import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const DATA_DIR = path.join(__dirname, "data");
-const DATA_FILE = path.join(DATA_DIR, "records.json");
+const STORAGE_ROOT = process.env.RECORDS_DATA_DIR
+  ? path.resolve(process.env.RECORDS_DATA_DIR)
+  : path.join(__dirname, "data");
+const DATA_FILE = process.env.RECORDS_DATA_FILE
+  ? path.resolve(process.env.RECORDS_DATA_FILE)
+  : path.join(STORAGE_ROOT, "records.json");
+const MOUNT_PATH = process.env.RENDER_DISK_PATH
+  ? path.resolve(process.env.RENDER_DISK_PATH)
+  : STORAGE_ROOT;
+const SERVER_LOG_FILE = process.env.SERVER_LOG_FILE
+  ? path.resolve(process.env.SERVER_LOG_FILE)
+  : path.join(MOUNT_PATH, "server.log");
 
 const app = express();
+
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", process.env.CORS_ORIGIN || "*");
+  res.header("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type");
+  if (req.method === "OPTIONS") {
+    res.sendStatus(204);
+    return;
+  }
+  next();
+});
+
 app.use(express.json({ limit: "2mb" }));
 app.use(express.static(__dirname));
 
+const appendServerLog = async (message) => {
+  const timestamp = new Date().toISOString();
+  const line = `[${timestamp}] ${message}
+`;
+  const logDir = path.dirname(SERVER_LOG_FILE);
+  await fs.mkdir(logDir, { recursive: true });
+  await fs.appendFile(SERVER_LOG_FILE, line, "utf-8");
+};
+
+const logStorageContext = async () => {
+  const report = [
+    `mountPath=${MOUNT_PATH}`,
+    `storageRoot=${STORAGE_ROOT}`,
+    `recordsFile=${DATA_FILE}`,
+    `logFile=${SERVER_LOG_FILE}`,
+    `renderService=${process.env.RENDER_SERVICE_NAME || ""}`,
+  ].join(" | ");
+  console.log(`Storage context: ${report}`);
+  try {
+    await appendServerLog(`Storage context: ${report}`);
+  } catch (error) {
+    console.error(`Unable to write server log: ${error.message}`);
+  }
+};
+
 const ensureDataFile = async () => {
-  await fs.mkdir(DATA_DIR, { recursive: true });
+  const dataDir = path.dirname(DATA_FILE);
+  await fs.mkdir(dataDir, { recursive: true });
   try {
     await fs.access(DATA_FILE);
   } catch {
@@ -49,20 +97,26 @@ app.get("/api/records/:id", async (req, res) => {
 });
 
 app.post("/api/records", async (req, res) => {
-  const payload = req.body;
-  if (!payload?.formId) {
-    res.status(400).json({ message: "formId is required" });
+  const payload = req.body || {};
+  const records = await readRecords();
+  const incomingId = String(payload.formId || "").trim();
+  const index = incomingId ? records.findIndex((item) => item.formId === incomingId) : -1;
+  if (index >= 0) {
+    records[index] = { ...payload, formId: incomingId };
+    await writeRecords(records);
+    res.json(records[index]);
     return;
   }
-  const records = await readRecords();
-  const index = records.findIndex((item) => item.formId === payload.formId);
-  if (index >= 0) {
-    records[index] = payload;
-  } else {
-    records.unshift(payload);
-  }
+
+  const maxId = records.reduce((max, item) => {
+    const value = Number.parseInt(String(item.formId || ""), 10);
+    return Number.isNaN(value) ? max : Math.max(max, value);
+  }, 0);
+  const nextId = String(maxId + 1);
+  const nextRecord = { ...payload, formId: nextId };
+  records.unshift(nextRecord);
   await writeRecords(records);
-  res.json({ status: "ok" });
+  res.json(nextRecord);
 });
 
 app.delete("/api/records", async (_req, res) => {
@@ -78,6 +132,8 @@ app.delete("/api/records/:id", async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`Server running at http://localhost:${PORT}`);
+  console.log(`Records storage file: ${DATA_FILE}`);
+  await logStorageContext();
 });

@@ -37,6 +37,11 @@
           <div class="grid-3">
             <div class="form-row"><label for="r90StartDate">วันที่เริ่มรายงานตัว</label><input id="r90StartDate" required type="date" /></div>
             <div class="form-row"><label for="r90NextDate">90 วันถัดไป</label><input id="r90NextDate" required type="date" /></div>
+            <div class="form-row"><label for="r90RecordedBy">ผู้บันทึกข้อมูล</label><input id="r90RecordedBy" required type="text" /></div>
+          </div>
+          <div class="grid-3">
+            <div class="form-row"><label for="r90SentBookCount">ส่งเล่มไป ตม. กี่เล่ม</label><input id="r90SentBookCount" type="number" min="0" step="1" value="0" /></div>
+            <div class="form-row"><label for="r90ReturnBookCount">ส่งเล่มคืนกี่เล่ม</label><input id="r90ReturnBookCount" type="number" min="0" step="1" value="0" /></div>
             <div class="form-row checklist-col">
               <label class="checkbox-item"><input id="r90Overdue" type="checkbox" /><span>ปรับ 90 เกิน</span></label>
               <label class="checkbox-item"><input id="r90SentImm" type="checkbox" /><span>ส่งเล่มไป ตม.</span></label>
@@ -52,7 +57,7 @@
         <div id="report90Alert" class="warning-banner is-hidden"></div>
         <div class="records-table-wrapper">
           <table class="records-table">
-            <thead><tr><th>ชื่อต่างด้าว</th><th>สัญชาติ</th><th>ชื่อนายจ้าง</th><th>วันที่เริ่ม</th><th>90 วันถัดไป</th><th>สถานะเตือน</th><th>การจัดการ</th></tr></thead>
+            <thead><tr><th>ชื่อต่างด้าว</th><th>นายจ้าง</th><th>ผู้บันทึก</th><th>ส่งไป ตม.</th><th>ส่งคืน</th><th>90 วันถัดไป</th><th>สถานะเตือน</th><th>การจัดการ</th></tr></thead>
             <tbody id="report90List"></tbody>
           </table>
         </div>

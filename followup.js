@@ -115,7 +115,7 @@ const toReport90Payload = (values, formId = "") => ({
   status: "final",
   updatedAt: new Date().toISOString(),
   data: {
-    recordedBy: "",
+    recordedBy: values.recordedBy || "",
     company: "",
     personalInfo: {
       fullName: values.workerName,
@@ -134,6 +134,8 @@ const toReport90Payload = (values, formId = "") => ({
       overdueFine: values.overdueFine,
       sentImmigration: values.sentImmigration,
       returnBook: values.returnBook,
+      sentBookCount: values.sentBookCount,
+      returnBookCount: values.returnBookCount,
     },
   },
 });
@@ -146,7 +148,7 @@ const toVisaRunPayload = (values, formId = "") => ({
   status: "final",
   updatedAt: new Date().toISOString(),
   data: {
-    recordedBy: "",
+    recordedBy: values.recordedBy || "",
     company: "",
     personalInfo: {
       fullName: values.workerName,
@@ -165,6 +167,8 @@ const toVisaRunPayload = (values, formId = "") => ({
       visaOverdue: values.visaOverdue,
       sentImmigration: values.sentImmigration,
       returnBook: values.returnBook,
+      sentBookCount: values.sentBookCount,
+      returnBookCount: values.returnBookCount,
       p60: values.p60,
       p30: values.p30,
     },
@@ -197,11 +201,14 @@ const runReport90Page = () => {
       workerName: info.fullName || "",
       nationality: info.nationality || "",
       employerName: info.employerName || "",
+      recordedBy: record?.data?.recordedBy || "",
       startDate: followup.startDate || "",
       nextDate: followup.nextDate || "",
       overdueFine: !!followup.overdueFine,
       sentImmigration: !!followup.sentImmigration,
       returnBook: !!followup.returnBook,
+      sentBookCount: Number(followup.sentBookCount || 0),
+      returnBookCount: Number(followup.returnBookCount || 0),
     };
   };
 
@@ -209,11 +216,14 @@ const runReport90Page = () => {
     document.getElementById("r90WorkerName").value = item.workerName || "";
     document.getElementById("r90Nationality").value = item.nationality || "";
     document.getElementById("r90Employer").value = item.employerName || "";
+    document.getElementById("r90RecordedBy").value = item.recordedBy || "";
     startDate.value = item.startDate || "";
     nextDate.value = item.nextDate || "";
     document.getElementById("r90Overdue").checked = !!item.overdueFine;
     document.getElementById("r90SentImm").checked = !!item.sentImmigration;
     document.getElementById("r90ReturnBook").checked = !!item.returnBook;
+    document.getElementById("r90SentBookCount").value = String(item.sentBookCount || 0);
+    document.getElementById("r90ReturnBookCount").value = String(item.returnBookCount || 0);
     editFormId = String(item.id || "");
     status.textContent = "กำลังแก้ไขข้อมูลรายการเดิม";
   };
@@ -223,11 +233,14 @@ const runReport90Page = () => {
       ["ชื่อต่างด้าว", item.workerName || "-"],
       ["สัญชาติ", item.nationality || "-"],
       ["ชื่อนายจ้าง", item.employerName || "-"],
+      ["ผู้บันทึกข้อมูล", item.recordedBy || "-"],
       ["วันที่เริ่มรายงานตัว", fmtDate(item.startDate)],
       ["90 วันถัดไป", fmtDate(item.nextDate)],
       ["ปรับ 90 เกิน", fmtCheck(item.overdueFine)],
       ["ส่งเล่มไป ตม.", fmtCheck(item.sentImmigration)],
+      ["ส่งเล่มไป ตม. (เล่ม)", String(item.sentBookCount || 0)],
       ["ส่งเล่มคืน", fmtCheck(item.returnBook)],
+      ["ส่งเล่มคืน (เล่ม)", String(item.returnBookCount || 0)],
     ]);
   };
 
@@ -244,7 +257,7 @@ const runReport90Page = () => {
     rows.forEach((item) => {
       const w = renderWarning(diffDays(item.nextDate), "ใกล้ถึง 90 วันถัดไป", "เกินกำหนด 90 วัน");
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.nationality || "-"}</td><td>${item.employerName || "-"}</td><td>${fmtDate(item.startDate)}</td><td>${fmtDate(item.nextDate)}</td><td class="${w.alert ? "text-alert" : ""}">${w.text}</td>`;
+      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${item.sentBookCount || 0}</td><td>${item.returnBookCount || 0}</td><td>${fmtDate(item.nextDate)}</td><td class="${w.alert ? "text-alert" : ""}">${w.text}</td>`;
       const actionCell = document.createElement("td");
       const actionWrap = document.createElement("div");
       actionWrap.className = "table-actions";
@@ -292,11 +305,14 @@ const runReport90Page = () => {
       workerName: document.getElementById("r90WorkerName").value.trim(),
       nationality: document.getElementById("r90Nationality").value,
       employerName: document.getElementById("r90Employer").value.trim(),
+      recordedBy: document.getElementById("r90RecordedBy").value.trim(),
       startDate: startDate.value,
       nextDate: nextDate.value,
       overdueFine: document.getElementById("r90Overdue").checked,
       sentImmigration: document.getElementById("r90SentImm").checked,
       returnBook: document.getElementById("r90ReturnBook").checked,
+      sentBookCount: Number(document.getElementById("r90SentBookCount").value || 0),
+      returnBookCount: Number(document.getElementById("r90ReturnBookCount").value || 0),
     };
 
     try {
@@ -342,11 +358,14 @@ const runVisaPage = () => {
       workerName: info.fullName || "",
       nationality: info.nationality || "",
       employerName: info.employerName || "",
+      recordedBy: record?.data?.recordedBy || "",
       startDate: followup.startDate || "",
       endDate: followup.endDate || "",
       visaOverdue: !!followup.visaOverdue,
       sentImmigration: !!followup.sentImmigration,
       returnBook: !!followup.returnBook,
+      sentBookCount: Number(followup.sentBookCount || 0),
+      returnBookCount: Number(followup.returnBookCount || 0),
       p60: !!followup.p60,
       p30: !!followup.p30,
     };
@@ -356,11 +375,14 @@ const runVisaPage = () => {
     document.getElementById("visaWorkerName").value = item.workerName || "";
     document.getElementById("visaNationality").value = item.nationality || "";
     document.getElementById("visaEmployer").value = item.employerName || "";
+    document.getElementById("visaRecordedBy").value = item.recordedBy || "";
     startDate.value = item.startDate || "";
     endDate.value = item.endDate || "";
     document.getElementById("visaOverdue").checked = !!item.visaOverdue;
     document.getElementById("visaSentImm").checked = !!item.sentImmigration;
     document.getElementById("visaReturnBook").checked = !!item.returnBook;
+    document.getElementById("visaSentBookCount").value = String(item.sentBookCount || 0);
+    document.getElementById("visaReturnBookCount").value = String(item.returnBookCount || 0);
     document.getElementById("visaP60").checked = !!item.p60;
     document.getElementById("visaP30").checked = !!item.p30;
     editFormId = String(item.id || "");
@@ -372,11 +394,14 @@ const runVisaPage = () => {
       ["ชื่อต่างด้าว", item.workerName || "-"],
       ["สัญชาติ", item.nationality || "-"],
       ["ชื่อนายจ้าง", item.employerName || "-"],
+      ["ผู้บันทึกข้อมูล", item.recordedBy || "-"],
       ["วันเริ่ม Visa", fmtDate(item.startDate)],
       ["วันหมด Visa", fmtDate(item.endDate)],
       ["Visa เกิน", fmtCheck(item.visaOverdue)],
       ["ส่งเล่มไป ตม.", fmtCheck(item.sentImmigration)],
+      ["ส่งเล่มไป ตม. (เล่ม)", String(item.sentBookCount || 0)],
       ["ส่งเล่มคืน", fmtCheck(item.returnBook)],
+      ["ส่งเล่มคืน (เล่ม)", String(item.returnBookCount || 0)],
       ["ผ.60", fmtCheck(item.p60)],
       ["ผ.30", fmtCheck(item.p30)],
     ]);
@@ -395,7 +420,7 @@ const runVisaPage = () => {
     rows.forEach((item) => {
       const w = renderWarning(diffDays(item.endDate), "Visa ใกล้หมดอายุ", "Visa หมดอายุแล้ว");
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.nationality || "-"}</td><td>${item.employerName || "-"}</td><td>${fmtDate(item.startDate)}</td><td>${fmtDate(item.endDate)}</td><td class="${w.alert ? "text-alert" : ""}">${w.text}</td>`;
+      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${item.sentBookCount || 0}</td><td>${item.returnBookCount || 0}</td><td>${fmtDate(item.endDate)}</td><td class="${w.alert ? "text-alert" : ""}">${w.text}</td>`;
       const actionCell = document.createElement("td");
       const actionWrap = document.createElement("div");
       actionWrap.className = "table-actions";
@@ -443,11 +468,14 @@ const runVisaPage = () => {
       workerName: document.getElementById("visaWorkerName").value.trim(),
       nationality: document.getElementById("visaNationality").value,
       employerName: document.getElementById("visaEmployer").value.trim(),
+      recordedBy: document.getElementById("visaRecordedBy").value.trim(),
       startDate: startDate.value,
       endDate: endDate.value,
       visaOverdue: document.getElementById("visaOverdue").checked,
       sentImmigration: document.getElementById("visaSentImm").checked,
       returnBook: document.getElementById("visaReturnBook").checked,
+      sentBookCount: Number(document.getElementById("visaSentBookCount").value || 0),
+      returnBookCount: Number(document.getElementById("visaReturnBookCount").value || 0),
       p60: document.getElementById("visaP60").checked,
       p30: document.getElementById("visaP30").checked,
     };

@@ -1868,24 +1868,56 @@ const exportRecordsToCsv = () => {
     translations[currentLanguage].recordsTableFormType,
     translations[currentLanguage].recordsTableEmployer,
     translations[currentLanguage].recordsTableWorker,
+    translations[currentLanguage].workerNationalityLabel,
     translations[currentLanguage].recordsTableRecordedBy,
     translations[currentLanguage].recordsTableUpdated,
     translations[currentLanguage].recordsTableStatus,
+    "Followup Type",
+    "Followup Start Date",
+    "Followup Next Date",
+    "Followup End Date",
+    "ส่งเล่มไป ตม. (ติ๊ก)",
+    "ส่งเล่มคืน (ติ๊ก)",
+    "ส่งเล่มไป ตม. (เล่ม)",
+    "ส่งเล่มคืน (เล่ม)",
+    "ปรับ 90 เกิน",
+    "Visa เกิน",
+    "ผ.60",
+    "ผ.30",
+    "หมายเหตุเอกสาร",
+    "Payment Status",
   ];
   const lines = [headers.map(toCsvValue).join(",")];
   rows.forEach((record) => {
-    const personalInfo = record.data.personalInfo || {};
-    const workers = normalizeWorkers(record.data);
+    const data = record.data || {};
+    const personalInfo = data.personalInfo || {};
+    const workers = normalizeWorkers(data);
     const workerName = personalInfo.fullName || workers[0]?.fullName || "-";
-    const employerLabel = personalInfo.employerName || record.data.company || record.data.employerId || "-";
+    const employerLabel = personalInfo.employerName || data.company || data.employerId || "-";
+    const followup = data.followup || {};
     const cols = [
       record.formId,
       record.formTypeLabel,
       employerLabel,
       workerName,
-      record.data.recordedBy || "-",
+      personalInfo.nationality || "-",
+      data.recordedBy || "-",
       formatDateTime(record.updatedAt),
-      getCaseStatusDisplay(record.data.caseStatus || {}),
+      getCaseStatusDisplay(data.caseStatus || {}),
+      data.followupType || "-",
+      followup.startDate || "-",
+      followup.nextDate || "-",
+      followup.endDate || "-",
+      followup.sentImmigration ? "yes" : "no",
+      followup.returnBook ? "yes" : "no",
+      followup.sentBookCount ?? "-",
+      followup.returnBookCount ?? "-",
+      followup.overdueFine ? "yes" : "no",
+      followup.visaOverdue ? "yes" : "no",
+      followup.p60 ? "yes" : "no",
+      followup.p30 ? "yes" : "no",
+      data.documents?.note || "-",
+      data.paymentStatus || "-",
     ];
     lines.push(cols.map(toCsvValue).join(","));
   });
@@ -1895,7 +1927,7 @@ const exportRecordsToCsv = () => {
   const anchor = document.createElement("a");
   anchor.href = url;
   const stamp = new Date().toISOString().slice(0, 10);
-  anchor.download = `records-${stamp}.csv`;
+  anchor.download = `records-detailed-${stamp}.csv`;
   document.body.appendChild(anchor);
   anchor.click();
   anchor.remove();

@@ -37,6 +37,11 @@
           <div class="grid-3">
             <div class="form-row"><label for="visaStartDate">วันเริ่ม Visa</label><input id="visaStartDate" required type="date" /></div>
             <div class="form-row"><label for="visaEndDate">วันหมด Visa</label><input id="visaEndDate" required type="date" /></div>
+            <div class="form-row"><label for="visaRecordedBy">ผู้บันทึกข้อมูล</label><input id="visaRecordedBy" required type="text" /></div>
+          </div>
+          <div class="grid-3">
+            <div class="form-row"><label for="visaSentBookCount">ส่งเล่มไป ตม. กี่เล่ม</label><input id="visaSentBookCount" type="number" min="0" step="1" value="0" /></div>
+            <div class="form-row"><label for="visaReturnBookCount">ส่งเล่มคืนกี่เล่ม</label><input id="visaReturnBookCount" type="number" min="0" step="1" value="0" /></div>
             <div class="form-row checklist-col">
               <label class="checkbox-item"><input id="visaOverdue" type="checkbox" /><span>Visa เกิน</span></label>
               <label class="checkbox-item"><input id="visaSentImm" type="checkbox" /><span>ส่งเล่มไป ตม.</span></label>
@@ -54,7 +59,7 @@
         <div id="visaAlert" class="warning-banner is-hidden"></div>
         <div class="records-table-wrapper">
           <table class="records-table">
-            <thead><tr><th>ชื่อต่างด้าว</th><th>สัญชาติ</th><th>ชื่อนายจ้าง</th><th>วันเริ่ม Visa</th><th>วันหมด Visa</th><th>สถานะเตือน</th><th>การจัดการ</th></tr></thead>
+            <thead><tr><th>ชื่อต่างด้าว</th><th>นายจ้าง</th><th>ผู้บันทึก</th><th>ส่งไป ตม.</th><th>ส่งคืน</th><th>วันหมด Visa</th><th>สถานะเตือน</th><th>การจัดการ</th></tr></thead>
             <tbody id="visaList"></tbody>
           </table>
         </div>

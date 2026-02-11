@@ -39,8 +39,15 @@ const workPermitExpiry = document.getElementById("workPermitExpiry");
 const passNumber = document.getElementById("passNumber");
 const passIssueDate = document.getElementById("passIssueDate");
 const passExpiryDate = document.getElementById("passExpiryDate");
+const personalVisaExpiryDate = document.getElementById("personalVisaExpiryDate");
 const businessType = document.getElementById("businessType");
 const employerName = document.getElementById("employerName");
+const employerEmail = document.getElementById("employerEmail");
+const employerSubdistrict = document.getElementById("employerSubdistrict");
+const employerDistrict = document.getElementById("employerDistrict");
+const employerProvince = document.getElementById("employerProvince");
+const employerPostcode = document.getElementById("employerPostcode");
+const employerAddress = document.getElementById("employerAddress");
 const documentSender = document.getElementById("documentSender");
 const documentSentDate = document.getElementById("documentSentDate");
 const documentReceiver = document.getElementById("documentReceiver");
@@ -52,6 +59,10 @@ const docRequestForm = document.getElementById("docRequestForm");
 const docNameList = document.getElementById("docNameList");
 const docPassPage = document.getElementById("docPassPage");
 const docVisaPage = document.getElementById("docVisaPage");
+const docPassCopy = document.getElementById("docPassCopy");
+const docVisaCopy = document.getElementById("docVisaCopy");
+const docWorkPermitCopy = document.getElementById("docWorkPermitCopy");
+const documentJobType = document.getElementById("documentJobType");
 const docHealthCard = document.getElementById("docHealthCard");
 const docExitNotice = document.getElementById("docExitNotice");
 const docHouseReg = document.getElementById("docHouseReg");
@@ -190,6 +201,90 @@ const updateAppointmentVisibility = () => {
   }
 };
 
+const THAI_LOCATION_OPTIONS = [
+  { subdistrict: "หนองปรือ", district: "บางละมุง", province: "ชลบุรี", postcode: "20150" },
+  { subdistrict: "สุเทพ", district: "เมืองเชียงใหม่", province: "เชียงใหม่", postcode: "50200" },
+  { subdistrict: "ปากน้ำ", district: "เมืองสมุทรปราการ", province: "สมุทรปราการ", postcode: "10270" },
+  { subdistrict: "ตลาด", district: "เมืองมหาสารคาม", province: "มหาสารคาม", postcode: "44000" },
+  { subdistrict: "ในเมือง", district: "เมืองขอนแก่น", province: "ขอนแก่น", postcode: "40000" },
+  { subdistrict: "หาดใหญ่", district: "หาดใหญ่", province: "สงขลา", postcode: "90110" },
+  { subdistrict: "บางรัก", district: "บางรัก", province: "กรุงเทพมหานคร", postcode: "10500" },
+  { subdistrict: "คลองตัน", district: "คลองเตย", province: "กรุงเทพมหานคร", postcode: "10110" },
+];
+
+const setInputDatalist = (input, values, id) => {
+  if (!input || !values?.length) return;
+  let datalist = document.getElementById(id);
+  if (!datalist) {
+    datalist = document.createElement("datalist");
+    datalist.id = id;
+    document.body.appendChild(datalist);
+  }
+  datalist.innerHTML = "";
+  [...new Set(values)]
+    .sort((a, b) => a.localeCompare(b, "th"))
+    .forEach((value) => {
+      const option = document.createElement("option");
+      option.value = value;
+      datalist.appendChild(option);
+    });
+  input.setAttribute("list", id);
+};
+
+const syncEmployerLocationFields = () => {
+  if (!employerSubdistrict || !employerDistrict) return;
+  const subdistrict = employerSubdistrict.value.trim();
+  const district = employerDistrict.value.trim();
+  const normalizedSubdistrict = subdistrict.toLowerCase();
+  const normalizedDistrict = district.toLowerCase();
+  const matched = THAI_LOCATION_OPTIONS.find((item) => {
+    if (normalizedSubdistrict && normalizedDistrict) {
+      return item.subdistrict.toLowerCase() === normalizedSubdistrict && item.district.toLowerCase() === normalizedDistrict;
+    }
+    if (normalizedSubdistrict) {
+      return item.subdistrict.toLowerCase() === normalizedSubdistrict;
+    }
+    if (normalizedDistrict) {
+      return item.district.toLowerCase() === normalizedDistrict;
+    }
+    return false;
+  });
+
+  if (!matched) {
+    if (employerProvince && !district && !subdistrict) {
+      employerProvince.value = "";
+    }
+    if (employerPostcode && !district && !subdistrict) {
+      employerPostcode.value = "";
+    }
+    return;
+  }
+
+  if (employerDistrict && !district) employerDistrict.value = matched.district;
+  if (employerSubdistrict && !subdistrict) employerSubdistrict.value = matched.subdistrict;
+  if (employerProvince) employerProvince.value = matched.province;
+  if (employerPostcode) employerPostcode.value = matched.postcode;
+};
+
+const initEmployerLocationAutoFill = () => {
+  if (!employerSubdistrict || !employerDistrict) return;
+  setInputDatalist(
+    employerSubdistrict,
+    THAI_LOCATION_OPTIONS.map((item) => item.subdistrict),
+    "employerSubdistrictOptions"
+  );
+  setInputDatalist(
+    employerDistrict,
+    THAI_LOCATION_OPTIONS.map((item) => item.district),
+    "employerDistrictOptions"
+  );
+  employerSubdistrict.addEventListener("change", syncEmployerLocationFields);
+  employerDistrict.addEventListener("change", syncEmployerLocationFields);
+  employerSubdistrict.addEventListener("blur", syncEmployerLocationFields);
+  employerDistrict.addEventListener("blur", syncEmployerLocationFields);
+  syncEmployerLocationFields();
+};
+
 const translations = {
   th: {
     heroTitle: "ระบบตรวจสอบข้อมูลแรงงานต่างด้าว",
@@ -211,7 +306,7 @@ const translations = {
     formTypeChangeEmployer: "เปลี่ยนนายจ้าง",
     formTypeResidence: "แจ้งที่พัก 37,38",
     formTypeVisaStamp: "ลงตรา Visa",
-    formTypeCiReport: "รายงานทำเล่ม CI",
+    formTypeCiReport: "ทำเล่ม CI",
     formTypeWorkPermitRenewal: "ต่ออนุญาตทำงานแรงงานต่างด้าว",
     formTypeMouLaos: "MOU ลาว",
     formTypeMouLaosRenew: "MOU ลาว 2 ปีหลัง",
@@ -225,9 +320,9 @@ const translations = {
     workerFullNamePlaceholder: "กรอกชื่อต่างด้าว",
     workerGenderLabel: "เพศ",
     workerGenderPlaceholder: "เลือกเพศ",
-    workerGenderMale: "ชาย",
-    workerGenderFemale: "หญิง",
-    workerGenderOther: "อื่น ๆ",
+    workerGenderMale: "Male",
+    workerGenderFemale: "Female",
+    workerGenderOther: "Other",
     workerNationalityLabel: "สัญชาติ",
     workerNationalityPlaceholder: "กรอกสัญชาติ",
     businessTypeLabel: "ประเภทกิจการ",
@@ -301,9 +396,9 @@ const translations = {
     nationalityPlaceholder: "เมียนมา / ลาว / กัมพูชา",
     dobLabel: "วันเดือนปีเกิด",
     genderLabel: "เพศ",
-    genderMale: "ชาย",
-    genderFemale: "หญิง",
-    genderOther: "อื่น ๆ",
+    genderMale: "Male",
+    genderFemale: "Female",
+    genderOther: "Other",
     employmentTitle: "ข้อมูลนายจ้าง",
     companyLabel: "ชื่อนายจ้าง",
     companyPlaceholder: "ระบุชื่อนายจ้าง",
@@ -1626,8 +1721,15 @@ const collectFormData = () => {
       passNumber: passNumber?.value?.trim() || "",
       passIssueDate: passIssueDate?.value || "",
       passExpiryDate: passExpiryDate?.value || "",
+      personalVisaExpiryDate: personalVisaExpiryDate?.value || "",
       businessType: businessType?.value?.trim() || "",
       employerName: employerName?.value?.trim() || "",
+      employerEmail: employerEmail?.value?.trim() || "",
+      employerSubdistrict: employerSubdistrict?.value?.trim() || "",
+      employerDistrict: employerDistrict?.value?.trim() || "",
+      employerProvince: employerProvince?.value?.trim() || "",
+      employerPostcode: employerPostcode?.value?.trim() || "",
+      employerAddress: employerAddress?.value?.trim() || "",
       documentSender: documentSender?.value?.trim() || "",
       documentSentDate: documentSentDate?.value || "",
       documentReceiver: documentReceiver?.value?.trim() || "",
@@ -1641,6 +1743,10 @@ const collectFormData = () => {
       nameList: docNameList?.checked || false,
       passPage: docPassPage?.checked || false,
       visaPage: docVisaPage?.checked || false,
+      passCopy: docPassCopy?.checked || false,
+      visaCopy: docVisaCopy?.checked || false,
+      workPermitCopy: docWorkPermitCopy?.checked || false,
+      documentJobType: documentJobType?.value?.trim() || "",
       healthCard: docHealthCard?.checked || false,
       exitNotice: docExitNotice?.checked || false,
       houseReg: docHouseReg?.checked || false,
@@ -1869,6 +1975,8 @@ const exportRecordsToCsv = () => {
     translations[currentLanguage].recordsTableEmployer,
     translations[currentLanguage].recordsTableWorker,
     translations[currentLanguage].workerNationalityLabel,
+    "Gender",
+    "Personal Visa Expiry",
     translations[currentLanguage].recordsTableRecordedBy,
     translations[currentLanguage].recordsTableUpdated,
     translations[currentLanguage].recordsTableStatus,
@@ -1885,6 +1993,9 @@ const exportRecordsToCsv = () => {
     "ผ.60",
     "ผ.30",
     "หมายเหตุเอกสาร",
+    "ประเภทงาน",
+    "เมลนายจ้าง",
+    "ที่อยู่นายจ้าง",
     "Payment Status",
   ];
   const lines = [headers.map(toCsvValue).join(",")];
@@ -1901,6 +2012,8 @@ const exportRecordsToCsv = () => {
       employerLabel,
       workerName,
       personalInfo.nationality || "-",
+      personalInfo.gender || "-",
+      personalInfo.personalVisaExpiryDate || "-",
       data.recordedBy || "-",
       formatDateTime(record.updatedAt),
       getCaseStatusDisplay(data.caseStatus || {}),
@@ -1917,6 +2030,17 @@ const exportRecordsToCsv = () => {
       followup.p60 ? "yes" : "no",
       followup.p30 ? "yes" : "no",
       data.documents?.note || "-",
+      data.documents?.documentJobType || "-",
+      personalInfo.employerEmail || "-",
+      [
+        personalInfo.employerAddress,
+        personalInfo.employerSubdistrict,
+        personalInfo.employerDistrict,
+        personalInfo.employerProvince,
+        personalInfo.employerPostcode,
+      ]
+        .filter(Boolean)
+        .join(" ") || "-",
       data.paymentStatus || "-",
     ];
     lines.push(cols.map(toCsvValue).join(","));
@@ -1967,6 +2091,9 @@ const openRecordModal = (record) => {
     if (documents.nameList) documentParts.push(translations[currentLanguage].documentNameList);
     if (documents.passPage) documentParts.push(translations[currentLanguage].documentPassPage);
     if (documents.visaPage) documentParts.push(translations[currentLanguage].documentVisaPage);
+    if (documents.passCopy) documentParts.push("หน้า Pass (สำเนา)");
+    if (documents.visaCopy) documentParts.push("หน้า Visa (สำเนา)");
+    if (documents.workPermitCopy) documentParts.push("ใบอนุญาตทำงาน (สำเนา)");
     if (documents.healthCard) documentParts.push(translations[currentLanguage].documentHealthCard);
     if (documents.exitNotice) documentParts.push(translations[currentLanguage].documentExitNotice);
     if (documents.houseReg) documentParts.push(translations[currentLanguage].documentHouseReg);
@@ -2013,11 +2140,27 @@ const openRecordModal = (record) => {
     if (personalInfo.passNumber) {
       addRow("เลข Pass", personalInfo.passNumber);
     }
+    if (personalInfo.personalVisaExpiryDate) {
+      addRow("วันหมดอายุ Visa", personalInfo.personalVisaExpiryDate);
+    }
     if (personalInfo.businessType) {
       addRow(translations[currentLanguage].businessTypeLabel, personalInfo.businessType);
     }
     if (personalInfo.employerName) {
       addRow(translations[currentLanguage].employerNameLabel, personalInfo.employerName);
+    }
+    if (personalInfo.employerEmail) {
+      addRow("เมลนายจ้าง", personalInfo.employerEmail);
+    }
+    if (personalInfo.employerAddress || personalInfo.employerSubdistrict || personalInfo.employerDistrict || personalInfo.employerProvince || personalInfo.employerPostcode) {
+      const addressParts = [
+        personalInfo.employerAddress,
+        personalInfo.employerSubdistrict,
+        personalInfo.employerDistrict,
+        personalInfo.employerProvince,
+        personalInfo.employerPostcode,
+      ].filter(Boolean);
+      addRow("ที่อยู่นายจ้าง", addressParts.join(" "));
     }
     if (personalInfo.documentSender) {
       addRow(translations[currentLanguage].documentSenderLabel, personalInfo.documentSender);
@@ -2039,6 +2182,9 @@ const openRecordModal = (record) => {
     }
     if (documents.note) {
       addRow(translations[currentLanguage].documentsNoteLabel, documents.note);
+    }
+    if (documents.documentJobType) {
+      addRow("ประเภทงาน", documents.documentJobType);
     }
     if (caseStatus.status) {
       addRow(translations[currentLanguage].statusTitle, getCaseStatusLabel(caseStatus.status));
@@ -2287,8 +2433,15 @@ const buildRecordSearchText = (record) => {
     personalInfo.passNumber,
     personalInfo.passIssueDate,
     personalInfo.passExpiryDate,
+    personalInfo.personalVisaExpiryDate,
     personalInfo.businessType,
     personalInfo.employerName,
+    personalInfo.employerEmail,
+    personalInfo.employerSubdistrict,
+    personalInfo.employerDistrict,
+    personalInfo.employerProvince,
+    personalInfo.employerPostcode,
+    personalInfo.employerAddress,
     personalInfo.documentSender,
     personalInfo.documentSentDate,
     personalInfo.documentReceiver,
@@ -2297,6 +2450,7 @@ const buildRecordSearchText = (record) => {
     caseStatus.status,
     caseStatus.appointmentDate,
     caseStatus.appointmentNote,
+    documents.documentJobType,
     documents.note,
     workerText,
   ]
@@ -2455,8 +2609,15 @@ if (formTypeInputs?.length) {
   if (passNumber) passNumber.value = record.data.personalInfo?.passNumber || "";
   if (passIssueDate) passIssueDate.value = record.data.personalInfo?.passIssueDate || "";
   if (passExpiryDate) passExpiryDate.value = record.data.personalInfo?.passExpiryDate || "";
+  if (personalVisaExpiryDate) personalVisaExpiryDate.value = record.data.personalInfo?.personalVisaExpiryDate || "";
   if (businessType) businessType.value = record.data.personalInfo?.businessType || "";
   if (employerName) employerName.value = record.data.personalInfo?.employerName || "";
+  if (employerEmail) employerEmail.value = record.data.personalInfo?.employerEmail || "";
+  if (employerSubdistrict) employerSubdistrict.value = record.data.personalInfo?.employerSubdistrict || "";
+  if (employerDistrict) employerDistrict.value = record.data.personalInfo?.employerDistrict || "";
+  if (employerProvince) employerProvince.value = record.data.personalInfo?.employerProvince || "";
+  if (employerPostcode) employerPostcode.value = record.data.personalInfo?.employerPostcode || "";
+  if (employerAddress) employerAddress.value = record.data.personalInfo?.employerAddress || "";
   if (documentSender) documentSender.value = record.data.personalInfo?.documentSender || "";
   if (documentSentDate) documentSentDate.value = record.data.personalInfo?.documentSentDate || "";
   if (documentReceiver) documentReceiver.value = record.data.personalInfo?.documentReceiver || "";
@@ -2468,6 +2629,10 @@ if (formTypeInputs?.length) {
   if (docNameList) docNameList.checked = record.data.documents?.nameList || false;
   if (docPassPage) docPassPage.checked = record.data.documents?.passPage || false;
   if (docVisaPage) docVisaPage.checked = record.data.documents?.visaPage || false;
+  if (docPassCopy) docPassCopy.checked = record.data.documents?.passCopy || false;
+  if (docVisaCopy) docVisaCopy.checked = record.data.documents?.visaCopy || false;
+  if (docWorkPermitCopy) docWorkPermitCopy.checked = record.data.documents?.workPermitCopy || false;
+  if (documentJobType) documentJobType.value = record.data.documents?.documentJobType || "";
   if (docHealthCard) docHealthCard.checked = record.data.documents?.healthCard || false;
   if (docExitNotice) docExitNotice.checked = record.data.documents?.exitNotice || false;
   if (docHouseReg) docHouseReg.checked = record.data.documents?.houseReg || false;
@@ -2528,6 +2693,7 @@ if (formTypeInputs?.length) {
   if (paymentStatus) paymentStatus.value = record.data.paymentStatus || "pending";
   if (paymentDate) paymentDate.value = record.data.paymentDate || "";
   if (paymentNotes) paymentNotes.value = record.data.paymentNotes || "";
+  syncEmployerLocationFields();
   uploadCache.facePhoto = {
     name: record.data.facePhoto || "",
     dataUrl: record.data.facePhotoData || "",
@@ -2632,6 +2798,7 @@ updateAppointmentVisibility();
 ensureWorkerCards();
 updateUploadPreview();
 updatePaymentSlipPreview();
+initEmployerLocationAutoFill();
 loadFormDraft();
 initTheme();
 renderRecords();

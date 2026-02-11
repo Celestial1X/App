@@ -1,8 +1,8 @@
 :root {
   color-scheme: light;
   font-family: "Sarabun", system-ui, sans-serif;
-  background: #f6f8fb;
-  color: #223149;
+  background: #f8fbff;
+  color: #1f2f46;
 }
 
 * {
@@ -11,7 +11,7 @@
 
 body {
   margin: 0;
-  background: linear-gradient(180deg, #f7f9fd 0%, #fbfdff 55%, #f5faf9 100%);
+  background: linear-gradient(180deg, #f9fbff 0%, #ffffff 55%, #f6fcff 100%);
   line-height: 1.6;
 }
 
@@ -20,16 +20,16 @@ body::before {
   content: "";
   position: fixed;
   inset: 0;
-  background: radial-gradient(circle at top, rgba(66, 130, 199, 0.16), transparent 55%),
-    radial-gradient(circle at 20% 20%, rgba(74, 201, 173, 0.12), transparent 45%),
-    radial-gradient(circle at 80% 20%, rgba(132, 159, 213, 0.1), transparent 45%);
+  background: radial-gradient(circle at top, rgba(66, 130, 199, 0.12), transparent 55%),
+    radial-gradient(circle at 20% 20%, rgba(74, 201, 173, 0.09), transparent 45%),
+    radial-gradient(circle at 80% 20%, rgba(132, 159, 213, 0.08), transparent 45%);
   pointer-events: none;
   z-index: -1;
 }
 
 
 .hero {
-  background: linear-gradient(135deg, #3f7fc3, #6798d8, #86b6d8);
+  background: linear-gradient(135deg, #4b8ed4, #78aee7, #9bc6e8);
   color: #fff;
   padding: 48px 20px 64px;
   position: relative;
@@ -167,10 +167,10 @@ h1 {
 
 
 .tab-btn.is-active {
-  background: linear-gradient(135deg, #3f7fc3, #6798d8);
+  background: linear-gradient(135deg, #4b8ed4, #7ab2e8);
   color: #fff;
-  border-color: #3f7fc3;
-  box-shadow: 0 8px 14px rgba(63, 127, 195, 0.24);
+  border-color: #4b8ed4;
+  box-shadow: 0 8px 14px rgba(75, 142, 212, 0.2);
 }
 
 
@@ -953,5 +953,4 @@ button {
   color: #dc2626;
   font-weight: 700;
 }
-
 

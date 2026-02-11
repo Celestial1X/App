@@ -81,3 +81,14 @@ docker run --rm -v app_data:/data -v "$PWD":/backup alpine tar czf /backup/app_d
 3) เช็ก log หลัง deploy ว่าขึ้น path ใน disk ถาวร
 
 ถ้าขาดข้อใดข้อหนึ่ง ข้อมูลมีโอกาสหายหลัง deploy/restart
+
+### หมายเหตุสำหรับ Render (เคสที่เจอบ่อย)
+
+ถ้า log ขึ้นแบบนี้:
+- `mountPath=/var/data`
+- แต่ `recordsFile=/opt/render/project/src/data/records.json`
+
+แปลว่าแอปยังเขียนไป path ไม่ถาวร
+
+เวอร์ชันนี้แก้ให้แล้ว โดยจะใช้ `RENDER_DISK_PATH` เป็น storage root อัตโนมัติเมื่อไม่ได้ตั้ง `RECORDS_DATA_DIR` เพิ่ม
+และมี migration ย้ายข้อมูลเดิมจาก `./data` ไปยัง disk ใหม่ให้อัตโนมัติ (ถ้าปลายทางยังไม่มีไฟล์)

@@ -5,18 +5,19 @@ import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const LEGACY_STORAGE_ROOT = path.join(__dirname, "data");
+const MOUNT_PATH = process.env.RENDER_DISK_PATH
+  ? path.resolve(process.env.RENDER_DISK_PATH)
+  : "";
 const STORAGE_ROOT = process.env.RECORDS_DATA_DIR
   ? path.resolve(process.env.RECORDS_DATA_DIR)
-  : path.join(__dirname, "data");
+  : MOUNT_PATH || LEGACY_STORAGE_ROOT;
 const DATA_FILE = process.env.RECORDS_DATA_FILE
   ? path.resolve(process.env.RECORDS_DATA_FILE)
   : path.join(STORAGE_ROOT, "records.json");
 const FOLLOWUPS_DATA_FILE = process.env.FOLLOWUPS_DATA_FILE
   ? path.resolve(process.env.FOLLOWUPS_DATA_FILE)
   : path.join(STORAGE_ROOT, "followups.json");
-const MOUNT_PATH = process.env.RENDER_DISK_PATH
-  ? path.resolve(process.env.RENDER_DISK_PATH)
-  : STORAGE_ROOT;
 const SERVER_LOG_FILE = process.env.SERVER_LOG_FILE
   ? path.resolve(process.env.SERVER_LOG_FILE)
   : path.join(MOUNT_PATH, "server.log");
@@ -59,6 +60,42 @@ const logStorageContext = async () => {
     await appendServerLog(`Storage context: ${report}`);
   } catch (error) {
     console.error(`Unable to write server log: ${error.message}`);
+  }
+};
+
+
+const fileExists = async (filePath) => {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const migrateLegacyStorageIfNeeded = async () => {
+  const usingLegacyRoot = path.resolve(STORAGE_ROOT) === path.resolve(LEGACY_STORAGE_ROOT);
+  if (usingLegacyRoot) {
+    return;
+  }
+
+  const legacyRecordsFile = path.join(LEGACY_STORAGE_ROOT, "records.json");
+  const legacyFollowupsFile = path.join(LEGACY_STORAGE_ROOT, "followups.json");
+
+  const targetRecordsExists = await fileExists(DATA_FILE);
+  const targetFollowupsExists = await fileExists(FOLLOWUPS_DATA_FILE);
+
+  await fs.mkdir(path.dirname(DATA_FILE), { recursive: true });
+  await fs.mkdir(path.dirname(FOLLOWUPS_DATA_FILE), { recursive: true });
+
+  if (!targetRecordsExists && (await fileExists(legacyRecordsFile))) {
+    await fs.copyFile(legacyRecordsFile, DATA_FILE);
+    console.log(`Migrated records data to persistent path: ${DATA_FILE}`);
+  }
+
+  if (!targetFollowupsExists && (await fileExists(legacyFollowupsFile))) {
+    await fs.copyFile(legacyFollowupsFile, FOLLOWUPS_DATA_FILE);
+    console.log(`Migrated followups data to persistent path: ${FOLLOWUPS_DATA_FILE}`);
   }
 };
 
@@ -203,6 +240,7 @@ app.post("/api/followups/:type", async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, async () => {
+  await migrateLegacyStorageIfNeeded();
   console.log(`Server running at http://localhost:${PORT}`);
   console.log(`Records storage file: ${DATA_FILE}`);
   console.log(`Followups storage file: ${FOLLOWUPS_DATA_FILE}`);

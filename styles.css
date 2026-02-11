@@ -955,32 +955,3 @@ button {
 }
 
 
-.count-control {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  border: 1px solid #cfd9e4;
-  border-radius: 10px;
-  background: #ffffff;
-  padding: 6px 8px;
-  width: fit-content;
-}
-
-.count-btn {
-  width: 34px;
-  height: 34px;
-  padding: 0;
-  border-radius: 8px;
-  border: 1px solid #bdd2e6;
-  background: #f2f7fd;
-  color: #274266;
-  font-size: 1.05rem;
-  font-weight: 700;
-}
-
-.count-value {
-  min-width: 26px;
-  text-align: center;
-  font-weight: 700;
-  color: #274266;
-}

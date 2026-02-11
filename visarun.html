@@ -40,22 +40,8 @@
             <div class="form-row"><label for="visaRecordedBy">ผู้บันทึกข้อมูล</label><input id="visaRecordedBy" required type="text" /></div>
           </div>
           <div class="grid-3">
-            <div class="form-row"><label>ส่งเล่มไป ตม. กี่เล่ม</label>
-              <div class="count-control" data-counter="visaSentBookCount">
-                <button type="button" class="count-btn" data-action="decrease">-</button>
-                <input id="visaSentBookCount" type="hidden" value="0" />
-                <span id="visaSentBookCountDisplay" class="count-value">0</span>
-                <button type="button" class="count-btn" data-action="increase">+</button>
-              </div>
-            </div>
-            <div class="form-row"><label>ส่งเล่มคืนกี่เล่ม</label>
-              <div class="count-control" data-counter="visaReturnBookCount">
-                <button type="button" class="count-btn" data-action="decrease">-</button>
-                <input id="visaReturnBookCount" type="hidden" value="0" />
-                <span id="visaReturnBookCountDisplay" class="count-value">0</span>
-                <button type="button" class="count-btn" data-action="increase">+</button>
-              </div>
-            </div>
+            <div class="form-row"><label class="helper-text">จำนวนเล่มจะนับอัตโนมัติเมื่อกดบันทึก</label></div>
+            <div class="form-row"><label class="helper-text">ระบบจะแสดงว่าเล่มที่บันทึกคือเล่มอะไร</label></div>
             <div class="form-row checklist-col">
               <label class="checkbox-item"><input id="visaOverdue" type="checkbox" /><span>Visa เกิน</span></label>
               <label class="checkbox-item"><input id="visaSentImm" type="checkbox" /><span>ส่งเล่มไป ตม.</span></label>
@@ -73,7 +59,7 @@
         <div id="visaAlert" class="warning-banner is-hidden"></div>
         <div class="records-table-wrapper">
           <table class="records-table">
-            <thead><tr><th>ชื่อต่างด้าว</th><th>นายจ้าง</th><th>ผู้บันทึก</th><th>ส่งไป ตม.</th><th>ส่งคืน</th><th>วันหมด Visa</th><th>สถานะเตือน</th><th>การจัดการ</th></tr></thead>
+            <thead><tr><th>ชื่อต่างด้าว</th><th>นายจ้าง</th><th>ผู้บันทึก</th><th>รวมเล่มที่บันทึก</th><th>เล่มที่บันทึกล่าสุด</th><th>วันหมด Visa</th><th>สถานะเตือน</th><th>การจัดการ</th></tr></thead>
             <tbody id="visaList"></tbody>
           </table>
         </div>

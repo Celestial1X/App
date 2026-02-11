@@ -48,32 +48,33 @@ const renderWarning = (days, nearText, overText) => {
 };
 
 
-const setCounterValue = (id, value) => {
-  const input = document.getElementById(id);
-  const display = document.getElementById(`${id}Display`);
-  const safe = Math.max(0, Number.parseInt(String(value || 0), 10) || 0);
-  if (input) input.value = String(safe);
-  if (display) display.textContent = String(safe);
+const getBookTypes = (item, type) => {
+  const books = [];
+  if (item.sentImmigration) books.push("ส่งเล่มไป ตม.");
+  if (item.returnBook) books.push("ส่งเล่มคืน");
+  if (type === "visarun" && item.p60) books.push("ผ.60");
+  if (type === "visarun" && item.p30) books.push("ผ.30");
+  return books;
 };
 
-const getCounterValue = (id) => {
-  const input = document.getElementById(id);
-  return Math.max(0, Number.parseInt(String(input?.value || 0), 10) || 0);
-};
-
-const bindCounterControls = () => {
-  document.querySelectorAll('.count-control').forEach((control) => {
-    const id = control.dataset.counter;
-    if (!id) return;
-    setCounterValue(id, getCounterValue(id));
-    control.querySelectorAll('.count-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const delta = btn.dataset.action === 'increase' ? 1 : -1;
-        setCounterValue(id, getCounterValue(id) + delta);
-      });
-    });
+const getAggregateBookStats = (rows, item, type) => {
+  const key = `${item.workerName || ""}|${item.employerName || ""}`;
+  const related = rows.filter((row) => `${row.workerName || ""}|${row.employerName || ""}` === key);
+  let total = 0;
+  const unique = new Set();
+  related.forEach((row) => {
+    const books = getBookTypes(row, type);
+    total += books.length;
+    books.forEach((b) => unique.add(b));
   });
+  const latest = getBookTypes(item, type);
+  return {
+    total,
+    latestText: latest.length ? latest.join(", ") : "-",
+    allTypesText: unique.size ? Array.from(unique).join(", ") : "-",
+  };
 };
+
 
 const setupModal = () => {
   const modal = document.getElementById("followupModal");
@@ -162,8 +163,6 @@ const toReport90Payload = (values, formId = "") => ({
       overdueFine: values.overdueFine,
       sentImmigration: values.sentImmigration,
       returnBook: values.returnBook,
-      sentBookCount: values.sentBookCount,
-      returnBookCount: values.returnBookCount,
     },
   },
 });
@@ -195,8 +194,6 @@ const toVisaRunPayload = (values, formId = "") => ({
       visaOverdue: values.visaOverdue,
       sentImmigration: values.sentImmigration,
       returnBook: values.returnBook,
-      sentBookCount: values.sentBookCount,
-      returnBookCount: values.returnBookCount,
       p60: values.p60,
       p30: values.p30,
     },
@@ -206,7 +203,6 @@ const toVisaRunPayload = (values, formId = "") => ({
 const runReport90Page = () => {
   const type = "report90";
   const form = document.getElementById("report90Form");
-  bindCounterControls();
   const startDate = document.getElementById("r90StartDate");
   const nextDate = document.getElementById("r90NextDate");
   const status = document.getElementById("report90Status");
@@ -219,8 +215,6 @@ const runReport90Page = () => {
 
   const resetForm = () => {
     form.reset();
-    setCounterValue("r90SentBookCount", 0);
-    setCounterValue("r90ReturnBookCount", 0);
     editFormId = "";
   };
 
@@ -238,8 +232,6 @@ const runReport90Page = () => {
       overdueFine: !!followup.overdueFine,
       sentImmigration: !!followup.sentImmigration,
       returnBook: !!followup.returnBook,
-      sentBookCount: Number(followup.sentBookCount || 0),
-      returnBookCount: Number(followup.returnBookCount || 0),
     };
   };
 
@@ -253,8 +245,6 @@ const runReport90Page = () => {
     document.getElementById("r90Overdue").checked = !!item.overdueFine;
     document.getElementById("r90SentImm").checked = !!item.sentImmigration;
     document.getElementById("r90ReturnBook").checked = !!item.returnBook;
-    setCounterValue("r90SentBookCount", item.sentBookCount || 0);
-    setCounterValue("r90ReturnBookCount", item.returnBookCount || 0);
     editFormId = String(item.id || "");
     status.textContent = "กำลังแก้ไขข้อมูลรายการเดิม";
   };
@@ -269,9 +259,10 @@ const runReport90Page = () => {
       ["90 วันถัดไป", fmtDate(item.nextDate)],
       ["ปรับ 90 เกิน", fmtCheck(item.overdueFine)],
       ["ส่งเล่มไป ตม.", fmtCheck(item.sentImmigration)],
-      ["ส่งเล่มไป ตม. (เล่ม)", String(item.sentBookCount || 0)],
+      ["เล่มที่บันทึกล่าสุด", getBookTypes(item, "report90").join(", ") || "-"],
+      ["ประเภทเล่มที่เคยบันทึก", getAggregateBookStats(rows, item, "report90").allTypesText],
+      ["จำนวนเล่มที่บันทึกสะสม", String(getAggregateBookStats(rows, item, "report90").total)],
       ["ส่งเล่มคืน", fmtCheck(item.returnBook)],
-      ["ส่งเล่มคืน (เล่ม)", String(item.returnBookCount || 0)],
     ]);
   };
 
@@ -288,7 +279,7 @@ const runReport90Page = () => {
     rows.forEach((item) => {
       const w = renderWarning(diffDays(item.nextDate), "ใกล้ถึง 90 วันถัดไป", "เกินกำหนด 90 วัน");
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${item.sentBookCount || 0}</td><td>${item.returnBookCount || 0}</td><td>${fmtDate(item.nextDate)}</td><td class="${w.alert ? "text-alert" : ""}">${w.text}</td>`;
+      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${getAggregateBookStats(rows, item, "report90").total}</td><td>${getAggregateBookStats(rows, item, "report90").latestText}</td><td>${fmtDate(item.nextDate)}</td><td class="${w.alert ? "text-alert" : ""}">${w.text}</td>`;
       const actionCell = document.createElement("td");
       const actionWrap = document.createElement("div");
       actionWrap.className = "table-actions";
@@ -342,15 +333,15 @@ const runReport90Page = () => {
       overdueFine: document.getElementById("r90Overdue").checked,
       sentImmigration: document.getElementById("r90SentImm").checked,
       returnBook: document.getElementById("r90ReturnBook").checked,
-      sentBookCount: getCounterValue("r90SentBookCount"),
-      returnBookCount: getCounterValue("r90ReturnBookCount"),
     };
 
     try {
       await saveRecord(toReport90Payload(values, editFormId));
-      status.textContent = editFormId ? "แก้ไขข้อมูลเรียบร้อย" : "บันทึกข้อมูลเรียบร้อย";
       resetForm();
       await refreshRows();
+      const latest = rows.find((row) => row.workerName === values.workerName && row.employerName === values.employerName);
+      const stats = latest ? getAggregateBookStats(rows, latest, "visarun") : { total: 0, latestText: "-" };
+      status.textContent = `${editFormId ? "แก้ไขข้อมูลเรียบร้อย" : "บันทึกข้อมูลเรียบร้อย"} • รวม ${stats.total} เล่ม • ล่าสุด: ${stats.latestText}`;
     } catch {
       status.textContent = "ไม่สามารถบันทึกข้อมูลได้ กรุณาตรวจสอบเซิร์ฟเวอร์";
       status.classList.add("error");
@@ -366,7 +357,6 @@ const runReport90Page = () => {
 const runVisaPage = () => {
   const type = "visarun";
   const form = document.getElementById("visaRunForm");
-  bindCounterControls();
   const startDate = document.getElementById("visaStartDate");
   const endDate = document.getElementById("visaEndDate");
   const status = document.getElementById("visaStatus");
@@ -379,8 +369,6 @@ const runVisaPage = () => {
 
   const resetForm = () => {
     form.reset();
-    setCounterValue("visaSentBookCount", 0);
-    setCounterValue("visaReturnBookCount", 0);
     editFormId = "";
   };
 
@@ -398,8 +386,6 @@ const runVisaPage = () => {
       visaOverdue: !!followup.visaOverdue,
       sentImmigration: !!followup.sentImmigration,
       returnBook: !!followup.returnBook,
-      sentBookCount: Number(followup.sentBookCount || 0),
-      returnBookCount: Number(followup.returnBookCount || 0),
       p60: !!followup.p60,
       p30: !!followup.p30,
     };
@@ -415,8 +401,6 @@ const runVisaPage = () => {
     document.getElementById("visaOverdue").checked = !!item.visaOverdue;
     document.getElementById("visaSentImm").checked = !!item.sentImmigration;
     document.getElementById("visaReturnBook").checked = !!item.returnBook;
-    setCounterValue("visaSentBookCount", item.sentBookCount || 0);
-    setCounterValue("visaReturnBookCount", item.returnBookCount || 0);
     document.getElementById("visaP60").checked = !!item.p60;
     document.getElementById("visaP30").checked = !!item.p30;
     editFormId = String(item.id || "");
@@ -433,9 +417,10 @@ const runVisaPage = () => {
       ["วันหมด Visa", fmtDate(item.endDate)],
       ["Visa เกิน", fmtCheck(item.visaOverdue)],
       ["ส่งเล่มไป ตม.", fmtCheck(item.sentImmigration)],
-      ["ส่งเล่มไป ตม. (เล่ม)", String(item.sentBookCount || 0)],
+      ["เล่มที่บันทึกล่าสุด", getBookTypes(item, "visarun").join(", ") || "-"],
+      ["ประเภทเล่มที่เคยบันทึก", getAggregateBookStats(rows, item, "visarun").allTypesText],
+      ["จำนวนเล่มที่บันทึกสะสม", String(getAggregateBookStats(rows, item, "visarun").total)],
       ["ส่งเล่มคืน", fmtCheck(item.returnBook)],
-      ["ส่งเล่มคืน (เล่ม)", String(item.returnBookCount || 0)],
       ["ผ.60", fmtCheck(item.p60)],
       ["ผ.30", fmtCheck(item.p30)],
     ]);
@@ -454,7 +439,7 @@ const runVisaPage = () => {
     rows.forEach((item) => {
       const w = renderWarning(diffDays(item.endDate), "Visa ใกล้หมดอายุ", "Visa หมดอายุแล้ว");
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${item.sentBookCount || 0}</td><td>${item.returnBookCount || 0}</td><td>${fmtDate(item.endDate)}</td><td class="${w.alert ? "text-alert" : ""}">${w.text}</td>`;
+      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${getAggregateBookStats(rows, item, "visarun").total}</td><td>${getAggregateBookStats(rows, item, "visarun").latestText}</td><td>${fmtDate(item.endDate)}</td><td class="${w.alert ? "text-alert" : ""}">${w.text}</td>`;
       const actionCell = document.createElement("td");
       const actionWrap = document.createElement("div");
       actionWrap.className = "table-actions";
@@ -508,17 +493,17 @@ const runVisaPage = () => {
       visaOverdue: document.getElementById("visaOverdue").checked,
       sentImmigration: document.getElementById("visaSentImm").checked,
       returnBook: document.getElementById("visaReturnBook").checked,
-      sentBookCount: getCounterValue("visaSentBookCount"),
-      returnBookCount: getCounterValue("visaReturnBookCount"),
       p60: document.getElementById("visaP60").checked,
       p30: document.getElementById("visaP30").checked,
     };
 
     try {
       await saveRecord(toVisaRunPayload(values, editFormId));
-      status.textContent = editFormId ? "แก้ไขข้อมูลเรียบร้อย" : "บันทึกข้อมูลเรียบร้อย";
       resetForm();
       await refreshRows();
+      const latest = rows.find((row) => row.workerName === values.workerName && row.employerName === values.employerName);
+      const stats = latest ? getAggregateBookStats(rows, latest, "report90") : { total: 0, latestText: "-" };
+      status.textContent = `${editFormId ? "แก้ไขข้อมูลเรียบร้อย" : "บันทึกข้อมูลเรียบร้อย"} • รวม ${stats.total} เล่ม • ล่าสุด: ${stats.latestText}`;
     } catch {
       status.textContent = "ไม่สามารถบันทึกข้อมูลได้ กรุณาตรวจสอบเซิร์ฟเวอร์";
       status.classList.add("error");

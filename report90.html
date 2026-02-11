@@ -40,8 +40,22 @@
             <div class="form-row"><label for="r90RecordedBy">ผู้บันทึกข้อมูล</label><input id="r90RecordedBy" required type="text" /></div>
           </div>
           <div class="grid-3">
-            <div class="form-row"><label for="r90SentBookCount">ส่งเล่มไป ตม. กี่เล่ม</label><input id="r90SentBookCount" type="number" min="0" step="1" value="0" /></div>
-            <div class="form-row"><label for="r90ReturnBookCount">ส่งเล่มคืนกี่เล่ม</label><input id="r90ReturnBookCount" type="number" min="0" step="1" value="0" /></div>
+            <div class="form-row"><label>ส่งเล่มไป ตม. กี่เล่ม</label>
+              <div class="count-control" data-counter="r90SentBookCount">
+                <button type="button" class="count-btn" data-action="decrease">-</button>
+                <input id="r90SentBookCount" type="hidden" value="0" />
+                <span id="r90SentBookCountDisplay" class="count-value">0</span>
+                <button type="button" class="count-btn" data-action="increase">+</button>
+              </div>
+            </div>
+            <div class="form-row"><label>ส่งเล่มคืนกี่เล่ม</label>
+              <div class="count-control" data-counter="r90ReturnBookCount">
+                <button type="button" class="count-btn" data-action="decrease">-</button>
+                <input id="r90ReturnBookCount" type="hidden" value="0" />
+                <span id="r90ReturnBookCountDisplay" class="count-value">0</span>
+                <button type="button" class="count-btn" data-action="increase">+</button>
+              </div>
+            </div>
             <div class="form-row checklist-col">
               <label class="checkbox-item"><input id="r90Overdue" type="checkbox" /><span>ปรับ 90 เกิน</span></label>
               <label class="checkbox-item"><input id="r90SentImm" type="checkbox" /><span>ส่งเล่มไป ตม.</span></label>

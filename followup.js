@@ -47,6 +47,34 @@ const renderWarning = (days, nearText, overText) => {
   return { text: `ปกติ (${days} วัน)`, alert: false };
 };
 
+
+const setCounterValue = (id, value) => {
+  const input = document.getElementById(id);
+  const display = document.getElementById(`${id}Display`);
+  const safe = Math.max(0, Number.parseInt(String(value || 0), 10) || 0);
+  if (input) input.value = String(safe);
+  if (display) display.textContent = String(safe);
+};
+
+const getCounterValue = (id) => {
+  const input = document.getElementById(id);
+  return Math.max(0, Number.parseInt(String(input?.value || 0), 10) || 0);
+};
+
+const bindCounterControls = () => {
+  document.querySelectorAll('.count-control').forEach((control) => {
+    const id = control.dataset.counter;
+    if (!id) return;
+    setCounterValue(id, getCounterValue(id));
+    control.querySelectorAll('.count-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const delta = btn.dataset.action === 'increase' ? 1 : -1;
+        setCounterValue(id, getCounterValue(id) + delta);
+      });
+    });
+  });
+};
+
 const setupModal = () => {
   const modal = document.getElementById("followupModal");
   const closeButton = document.getElementById("followupModalClose");
@@ -178,6 +206,7 @@ const toVisaRunPayload = (values, formId = "") => ({
 const runReport90Page = () => {
   const type = "report90";
   const form = document.getElementById("report90Form");
+  bindCounterControls();
   const startDate = document.getElementById("r90StartDate");
   const nextDate = document.getElementById("r90NextDate");
   const status = document.getElementById("report90Status");
@@ -190,6 +219,8 @@ const runReport90Page = () => {
 
   const resetForm = () => {
     form.reset();
+    setCounterValue("r90SentBookCount", 0);
+    setCounterValue("r90ReturnBookCount", 0);
     editFormId = "";
   };
 
@@ -222,8 +253,8 @@ const runReport90Page = () => {
     document.getElementById("r90Overdue").checked = !!item.overdueFine;
     document.getElementById("r90SentImm").checked = !!item.sentImmigration;
     document.getElementById("r90ReturnBook").checked = !!item.returnBook;
-    document.getElementById("r90SentBookCount").value = String(item.sentBookCount || 0);
-    document.getElementById("r90ReturnBookCount").value = String(item.returnBookCount || 0);
+    setCounterValue("r90SentBookCount", item.sentBookCount || 0);
+    setCounterValue("r90ReturnBookCount", item.returnBookCount || 0);
     editFormId = String(item.id || "");
     status.textContent = "กำลังแก้ไขข้อมูลรายการเดิม";
   };
@@ -311,8 +342,8 @@ const runReport90Page = () => {
       overdueFine: document.getElementById("r90Overdue").checked,
       sentImmigration: document.getElementById("r90SentImm").checked,
       returnBook: document.getElementById("r90ReturnBook").checked,
-      sentBookCount: Number(document.getElementById("r90SentBookCount").value || 0),
-      returnBookCount: Number(document.getElementById("r90ReturnBookCount").value || 0),
+      sentBookCount: getCounterValue("r90SentBookCount"),
+      returnBookCount: getCounterValue("r90ReturnBookCount"),
     };
 
     try {
@@ -335,6 +366,7 @@ const runReport90Page = () => {
 const runVisaPage = () => {
   const type = "visarun";
   const form = document.getElementById("visaRunForm");
+  bindCounterControls();
   const startDate = document.getElementById("visaStartDate");
   const endDate = document.getElementById("visaEndDate");
   const status = document.getElementById("visaStatus");
@@ -347,6 +379,8 @@ const runVisaPage = () => {
 
   const resetForm = () => {
     form.reset();
+    setCounterValue("visaSentBookCount", 0);
+    setCounterValue("visaReturnBookCount", 0);
     editFormId = "";
   };
 
@@ -381,8 +415,8 @@ const runVisaPage = () => {
     document.getElementById("visaOverdue").checked = !!item.visaOverdue;
     document.getElementById("visaSentImm").checked = !!item.sentImmigration;
     document.getElementById("visaReturnBook").checked = !!item.returnBook;
-    document.getElementById("visaSentBookCount").value = String(item.sentBookCount || 0);
-    document.getElementById("visaReturnBookCount").value = String(item.returnBookCount || 0);
+    setCounterValue("visaSentBookCount", item.sentBookCount || 0);
+    setCounterValue("visaReturnBookCount", item.returnBookCount || 0);
     document.getElementById("visaP60").checked = !!item.p60;
     document.getElementById("visaP30").checked = !!item.p30;
     editFormId = String(item.id || "");
@@ -474,8 +508,8 @@ const runVisaPage = () => {
       visaOverdue: document.getElementById("visaOverdue").checked,
       sentImmigration: document.getElementById("visaSentImm").checked,
       returnBook: document.getElementById("visaReturnBook").checked,
-      sentBookCount: Number(document.getElementById("visaSentBookCount").value || 0),
-      returnBookCount: Number(document.getElementById("visaReturnBookCount").value || 0),
+      sentBookCount: getCounterValue("visaSentBookCount"),
+      returnBookCount: getCounterValue("visaReturnBookCount"),
       p60: document.getElementById("visaP60").checked,
       p30: document.getElementById("visaP30").checked,
     };

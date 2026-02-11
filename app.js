@@ -2916,6 +2916,7 @@ if (workerForm) {
   const requestedEditId = queryEditId || storedEditId;
 
   if (requestedEditId) {
+    currentEditId = requestedEditId;
     const records = loadRecords();
     const record = records.find((item) => String(item.formId || "") === requestedEditId);
     if (record) {

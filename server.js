@@ -122,7 +122,10 @@ const writeJsonFile = async (filePath, payload) => {
 
 const readRecords = async () => {
   const parsed = await readJsonFile(DATA_FILE, { records: [] });
-  return Array.isArray(parsed.records) ? parsed.records : [];
+  const rows = Array.isArray(parsed.records) ? parsed.records : [];
+  return rows
+    .filter((item) => item && typeof item === "object")
+    .map((item) => ({ ...item, formId: String(item.formId || "").trim() }));
 };
 
 const writeRecords = async (records) => {
@@ -153,7 +156,8 @@ app.get("/api/records", async (_req, res) => {
 
 app.get("/api/records/:id", async (req, res) => {
   const records = await readRecords();
-  const record = records.find((item) => item.formId === req.params.id);
+  const requestedId = String(req.params.id || "").trim();
+  const record = records.find((item) => String(item.formId || "") === requestedId);
   if (!record) {
     res.status(404).json({ message: "Record not found" });
     return;
@@ -165,7 +169,7 @@ app.post("/api/records", async (req, res) => {
   const payload = req.body || {};
   const records = await readRecords();
   const incomingId = String(payload.formId || "").trim();
-  const index = incomingId ? records.findIndex((item) => item.formId === incomingId) : -1;
+  const index = incomingId ? records.findIndex((item) => String(item.formId || "") === incomingId) : -1;
   if (index >= 0) {
     records[index] = { ...payload, formId: incomingId };
     await writeRecords(records);
@@ -191,7 +195,8 @@ app.delete("/api/records", async (_req, res) => {
 
 app.delete("/api/records/:id", async (req, res) => {
   const records = await readRecords();
-  const nextRecords = records.filter((item) => item.formId !== req.params.id);
+  const requestedId = String(req.params.id || "").trim();
+  const nextRecords = records.filter((item) => String(item.formId || "") !== requestedId);
   await writeRecords(nextRecords);
   res.json({ status: "ok" });
 });

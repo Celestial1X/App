@@ -140,6 +140,12 @@ const resolveApiBaseUrl = () => {
 
 const API_BASE_URL = resolveApiBaseUrl();
 const RECORDS_API_URL = API_BASE_URL ? `${API_BASE_URL}/api/records` : "/api/records";
+
+const getEditIdFromQuery = () => {
+  const params = new URLSearchParams(window.location.search || "");
+  return String(params.get("editId") || "").trim();
+};
+
 let currentEditId = null;
 let latestRenderedRecords = [];
 const uploadCache = {
@@ -1109,6 +1115,22 @@ const upsertRecordToServer = async (record) => {
   }
 };
 
+const fetchRecordByIdFromServer = async (formId) => {
+  if (!formId || !canUseServerSync()) {
+    return null;
+  }
+  try {
+    const response = await fetch(`${RECORDS_API_URL}/${encodeURIComponent(formId)}`, { method: "GET" });
+    if (!response.ok) {
+      return null;
+    }
+    const record = await response.json();
+    return record && typeof record === "object" ? { ...record, formId: String(record.formId || "") } : null;
+  } catch (_error) {
+    return null;
+  }
+};
+
 const deleteRecordFromServer = async (formId) => {
   if (!canUseServerSync()) {
     return false;
@@ -1722,6 +1744,8 @@ function saveFormDraft() {
 
 function loadFormDraft() {
   if (!workerForm || currentEditId) return;
+  const hasPendingEdit = Boolean(getEditIdFromQuery() || String(localStorage.getItem(EDIT_KEY) || "").trim());
+  if (hasPendingEdit) return;
   const formData = readJsonStorage(FORM_DRAFT_KEY, null);
   if (!formData || typeof formData !== "object") {
     localStorage.removeItem(FORM_DRAFT_KEY);
@@ -1836,11 +1860,11 @@ const renderRecords = () => {
       };
       const targetPage = followupPageMap[record.formType] || "form.html";
       if (targetPage === "form.html") {
-        localStorage.setItem(EDIT_KEY, record.formId);
+        localStorage.setItem(EDIT_KEY, String(record.formId || ""));
       }
       showLoader();
       if (targetPage === "form.html") {
-        window.location.href = targetPage;
+        window.location.href = `${targetPage}?editId=${encodeURIComponent(String(record.formId || ""))}`;
       } else {
         window.location.href = `${targetPage}?editId=${encodeURIComponent(record.formId || "")}`;
       }
@@ -2887,13 +2911,30 @@ if (recordModal) {
   });
 }
 if (workerForm) {
-  const storedEditId = localStorage.getItem(EDIT_KEY);
-  if (storedEditId) {
+  const queryEditId = getEditIdFromQuery();
+  const storedEditId = String(localStorage.getItem(EDIT_KEY) || "").trim();
+  const requestedEditId = queryEditId || storedEditId;
+
+  if (requestedEditId) {
     const records = loadRecords();
-    const record = records.find((item) => item.formId === storedEditId);
+    const record = records.find((item) => String(item.formId || "") === requestedEditId);
     if (record) {
-      currentEditId = record.formId;
+      currentEditId = String(record.formId || "");
       populateForm(record);
+    } else {
+      fetchRecordByIdFromServer(requestedEditId).then((serverRecord) => {
+        if (!serverRecord) return;
+        currentEditId = String(serverRecord.formId || requestedEditId);
+        const all = loadRecords();
+        const index = all.findIndex((item) => String(item.formId || "") === currentEditId);
+        if (index >= 0) {
+          all[index] = serverRecord;
+        } else {
+          all.unshift(serverRecord);
+        }
+        saveRecords(all);
+        populateForm(serverRecord);
+      });
     }
   }
 }

@@ -43,10 +43,6 @@ const personalVisaExpiryDate = document.getElementById("personalVisaExpiryDate")
 const businessType = document.getElementById("businessType");
 const employerName = document.getElementById("employerName");
 const employerEmail = document.getElementById("employerEmail");
-const employerSubdistrict = document.getElementById("employerSubdistrict");
-const employerDistrict = document.getElementById("employerDistrict");
-const employerProvince = document.getElementById("employerProvince");
-const employerPostcode = document.getElementById("employerPostcode");
 const employerAddress = document.getElementById("employerAddress");
 const documentSender = document.getElementById("documentSender");
 const documentSentDate = document.getElementById("documentSentDate");
@@ -199,90 +195,6 @@ const updateAppointmentVisibility = () => {
   if (!isAppointment && appointmentNote) {
     appointmentNote.value = "";
   }
-};
-
-const THAI_LOCATION_OPTIONS = [
-  { subdistrict: "หนองปรือ", district: "บางละมุง", province: "ชลบุรี", postcode: "20150" },
-  { subdistrict: "สุเทพ", district: "เมืองเชียงใหม่", province: "เชียงใหม่", postcode: "50200" },
-  { subdistrict: "ปากน้ำ", district: "เมืองสมุทรปราการ", province: "สมุทรปราการ", postcode: "10270" },
-  { subdistrict: "ตลาด", district: "เมืองมหาสารคาม", province: "มหาสารคาม", postcode: "44000" },
-  { subdistrict: "ในเมือง", district: "เมืองขอนแก่น", province: "ขอนแก่น", postcode: "40000" },
-  { subdistrict: "หาดใหญ่", district: "หาดใหญ่", province: "สงขลา", postcode: "90110" },
-  { subdistrict: "บางรัก", district: "บางรัก", province: "กรุงเทพมหานคร", postcode: "10500" },
-  { subdistrict: "คลองตัน", district: "คลองเตย", province: "กรุงเทพมหานคร", postcode: "10110" },
-];
-
-const setInputDatalist = (input, values, id) => {
-  if (!input || !values?.length) return;
-  let datalist = document.getElementById(id);
-  if (!datalist) {
-    datalist = document.createElement("datalist");
-    datalist.id = id;
-    document.body.appendChild(datalist);
-  }
-  datalist.innerHTML = "";
-  [...new Set(values)]
-    .sort((a, b) => a.localeCompare(b, "th"))
-    .forEach((value) => {
-      const option = document.createElement("option");
-      option.value = value;
-      datalist.appendChild(option);
-    });
-  input.setAttribute("list", id);
-};
-
-const syncEmployerLocationFields = () => {
-  if (!employerSubdistrict || !employerDistrict) return;
-  const subdistrict = employerSubdistrict.value.trim();
-  const district = employerDistrict.value.trim();
-  const normalizedSubdistrict = subdistrict.toLowerCase();
-  const normalizedDistrict = district.toLowerCase();
-  const matched = THAI_LOCATION_OPTIONS.find((item) => {
-    if (normalizedSubdistrict && normalizedDistrict) {
-      return item.subdistrict.toLowerCase() === normalizedSubdistrict && item.district.toLowerCase() === normalizedDistrict;
-    }
-    if (normalizedSubdistrict) {
-      return item.subdistrict.toLowerCase() === normalizedSubdistrict;
-    }
-    if (normalizedDistrict) {
-      return item.district.toLowerCase() === normalizedDistrict;
-    }
-    return false;
-  });
-
-  if (!matched) {
-    if (employerProvince && !district && !subdistrict) {
-      employerProvince.value = "";
-    }
-    if (employerPostcode && !district && !subdistrict) {
-      employerPostcode.value = "";
-    }
-    return;
-  }
-
-  if (employerDistrict && !district) employerDistrict.value = matched.district;
-  if (employerSubdistrict && !subdistrict) employerSubdistrict.value = matched.subdistrict;
-  if (employerProvince) employerProvince.value = matched.province;
-  if (employerPostcode) employerPostcode.value = matched.postcode;
-};
-
-const initEmployerLocationAutoFill = () => {
-  if (!employerSubdistrict || !employerDistrict) return;
-  setInputDatalist(
-    employerSubdistrict,
-    THAI_LOCATION_OPTIONS.map((item) => item.subdistrict),
-    "employerSubdistrictOptions"
-  );
-  setInputDatalist(
-    employerDistrict,
-    THAI_LOCATION_OPTIONS.map((item) => item.district),
-    "employerDistrictOptions"
-  );
-  employerSubdistrict.addEventListener("change", syncEmployerLocationFields);
-  employerDistrict.addEventListener("change", syncEmployerLocationFields);
-  employerSubdistrict.addEventListener("blur", syncEmployerLocationFields);
-  employerDistrict.addEventListener("blur", syncEmployerLocationFields);
-  syncEmployerLocationFields();
 };
 
 const translations = {
@@ -1725,10 +1637,6 @@ const collectFormData = () => {
       businessType: businessType?.value?.trim() || "",
       employerName: employerName?.value?.trim() || "",
       employerEmail: employerEmail?.value?.trim() || "",
-      employerSubdistrict: employerSubdistrict?.value?.trim() || "",
-      employerDistrict: employerDistrict?.value?.trim() || "",
-      employerProvince: employerProvince?.value?.trim() || "",
-      employerPostcode: employerPostcode?.value?.trim() || "",
       employerAddress: employerAddress?.value?.trim() || "",
       documentSender: documentSender?.value?.trim() || "",
       documentSentDate: documentSentDate?.value || "",
@@ -2032,15 +1940,7 @@ const exportRecordsToCsv = () => {
       data.documents?.note || "-",
       data.documents?.documentJobType || "-",
       personalInfo.employerEmail || "-",
-      [
-        personalInfo.employerAddress,
-        personalInfo.employerSubdistrict,
-        personalInfo.employerDistrict,
-        personalInfo.employerProvince,
-        personalInfo.employerPostcode,
-      ]
-        .filter(Boolean)
-        .join(" ") || "-",
+      personalInfo.employerAddress || "-",
       data.paymentStatus || "-",
     ];
     lines.push(cols.map(toCsvValue).join(","));
@@ -2152,15 +2052,8 @@ const openRecordModal = (record) => {
     if (personalInfo.employerEmail) {
       addRow("เมลนายจ้าง", personalInfo.employerEmail);
     }
-    if (personalInfo.employerAddress || personalInfo.employerSubdistrict || personalInfo.employerDistrict || personalInfo.employerProvince || personalInfo.employerPostcode) {
-      const addressParts = [
-        personalInfo.employerAddress,
-        personalInfo.employerSubdistrict,
-        personalInfo.employerDistrict,
-        personalInfo.employerProvince,
-        personalInfo.employerPostcode,
-      ].filter(Boolean);
-      addRow("ที่อยู่นายจ้าง", addressParts.join(" "));
+    if (personalInfo.employerAddress) {
+      addRow("ที่อยู่นายจ้าง", personalInfo.employerAddress);
     }
     if (personalInfo.documentSender) {
       addRow(translations[currentLanguage].documentSenderLabel, personalInfo.documentSender);
@@ -2437,10 +2330,6 @@ const buildRecordSearchText = (record) => {
     personalInfo.businessType,
     personalInfo.employerName,
     personalInfo.employerEmail,
-    personalInfo.employerSubdistrict,
-    personalInfo.employerDistrict,
-    personalInfo.employerProvince,
-    personalInfo.employerPostcode,
     personalInfo.employerAddress,
     personalInfo.documentSender,
     personalInfo.documentSentDate,
@@ -2613,10 +2502,6 @@ if (formTypeInputs?.length) {
   if (businessType) businessType.value = record.data.personalInfo?.businessType || "";
   if (employerName) employerName.value = record.data.personalInfo?.employerName || "";
   if (employerEmail) employerEmail.value = record.data.personalInfo?.employerEmail || "";
-  if (employerSubdistrict) employerSubdistrict.value = record.data.personalInfo?.employerSubdistrict || "";
-  if (employerDistrict) employerDistrict.value = record.data.personalInfo?.employerDistrict || "";
-  if (employerProvince) employerProvince.value = record.data.personalInfo?.employerProvince || "";
-  if (employerPostcode) employerPostcode.value = record.data.personalInfo?.employerPostcode || "";
   if (employerAddress) employerAddress.value = record.data.personalInfo?.employerAddress || "";
   if (documentSender) documentSender.value = record.data.personalInfo?.documentSender || "";
   if (documentSentDate) documentSentDate.value = record.data.personalInfo?.documentSentDate || "";
@@ -2693,7 +2578,6 @@ if (formTypeInputs?.length) {
   if (paymentStatus) paymentStatus.value = record.data.paymentStatus || "pending";
   if (paymentDate) paymentDate.value = record.data.paymentDate || "";
   if (paymentNotes) paymentNotes.value = record.data.paymentNotes || "";
-  syncEmployerLocationFields();
   uploadCache.facePhoto = {
     name: record.data.facePhoto || "",
     dataUrl: record.data.facePhotoData || "",
@@ -2798,7 +2682,6 @@ updateAppointmentVisibility();
 ensureWorkerCards();
 updateUploadPreview();
 updatePaymentSlipPreview();
-initEmployerLocationAutoFill();
 loadFormDraft();
 initTheme();
 renderRecords();

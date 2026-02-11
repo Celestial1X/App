@@ -17,6 +17,12 @@ const resolveApiBaseUrl = () => {
 const API_BASE_URL = resolveApiBaseUrl();
 const RECORDS_API_URL = API_BASE_URL ? `${API_BASE_URL}/api/records` : "/api/records";
 
+const getEditIdFromQuery = () => {
+  const params = new URLSearchParams(window.location.search || "");
+  return String(params.get("editId") || "").trim();
+};
+
+
 const toDateOnly = (value) => (value ? new Date(`${value}T00:00:00`) : null);
 const addDays = (value, days) => {
   const dt = toDateOnly(value);
@@ -176,6 +182,7 @@ const runReport90Page = () => {
   const modal = setupModal();
   let rows = [];
   let editFormId = "";
+  const requestedEditId = getEditIdFromQuery();
 
   const resetForm = () => {
     form.reset();
@@ -266,6 +273,13 @@ const runReport90Page = () => {
     const serverRows = await fetchRecordsByType(type);
     rows = serverRows.map(mapRecord);
     renderRows();
+    if (requestedEditId) {
+      const matched = rows.find((item) => String(item.id) === requestedEditId);
+      if (matched) {
+        fillForEdit(matched);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    }
   };
 
   startDate?.addEventListener("change", () => {
@@ -313,6 +327,7 @@ const runVisaPage = () => {
   const modal = setupModal();
   let rows = [];
   let editFormId = "";
+  const requestedEditId = getEditIdFromQuery();
 
   const resetForm = () => {
     form.reset();
@@ -409,6 +424,13 @@ const runVisaPage = () => {
     const serverRows = await fetchRecordsByType(type);
     rows = serverRows.map(mapRecord);
     renderRows();
+    if (requestedEditId) {
+      const matched = rows.find((item) => String(item.id) === requestedEditId);
+      if (matched) {
+        fillForEdit(matched);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    }
   };
 
   startDate?.addEventListener("change", () => {

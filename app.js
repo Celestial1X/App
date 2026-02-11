@@ -1798,9 +1798,20 @@ const renderRecords = () => {
     editButton.className = "secondary";
     editButton.textContent = translations[currentLanguage].editButton;
     editButton.addEventListener("click", () => {
-      localStorage.setItem(EDIT_KEY, record.formId);
+      const followupPageMap = {
+        report90: "report90.html",
+        visarun: "visarun.html",
+      };
+      const targetPage = followupPageMap[record.formType] || "form.html";
+      if (targetPage === "form.html") {
+        localStorage.setItem(EDIT_KEY, record.formId);
+      }
       showLoader();
-      window.location.href = "form.html";
+      if (targetPage === "form.html") {
+        window.location.href = targetPage;
+      } else {
+        window.location.href = `${targetPage}?editId=${encodeURIComponent(record.formId || "")}`;
+      }
     });
     const verifyButton = document.createElement("button");
     verifyButton.type = "button";

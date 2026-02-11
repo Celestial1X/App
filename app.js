@@ -41,6 +41,7 @@ const passIssueDate = document.getElementById("passIssueDate");
 const passExpiryDate = document.getElementById("passExpiryDate");
 const personalVisaExpiryDate = document.getElementById("personalVisaExpiryDate");
 const businessType = document.getElementById("businessType");
+const businessTypeCustom = document.getElementById("businessTypeCustom");
 const employerName = document.getElementById("employerName");
 const employerEmail = document.getElementById("employerEmail");
 const employerAddress = document.getElementById("employerAddress");
@@ -195,6 +196,23 @@ const updateAppointmentVisibility = () => {
   if (!isAppointment && appointmentNote) {
     appointmentNote.value = "";
   }
+};
+
+const updateBusinessTypeCustomVisibility = () => {
+  if (!businessType || !businessTypeCustom) return;
+  const isCustom = businessType.value === "other";
+  businessTypeCustom.classList.toggle("is-hidden", !isCustom);
+  if (!isCustom) {
+    businessTypeCustom.value = "";
+  }
+};
+
+const getBusinessTypeValue = () => {
+  if (!businessType) return "";
+  if (businessType.value === "other") {
+    return businessTypeCustom?.value?.trim() || "";
+  }
+  return businessType.value?.trim() || "";
 };
 
 const translations = {
@@ -1634,7 +1652,7 @@ const collectFormData = () => {
       passIssueDate: passIssueDate?.value || "",
       passExpiryDate: passExpiryDate?.value || "",
       personalVisaExpiryDate: personalVisaExpiryDate?.value || "",
-      businessType: businessType?.value?.trim() || "",
+      businessType: getBusinessTypeValue(),
       employerName: employerName?.value?.trim() || "",
       employerEmail: employerEmail?.value?.trim() || "",
       employerAddress: employerAddress?.value?.trim() || "",
@@ -2499,7 +2517,14 @@ if (formTypeInputs?.length) {
   if (passIssueDate) passIssueDate.value = record.data.personalInfo?.passIssueDate || "";
   if (passExpiryDate) passExpiryDate.value = record.data.personalInfo?.passExpiryDate || "";
   if (personalVisaExpiryDate) personalVisaExpiryDate.value = record.data.personalInfo?.personalVisaExpiryDate || "";
-  if (businessType) businessType.value = record.data.personalInfo?.businessType || "";
+  if (businessType) {
+    const savedBusinessType = record.data.personalInfo?.businessType || "";
+    const hasOption = Array.from(businessType.options || []).some((option) => option.value === savedBusinessType);
+    businessType.value = hasOption ? savedBusinessType : savedBusinessType ? "other" : "";
+    if (businessTypeCustom) {
+      businessTypeCustom.value = hasOption ? "" : savedBusinessType;
+    }
+  }
   if (employerName) employerName.value = record.data.personalInfo?.employerName || "";
   if (employerEmail) employerEmail.value = record.data.personalInfo?.employerEmail || "";
   if (employerAddress) employerAddress.value = record.data.personalInfo?.employerAddress || "";
@@ -2597,6 +2622,7 @@ if (formTypeInputs?.length) {
   updateSections();
   updateUploadPreview();
   updatePaymentSlipPreview();
+  updateBusinessTypeCustomVisibility();
 };
 
 const updateFormStepVisibility = () => {
@@ -2654,6 +2680,9 @@ if (caseStatusInputs?.length) {
     input.addEventListener("change", updateAppointmentVisibility);
   });
 }
+if (businessType) {
+  businessType.addEventListener("change", updateBusinessTypeCustomVisibility);
+}
 if (passportCheckInput && passportStatus) {
   passportCheckInput.addEventListener("input", () => validatePassport(passportCheckInput.value, passportStatus));
 }
@@ -2679,6 +2708,7 @@ if (paymentSlipInput) {
 updateSections();
 updateFormTypeOtherVisibility();
 updateAppointmentVisibility();
+updateBusinessTypeCustomVisibility();
 ensureWorkerCards();
 updateUploadPreview();
 updatePaymentSlipPreview();

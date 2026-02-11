@@ -17,50 +17,67 @@ Data files (default):
 
 ---
 
-## ทำให้ข้อมูล “บันทึกถาวร” หลัง Deploy (สำคัญ)
+## วิธีที่ชัวร์สุดให้ข้อมูล “ไม่หาย” หลัง Deploy
 
-ถ้าต้องการให้ข้อมูลทั้งเว็บไม่หายหลัง deploy/restart ต้องทำ 2 อย่างนี้:
+ใช้ Docker + Persistent Volume (ใน repo นี้เตรียมไว้แล้ว):
+- `Dockerfile`
+- `docker-compose.yml`
+- volume ชื่อ `app_data` ผูกเข้ากับ `/var/data`
 
-1) **ใช้ backend API ตลอด** (ห้ามพึ่ง localStorage อย่างเดียว)
-2) **ผูก Persistent Disk** แล้วชี้ path เก็บข้อมูลไปที่ disk นั้น
+แอปจะเขียนข้อมูลไปที่:
+- `/var/data/records.json`
+- `/var/data/followups.json`
+- `/var/data/server.log`
 
-โค้ดนี้รองรับแล้ว โดยอ่าน env:
-- `RECORDS_DATA_DIR` (โฟลเดอร์เก็บไฟล์)
-- หรือ `RECORDS_DATA_FILE` / `FOLLOWUPS_DATA_FILE` (ระบุไฟล์ตรงๆ)
-- `RENDER_DISK_PATH` (ใช้บน Render)
+### รันครั้งแรก
+
+```bash
+docker compose up -d --build
+```
+
+### อัปเดตเวอร์ชันใหม่ (deploy ใหม่) โดยข้อมูลยังอยู่
+
+```bash
+docker compose up -d --build
+```
+
+เพราะใช้ volume เดิม `app_data` ข้อมูลจะไม่หายจนกว่าจะลบ volume เอง
+
+### ห้ามทำ ถ้าไม่อยากให้ข้อมูลหาย
+
+```bash
+docker compose down -v
+```
+
+`-v` จะลบ volume และลบข้อมูลถาวรทั้งหมด
 
 ---
 
-## ตัวอย่างการตั้งค่า Render (แนะนำ)
+## ตรวจสอบว่าเขียนลง disk ถาวรจริง
 
-### 1) Add Persistent Disk
-- สร้าง disk และ mount เช่น `/var/data`
+```bash
+docker compose logs -f app
+```
 
-### 2) ตั้ง Environment Variables
-- `RECORDS_DATA_DIR=/var/data`
-- (ถ้าต้องการ) `FOLLOWUPS_DATA_FILE=/var/data/followups.json`
-- (ถ้าต้องการ) `RECORDS_DATA_FILE=/var/data/records.json`
-
-### 3) Deploy ใหม่
-หลัง deploy ให้เช็ก log startup ว่าขึ้น path ใน disk จริง เช่น:
+ต้องเห็น startup log ชี้ไปที่ `/var/data/...` เช่น:
 - `Records storage file: /var/data/records.json`
 - `Followups storage file: /var/data/followups.json`
 
-ถ้ายังขึ้น path ในโฟลเดอร์ source/code แปลว่ายังไม่ได้เก็บลง persistent disk
+---
+
+## backup ข้อมูล (แนะนำ)
+
+```bash
+docker run --rm -v app_data:/data -v "$PWD":/backup alpine tar czf /backup/app_data_backup.tgz -C /data .
+```
 
 ---
 
-## พฤติกรรมที่แก้แล้ว
+## ถ้า deploy บน Cloud (Render/Railway/Fly)
 
-- หน้า `records.html` และฟอร์มต่างๆ จะบันทึกผ่านเซิร์ฟเวอร์
-- ถ้าเซิร์ฟเวอร์บันทึกไม่สำเร็จ จะขึ้น error และ **ไม่แสดงผลบันทึกหลอกในเครื่อง**
-- ข้อมูลจะคงอยู่จนกว่าจะลบ (DELETE) เอง
+หลักการเดียวกัน:
+1) ต้องมี Persistent Disk/Volume
+2) ตั้ง env ให้ path ชี้ไป mount path นั้น (`RECORDS_DATA_DIR` หรือไฟล์เฉพาะ)
+3) เช็ก log หลัง deploy ว่าขึ้น path ใน disk ถาวร
 
----
-
-## Emergency checklist (ด่วน)
-
-- [ ] มี Persistent Disk
-- [ ] ตั้ง `RECORDS_DATA_DIR` ชี้เข้า Disk
-- [ ] Log startup ชี้ไป path ใน Disk
-- [ ] ทดสอบบันทึก 1 รายการ แล้ว deploy ใหม่ -> รายการต้องยังอยู่
+ถ้าขาดข้อใดข้อหนึ่ง ข้อมูลมีโอกาสหายหลัง deploy/restart

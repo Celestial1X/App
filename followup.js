@@ -160,6 +160,8 @@ const toReport90Payload = (values, formId = "") => ({
     followup: {
       startDate: values.startDate,
       nextDate: values.nextDate,
+      documentReceivedDate: values.documentReceivedDate,
+      documentReturnDate: values.documentReturnDate,
       overdueFine: values.overdueFine,
       sentImmigration: values.sentImmigration,
       returnBook: values.returnBook,
@@ -191,6 +193,8 @@ const toVisaRunPayload = (values, formId = "") => ({
     followup: {
       startDate: values.startDate,
       endDate: values.endDate,
+      documentReceivedDate: values.documentReceivedDate,
+      documentReturnDate: values.documentReturnDate,
       visaOverdue: values.visaOverdue,
       sentImmigration: values.sentImmigration,
       returnBook: values.returnBook,
@@ -229,6 +233,8 @@ const runReport90Page = () => {
       recordedBy: record?.data?.recordedBy || "",
       startDate: followup.startDate || "",
       nextDate: followup.nextDate || "",
+      documentReceivedDate: followup.documentReceivedDate || "",
+      documentReturnDate: followup.documentReturnDate || "",
       overdueFine: !!followup.overdueFine,
       sentImmigration: !!followup.sentImmigration,
       returnBook: !!followup.returnBook,
@@ -242,6 +248,8 @@ const runReport90Page = () => {
     document.getElementById("r90RecordedBy").value = item.recordedBy || "";
     startDate.value = item.startDate || "";
     nextDate.value = item.nextDate || "";
+    document.getElementById("r90DocReceiveDate").value = item.documentReceivedDate || "";
+    document.getElementById("r90DocReturnDate").value = item.documentReturnDate || "";
     document.getElementById("r90Overdue").checked = !!item.overdueFine;
     document.getElementById("r90SentImm").checked = !!item.sentImmigration;
     document.getElementById("r90ReturnBook").checked = !!item.returnBook;
@@ -257,6 +265,8 @@ const runReport90Page = () => {
       ["ผู้บันทึกข้อมูล", item.recordedBy || "-"],
       ["วันที่เริ่มรายงานตัว", fmtDate(item.startDate)],
       ["90 วันถัดไป", fmtDate(item.nextDate)],
+      ["วันรับเอกสาร", fmtDate(item.documentReceivedDate)],
+      ["วันคืนเอกสาร", fmtDate(item.documentReturnDate)],
       ["ปรับ 90 เกิน", fmtCheck(item.overdueFine)],
       ["ส่งเล่มไป ตม.", fmtCheck(item.sentImmigration)],
       ["เล่มที่บันทึกล่าสุด", getBookTypes(item, "report90").join(", ") || "-"],
@@ -330,6 +340,8 @@ const runReport90Page = () => {
       recordedBy: document.getElementById("r90RecordedBy").value.trim(),
       startDate: startDate.value,
       nextDate: nextDate.value,
+      documentReceivedDate: document.getElementById("r90DocReceiveDate").value,
+      documentReturnDate: document.getElementById("r90DocReturnDate").value,
       overdueFine: document.getElementById("r90Overdue").checked,
       sentImmigration: document.getElementById("r90SentImm").checked,
       returnBook: document.getElementById("r90ReturnBook").checked,
@@ -383,6 +395,8 @@ const runVisaPage = () => {
       recordedBy: record?.data?.recordedBy || "",
       startDate: followup.startDate || "",
       endDate: followup.endDate || "",
+      documentReceivedDate: followup.documentReceivedDate || "",
+      documentReturnDate: followup.documentReturnDate || "",
       visaOverdue: !!followup.visaOverdue,
       sentImmigration: !!followup.sentImmigration,
       returnBook: !!followup.returnBook,
@@ -398,6 +412,8 @@ const runVisaPage = () => {
     document.getElementById("visaRecordedBy").value = item.recordedBy || "";
     startDate.value = item.startDate || "";
     endDate.value = item.endDate || "";
+    document.getElementById("visaDocReceiveDate").value = item.documentReceivedDate || "";
+    document.getElementById("visaDocReturnDate").value = item.documentReturnDate || "";
     document.getElementById("visaOverdue").checked = !!item.visaOverdue;
     document.getElementById("visaSentImm").checked = !!item.sentImmigration;
     document.getElementById("visaReturnBook").checked = !!item.returnBook;
@@ -415,6 +431,8 @@ const runVisaPage = () => {
       ["ผู้บันทึกข้อมูล", item.recordedBy || "-"],
       ["วันเริ่ม Visa", fmtDate(item.startDate)],
       ["วันหมด Visa", fmtDate(item.endDate)],
+      ["วันรับเอกสาร", fmtDate(item.documentReceivedDate)],
+      ["วันคืนเอกสาร", fmtDate(item.documentReturnDate)],
       ["Visa เกิน", fmtCheck(item.visaOverdue)],
       ["ส่งเล่มไป ตม.", fmtCheck(item.sentImmigration)],
       ["เล่มที่บันทึกล่าสุด", getBookTypes(item, "visarun").join(", ") || "-"],
@@ -490,6 +508,8 @@ const runVisaPage = () => {
       recordedBy: document.getElementById("visaRecordedBy").value.trim(),
       startDate: startDate.value,
       endDate: endDate.value,
+      documentReceivedDate: document.getElementById("visaDocReceiveDate").value,
+      documentReturnDate: document.getElementById("visaDocReturnDate").value,
       visaOverdue: document.getElementById("visaOverdue").checked,
       sentImmigration: document.getElementById("visaSentImm").checked,
       returnBook: document.getElementById("visaReturnBook").checked,

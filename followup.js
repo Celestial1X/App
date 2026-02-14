@@ -148,7 +148,7 @@ const toReport90Payload = (values, formId = "") => ({
     company: "",
     personalInfo: {
       fullName: values.workerName,
-      nationality: values.nationality,
+      gender: values.gender,
       employerName: values.employerName,
     },
     caseStatus: {
@@ -179,7 +179,7 @@ const toVisaRunPayload = (values, formId = "") => ({
     company: "",
     personalInfo: {
       fullName: values.workerName,
-      nationality: values.nationality,
+      gender: values.gender,
       employerName: values.employerName,
     },
     caseStatus: {
@@ -224,7 +224,7 @@ const runReport90Page = () => {
     return {
       id: record.formId,
       workerName: info.fullName || "",
-      nationality: info.nationality || "",
+      gender: info.gender || info.nationality || "",
       employerName: info.employerName || "",
       recordedBy: record?.data?.recordedBy || "",
       startDate: followup.startDate || "",
@@ -237,7 +237,7 @@ const runReport90Page = () => {
 
   const fillForEdit = (item) => {
     document.getElementById("r90WorkerName").value = item.workerName || "";
-    document.getElementById("r90Nationality").value = item.nationality || "";
+    document.getElementById("r90Gender").value = item.gender || "";
     document.getElementById("r90Employer").value = item.employerName || "";
     document.getElementById("r90RecordedBy").value = item.recordedBy || "";
     startDate.value = item.startDate || "";
@@ -252,7 +252,7 @@ const runReport90Page = () => {
   const showDetail = (item) => {
     modal.open("ตรวจสอบข้อมูล รายงานตัว 90 วัน", [
       ["ชื่อต่างด้าว", item.workerName || "-"],
-      ["สัญชาติ", item.nationality || "-"],
+      ["เพศ", item.gender || "-"],
       ["ชื่อนายจ้าง", item.employerName || "-"],
       ["ผู้บันทึกข้อมูล", item.recordedBy || "-"],
       ["วันที่เริ่มรายงานตัว", fmtDate(item.startDate)],
@@ -325,7 +325,7 @@ const runReport90Page = () => {
     event.preventDefault();
     const values = {
       workerName: document.getElementById("r90WorkerName").value.trim(),
-      nationality: document.getElementById("r90Nationality").value,
+      gender: document.getElementById("r90Gender").value,
       employerName: document.getElementById("r90Employer").value.trim(),
       recordedBy: document.getElementById("r90RecordedBy").value.trim(),
       startDate: startDate.value,
@@ -378,7 +378,7 @@ const runVisaPage = () => {
     return {
       id: record.formId,
       workerName: info.fullName || "",
-      nationality: info.nationality || "",
+      gender: info.gender || info.nationality || "",
       employerName: info.employerName || "",
       recordedBy: record?.data?.recordedBy || "",
       startDate: followup.startDate || "",
@@ -393,7 +393,7 @@ const runVisaPage = () => {
 
   const fillForEdit = (item) => {
     document.getElementById("visaWorkerName").value = item.workerName || "";
-    document.getElementById("visaNationality").value = item.nationality || "";
+    document.getElementById("visaGender").value = item.gender || "";
     document.getElementById("visaEmployer").value = item.employerName || "";
     document.getElementById("visaRecordedBy").value = item.recordedBy || "";
     startDate.value = item.startDate || "";
@@ -410,7 +410,7 @@ const runVisaPage = () => {
   const showDetail = (item) => {
     modal.open("ตรวจสอบข้อมูล Visa run", [
       ["ชื่อต่างด้าว", item.workerName || "-"],
-      ["สัญชาติ", item.nationality || "-"],
+      ["เพศ", item.gender || "-"],
       ["ชื่อนายจ้าง", item.employerName || "-"],
       ["ผู้บันทึกข้อมูล", item.recordedBy || "-"],
       ["วันเริ่ม Visa", fmtDate(item.startDate)],
@@ -485,7 +485,7 @@ const runVisaPage = () => {
     event.preventDefault();
     const values = {
       workerName: document.getElementById("visaWorkerName").value.trim(),
-      nationality: document.getElementById("visaNationality").value,
+      gender: document.getElementById("visaGender").value,
       employerName: document.getElementById("visaEmployer").value.trim(),
       recordedBy: document.getElementById("visaRecordedBy").value.trim(),
       startDate: startDate.value,
@@ -502,7 +502,7 @@ const runVisaPage = () => {
       resetForm();
       await refreshRows();
       const latest = rows.find((row) => row.workerName === values.workerName && row.employerName === values.employerName);
-      const stats = latest ? getAggregateBookStats(rows, latest, "report90") : { total: 0, latestText: "-" };
+      const stats = latest ? getAggregateBookStats(rows, latest, "visarun") : { total: 0, latestText: "-" };
       status.textContent = `${editFormId ? "แก้ไขข้อมูลเรียบร้อย" : "บันทึกข้อมูลเรียบร้อย"} • รวม ${stats.total} เล่ม • ล่าสุด: ${stats.latestText}`;
     } catch {
       status.textContent = "ไม่สามารถบันทึกข้อมูลได้ กรุณาตรวจสอบเซิร์ฟเวอร์";

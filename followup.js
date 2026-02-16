@@ -118,12 +118,37 @@ const setupModal = () => {
   return { open };
 };
 
+const readLocalRecords = () => {
+  try {
+    const parsed = JSON.parse(localStorage.getItem("workerRecords") || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (_error) {
+    return [];
+  }
+};
+
+const writeLocalRecords = (rows) => {
+  localStorage.setItem("workerRecords", JSON.stringify(Array.isArray(rows) ? rows : []));
+};
+
+const nextLocalId = (rows) => {
+  const maxId = (rows || []).reduce((max, item) => {
+    const value = Number.parseInt(String(item?.formId || ""), 10);
+    return Number.isNaN(value) ? max : Math.max(max, value);
+  }, 0);
+  return String(maxId + 1);
+};
+
 const fetchRecordsByType = async (type) => {
-  const response = await fetch(RECORDS_API_URL);
-  if (!response.ok) throw new Error("Cannot load records");
-  const rows = await response.json();
-  if (!Array.isArray(rows)) return [];
-  return rows.filter((record) => record.formType === type);
+  try {
+    const response = await fetch(RECORDS_API_URL);
+    if (!response.ok) throw new Error("Cannot load records");
+    const rows = await response.json();
+    if (!Array.isArray(rows)) return [];
+    return rows.filter((record) => record.formType === type);
+  } catch (_error) {
+    return readLocalRecords().filter((record) => record?.formType === type);
+  }
 };
 
 const saveRecord = async (payload) => {
@@ -145,8 +170,36 @@ const saveRecord = async (payload) => {
     response = await send(RECORDS_API_URL, "POST");
   }
 
-  if (!response.ok) throw new Error("Cannot save record");
-  return response.json();
+  if (!response.ok) {
+    const localRows = readLocalRecords();
+    const fallbackId = incomingId || nextLocalId(localRows);
+    const normalizedPayload = {
+      ...payload,
+      formId: fallbackId,
+      updatedAt: new Date().toISOString(),
+    };
+    const index = localRows.findIndex((item) => String(item?.formId || "") === fallbackId);
+    if (index >= 0) {
+      localRows[index] = normalizedPayload;
+    } else {
+      localRows.unshift(normalizedPayload);
+    }
+    writeLocalRecords(localRows);
+    return normalizedPayload;
+  }
+  const saved = await response.json();
+  const localRows = readLocalRecords();
+  const savedId = String(saved?.formId || incomingId || "").trim();
+  if (savedId) {
+    const index = localRows.findIndex((item) => String(item?.formId || "") === savedId);
+    if (index >= 0) {
+      localRows[index] = saved;
+    } else {
+      localRows.unshift(saved);
+    }
+    writeLocalRecords(localRows);
+  }
+  return saved;
 };
 
 const toReport90Payload = (values, formId = "") => ({

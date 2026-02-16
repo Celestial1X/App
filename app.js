@@ -1069,6 +1069,14 @@ const loadRecords = () => {
   return withSequentialIds;
 };
 
+const nextLocalFormId = (records) => {
+  const maxId = (records || []).reduce((max, item) => {
+    const value = Number.parseInt(String(item?.formId || ""), 10);
+    return Number.isNaN(value) ? max : Math.max(max, value);
+  }, 0);
+  return String(maxId + 1);
+};
+
 const saveRecords = (records) => {
   localStorage.setItem("workerRecords", JSON.stringify(records));
 };
@@ -2502,8 +2510,30 @@ const saveRecord = async (status = "draft") => {
 
   const savedServerRecord = await upsertRecordToServer(recordPayload);
   if (!savedServerRecord) {
+    const fallbackId = formId || nextLocalFormId(records);
+    const fallbackRecord = {
+      ...recordPayload,
+      formId: fallbackId,
+      updatedAt: new Date().toISOString(),
+    };
+    const existingIndex = records.findIndex((record) => String(record.formId || "") === String(fallbackId));
+    if (existingIndex >= 0) {
+      records.splice(existingIndex, 1, fallbackRecord);
+    } else {
+      records.unshift(fallbackRecord);
+    }
+    saveRecords(records);
+    localStorage.removeItem(FORM_DRAFT_KEY);
+    currentEditId = fallbackId;
+    localStorage.removeItem(EDIT_KEY);
+    renderRecords();
+    renderLatestRecordCard();
     hideLoader();
-    setStatus(formSaveStatus, "ไม่สามารถบันทึกข้อมูลลงเซิร์ฟเวอร์ได้ กรุณาตรวจสอบระบบก่อน", "error");
+    setStatus(formSaveStatus, `บันทึกแบบออฟไลน์สำเร็จ: ${fallbackId} (เซิร์ฟเวอร์ไม่พร้อมใช้งาน)`, "warn");
+    if (workerForm) {
+      localStorage.setItem(RECORD_SEARCH_KEY, fallbackId);
+      window.location.href = "records.html";
+    }
     return;
   }
 

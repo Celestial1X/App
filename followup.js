@@ -128,11 +128,23 @@ const fetchRecordsByType = async (type) => {
 
 const saveRecord = async (payload) => {
   const incomingId = String(payload?.formId || "").trim();
-  const response = await fetch(incomingId ? `${RECORDS_API_URL}/${encodeURIComponent(incomingId)}` : RECORDS_API_URL, {
-    method: incomingId ? "PUT" : "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
+  const send = (url, method) =>
+    fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+  let response = await send(
+    incomingId ? `${RECORDS_API_URL}/${encodeURIComponent(incomingId)}` : RECORDS_API_URL,
+    incomingId ? "PUT" : "POST"
+  );
+
+  if (!response.ok && incomingId && [404, 405, 501].includes(response.status)) {
+    // backward compatibility: some deployments still expose upsert via POST only
+    response = await send(RECORDS_API_URL, "POST");
+  }
+
   if (!response.ok) throw new Error("Cannot save record");
   return response.json();
 };

@@ -1101,14 +1101,24 @@ const upsertRecordToServer = async (record) => {
   }
   const incomingId = String(record?.formId || "").trim();
   try {
-    const response = await fetch(incomingId ? `${RECORDS_API_URL}/${encodeURIComponent(incomingId)}` : RECORDS_API_URL, {
-      method: incomingId ? "PUT" : "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(record),
-    });
-    if (!response.ok) {
-      return null;
+    const send = async (url, method) =>
+      fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(record),
+      });
+
+    let response = await send(
+      incomingId ? `${RECORDS_API_URL}/${encodeURIComponent(incomingId)}` : RECORDS_API_URL,
+      incomingId ? "PUT" : "POST"
+    );
+
+    if (!response.ok && incomingId && [404, 405, 501].includes(response.status)) {
+      // backward compatibility: some deployments still expose upsert via POST only
+      response = await send(RECORDS_API_URL, "POST");
     }
+
+    if (!response.ok) return null;
     const savedRecord = await response.json();
     return savedRecord && typeof savedRecord === "object" ? savedRecord : null;
   } catch (_error) {

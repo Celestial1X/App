@@ -2469,7 +2469,8 @@ const saveRecord = async (status = "draft") => {
     setStatus(formSaveStatus, formatExpiryLabel(cardExpiryState.state, cardExpiryState.days), "warn");
   }
   const records = loadRecords();
-  const formId = currentEditId || "";
+  const submittingEditId = String(currentEditId || getEditIdFromQuery() || localStorage.getItem(EDIT_KEY) || "").trim();
+  const formId = submittingEditId;
   const workerNames = (formData.workers || []).map((worker) => worker.fullName).filter(Boolean);
   const workerCountLabel = workerNames.length
     ? ` (${workerNames.length} ${translations[currentLanguage].workerCountSuffix})`
@@ -2501,7 +2502,7 @@ const saveRecord = async (status = "draft") => {
     formId: String(savedServerRecord.formId || ""),
   };
 
-  const existingIndex = records.findIndex((record) => record.formId === finalRecord.formId);
+  const existingIndex = records.findIndex((record) => String(record.formId || "") === String(finalRecord.formId || ""));
   if (existingIndex >= 0) {
     records.splice(existingIndex, 1, finalRecord);
   } else {

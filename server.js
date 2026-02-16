@@ -188,6 +188,24 @@ app.post("/api/records", async (req, res) => {
   res.json(nextRecord);
 });
 
+app.put("/api/records/:id", async (req, res) => {
+  const requestedId = String(req.params.id || "").trim();
+  if (!requestedId) {
+    res.status(400).json({ message: "Invalid record id" });
+    return;
+  }
+  const payload = req.body || {};
+  const records = await readRecords();
+  const index = records.findIndex((item) => String(item.formId || "") === requestedId);
+  if (index < 0) {
+    res.status(404).json({ message: "Record not found" });
+    return;
+  }
+  records[index] = { ...payload, formId: requestedId };
+  await writeRecords(records);
+  res.json(records[index]);
+});
+
 app.delete("/api/records", async (_req, res) => {
   await writeRecords([]);
   res.json({ status: "ok" });

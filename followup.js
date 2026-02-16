@@ -127,8 +127,9 @@ const fetchRecordsByType = async (type) => {
 };
 
 const saveRecord = async (payload) => {
-  const response = await fetch(RECORDS_API_URL, {
-    method: "POST",
+  const incomingId = String(payload?.formId || "").trim();
+  const response = await fetch(incomingId ? `${RECORDS_API_URL}/${encodeURIComponent(incomingId)}` : RECORDS_API_URL, {
+    method: incomingId ? "PUT" : "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });

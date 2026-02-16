@@ -2563,6 +2563,12 @@ const saveRecord = async (status = "draft") => {
     formId: String(savedServerRecord.formId || ""),
   };
 
+  if (formId && String(finalRecord.formId || "") !== String(formId)) {
+    // Some legacy POST-upsert deployments may return a new id while user is editing an existing row.
+    // Force local cache to keep the edited record id so records.html always shows updated content on that row.
+    finalRecord.formId = String(formId);
+  }
+
   const existingIndex = records.findIndex((record) => String(record.formId || "") === String(finalRecord.formId || ""));
   if (existingIndex >= 0) {
     records.splice(existingIndex, 1, finalRecord);

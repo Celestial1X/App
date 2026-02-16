@@ -209,6 +209,10 @@ const saveRecord = async (payload) => {
     return normalizedPayload;
   }
   const saved = await response.json();
+  if (incomingId && String(saved?.formId || "").trim() && String(saved.formId).trim() !== incomingId) {
+    // Legacy POST-upsert may create new id even for edit; keep edited row id in local cache.
+    saved.formId = incomingId;
+  }
   const localRows = readLocalRecords();
   const savedId = String(saved?.formId || incomingId || "").trim();
   if (savedId) {

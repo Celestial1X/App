@@ -139,13 +139,34 @@ const nextLocalId = (rows) => {
   return String(maxId + 1);
 };
 
+const toTimestamp = (value) => {
+  const time = Date.parse(String(value || ""));
+  return Number.isNaN(time) ? 0 : time;
+};
+
+const mergeRecordsPreferLatest = (localRows, serverRows) => {
+  const merged = new Map();
+  [...(localRows || []), ...(serverRows || [])].forEach((row) => {
+    const id = String(row?.formId || "").trim();
+    if (!id) return;
+    const existing = merged.get(id);
+    if (!existing || toTimestamp(row.updatedAt) >= toTimestamp(existing.updatedAt)) {
+      merged.set(id, row);
+    }
+  });
+  return Array.from(merged.values()).sort((a, b) => toTimestamp(b.updatedAt) - toTimestamp(a.updatedAt));
+};
+
 const fetchRecordsByType = async (type) => {
   try {
     const response = await fetch(RECORDS_API_URL);
     if (!response.ok) throw new Error("Cannot load records");
     const rows = await response.json();
     if (!Array.isArray(rows)) return [];
-    return rows.filter((record) => record.formType === type);
+    const localRows = readLocalRecords();
+    const merged = mergeRecordsPreferLatest(localRows, rows);
+    writeLocalRecords(merged);
+    return merged.filter((record) => record.formType === type);
   } catch (_error) {
     return readLocalRecords().filter((record) => record?.formType === type);
   }

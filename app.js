@@ -1083,6 +1083,24 @@ const saveRecords = (records) => {
 
 const canUseServerSync = () => Boolean(API_BASE_URL) || window.location.protocol.startsWith("http");
 
+const toTimestamp = (value) => {
+  const time = Date.parse(String(value || ""));
+  return Number.isNaN(time) ? 0 : time;
+};
+
+const mergeRecordsPreferLatest = (localRows, serverRows) => {
+  const merged = new Map();
+  [...(localRows || []), ...(serverRows || [])].forEach((row) => {
+    const id = String(row?.formId || "").trim();
+    if (!id) return;
+    const existing = merged.get(id);
+    if (!existing || toTimestamp(row.updatedAt) >= toTimestamp(existing.updatedAt)) {
+      merged.set(id, row);
+    }
+  });
+  return Array.from(merged.values()).sort((a, b) => toTimestamp(b.updatedAt) - toTimestamp(a.updatedAt));
+};
+
 const syncRecordsFromServer = async () => {
   if (!canUseServerSync()) {
     return;
@@ -1094,7 +1112,9 @@ const syncRecordsFromServer = async () => {
     }
     const records = await response.json();
     if (Array.isArray(records)) {
-      saveRecords(records);
+      const localRows = loadRecords();
+      const merged = mergeRecordsPreferLatest(localRows, records);
+      saveRecords(merged);
       renderRecords();
       renderLatestRecordCard();
     }

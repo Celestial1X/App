@@ -216,6 +216,9 @@ const runReport90Page = () => {
   let rows = [];
   let editFormId = "";
   const requestedEditId = getEditIdFromQuery();
+  if (requestedEditId) {
+    editFormId = requestedEditId;
+  }
 
   const resetForm = () => {
     form.reset();
@@ -348,12 +351,14 @@ const runReport90Page = () => {
     };
 
     try {
-      await saveRecord(toReport90Payload(values, editFormId));
+      const submittingEditId = editFormId || requestedEditId || "";
+      await saveRecord(toReport90Payload(values, submittingEditId));
+      const wasEdit = Boolean(submittingEditId);
       resetForm();
       await refreshRows();
       const latest = rows.find((row) => row.workerName === values.workerName && row.employerName === values.employerName);
-      const stats = latest ? getAggregateBookStats(rows, latest, "visarun") : { total: 0, latestText: "-" };
-      status.textContent = `${editFormId ? "แก้ไขข้อมูลเรียบร้อย" : "บันทึกข้อมูลเรียบร้อย"} • รวม ${stats.total} เล่ม • ล่าสุด: ${stats.latestText}`;
+      const stats = latest ? getAggregateBookStats(rows, latest, "report90") : { total: 0, latestText: "-" };
+      status.textContent = `${wasEdit ? "แก้ไขข้อมูลเรียบร้อย" : "บันทึกข้อมูลเรียบร้อย"} • รวม ${stats.total} เล่ม • ล่าสุด: ${stats.latestText}`;
     } catch {
       status.textContent = "ไม่สามารถบันทึกข้อมูลได้ กรุณาตรวจสอบเซิร์ฟเวอร์";
       status.classList.add("error");
@@ -378,6 +383,9 @@ const runVisaPage = () => {
   let rows = [];
   let editFormId = "";
   const requestedEditId = getEditIdFromQuery();
+  if (requestedEditId) {
+    editFormId = requestedEditId;
+  }
 
   const resetForm = () => {
     form.reset();
@@ -518,12 +526,14 @@ const runVisaPage = () => {
     };
 
     try {
-      await saveRecord(toVisaRunPayload(values, editFormId));
+      const submittingEditId = editFormId || requestedEditId || "";
+      await saveRecord(toVisaRunPayload(values, submittingEditId));
+      const wasEdit = Boolean(submittingEditId);
       resetForm();
       await refreshRows();
       const latest = rows.find((row) => row.workerName === values.workerName && row.employerName === values.employerName);
       const stats = latest ? getAggregateBookStats(rows, latest, "visarun") : { total: 0, latestText: "-" };
-      status.textContent = `${editFormId ? "แก้ไขข้อมูลเรียบร้อย" : "บันทึกข้อมูลเรียบร้อย"} • รวม ${stats.total} เล่ม • ล่าสุด: ${stats.latestText}`;
+      status.textContent = `${wasEdit ? "แก้ไขข้อมูลเรียบร้อย" : "บันทึกข้อมูลเรียบร้อย"} • รวม ${stats.total} เล่ม • ล่าสุด: ${stats.latestText}`;
     } catch {
       status.textContent = "ไม่สามารถบันทึกข้อมูลได้ กรุณาตรวจสอบเซิร์ฟเวอร์";
       status.classList.add("error");

@@ -1094,7 +1094,7 @@ const mergeRecordsPreferLatest = (localRows, serverRows) => {
     const id = String(row?.formId || "").trim();
     if (!id) return;
     const existing = merged.get(id);
-    if (!existing || toTimestamp(row.updatedAt) >= toTimestamp(existing.updatedAt)) {
+    if (!existing || toTimestamp(row.updatedAt) > toTimestamp(existing.updatedAt)) {
       merged.set(id, row);
     }
   });

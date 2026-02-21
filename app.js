@@ -119,6 +119,8 @@ const EDIT_KEY = "editRecordId";
 const RECORD_SEARCH_KEY = "recordSearchQuery";
 const FORM_DRAFT_KEY = "workerFormDraft";
 const API_BASE_KEY = "recordsApiBaseUrl";
+const DIRTY_RECORD_IDS_KEY = "dirtyRecordIds";
+const DIRTY_RECORD_TTL_MS = 10 * 60 * 1000;
 
 const normalizeApiBaseUrl = (value) => String(value || "").trim().replace(/\/+$/, "");
 
@@ -1077,6 +1079,50 @@ const nextLocalFormId = (records) => {
   return String(maxId + 1);
 };
 
+const readDirtyRecordMap = () => {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(DIRTY_RECORD_IDS_KEY) || "{}");
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch (_error) {
+    return {};
+  }
+};
+
+const writeDirtyRecordMap = (map) => {
+  localStorage.setItem(DIRTY_RECORD_IDS_KEY, JSON.stringify(map || {}));
+};
+
+const markRecordDirty = (formId) => {
+  const id = String(formId || "").trim();
+  if (!id) return;
+  const map = readDirtyRecordMap();
+  map[id] = Date.now();
+  writeDirtyRecordMap(map);
+};
+
+const isRecordDirty = (formId) => {
+  const id = String(formId || "").trim();
+  if (!id) return false;
+  const map = readDirtyRecordMap();
+  const markedAt = Number(map[id] || 0);
+  const isFresh = markedAt > 0 && Date.now() - markedAt < DIRTY_RECORD_TTL_MS;
+  if (!isFresh && map[id]) {
+    delete map[id];
+    writeDirtyRecordMap(map);
+  }
+  return isFresh;
+};
+
+const clearRecordDirty = (formId) => {
+  const id = String(formId || "").trim();
+  if (!id) return;
+  const map = readDirtyRecordMap();
+  if (id in map) {
+    delete map[id];
+    writeDirtyRecordMap(map);
+  }
+};
+
 const updateInputDatalist = (input, datalistId, values) => {
   if (!input) return;
   let datalist = document.getElementById(datalistId);
@@ -1120,16 +1166,36 @@ const toTimestamp = (value) => {
 
 const mergeRecordsPreferLatest = (localRows, serverRows) => {
   const merged = new Map();
-  [...(localRows || []), ...(serverRows || [])].forEach((row) => {
+
+  (localRows || []).forEach((row) => {
     const id = String(row?.formId || "").trim();
     if (!id) return;
+    merged.set(id, row);
+  });
+
+  (serverRows || []).forEach((row) => {
+    const id = String(row?.formId || "").trim();
+    if (!id) return;
+
     const existing = merged.get(id);
-    if (!existing || toTimestamp(row.updatedAt) > toTimestamp(existing.updatedAt)) {
+    const existingTs = toTimestamp(existing?.updatedAt);
+    const incomingTs = toTimestamp(row?.updatedAt);
+
+    if (existing && isRecordDirty(id)) {
+      if (incomingTs <= existingTs) {
+        return;
+      }
+      clearRecordDirty(id);
+    }
+
+    if (!existing || incomingTs > existingTs) {
       merged.set(id, row);
     }
   });
+
   return Array.from(merged.values()).sort((a, b) => toTimestamp(b.updatedAt) - toTimestamp(a.updatedAt));
 };
+
 
 const syncRecordsFromServer = async () => {
   if (!canUseServerSync()) {
@@ -2581,6 +2647,7 @@ const saveRecord = async (status = "draft") => {
       records.unshift(fallbackRecord);
     }
     saveRecords(records);
+    markRecordDirty(fallbackId);
     refreshNameSuggestions();
     localStorage.removeItem(FORM_DRAFT_KEY);
     currentEditId = fallbackId;
@@ -2616,6 +2683,7 @@ const saveRecord = async (status = "draft") => {
   }
 
   saveRecords(records);
+  markRecordDirty(finalRecord.formId);
   refreshNameSuggestions();
   localStorage.removeItem(FORM_DRAFT_KEY);
   setStatus(formSaveStatus, `${translations[currentLanguage].saveDraftSuccess}: ${finalRecord.formId}`, "ok");

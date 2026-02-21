@@ -1715,6 +1715,10 @@ const collectFormData = () => {
     .filter((item) => item.checked)
     .map((item) => item.value);
   const workers = getWorkerCards().map(extractWorkerData).filter(hasWorkerValue);
+  const clearedPrimaryWorkerName = (workerFullName?.value || "").trim() === "";
+  if (clearedPrimaryWorkerName && workers.length) {
+    workers[0] = { ...workers[0], fullName: "" };
+  }
   const formData = {
     formType: getSelectedFormType(),
     formTypeOtherDetail: formTypeOtherDetail?.value?.trim() || "",

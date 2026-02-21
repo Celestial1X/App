@@ -1164,6 +1164,15 @@ const toTimestamp = (value) => {
   return Number.isNaN(time) ? 0 : time;
 };
 
+const resolveWorkerNameForDisplay = (record) => {
+  const personalInfo = record?.data?.personalInfo || {};
+  if (personalInfo.fullName === "") {
+    return "-";
+  }
+  const workers = normalizeWorkers(record?.data);
+  return personalInfo.fullName || workers[0]?.fullName || "-";
+};
+
 const mergeRecordsPreferLatest = (localRows, serverRows) => {
   const merged = new Map();
 
@@ -1970,7 +1979,7 @@ const renderRecords = () => {
     const row = document.createElement("tr");
     const personalInfo = record.data.personalInfo || {};
     const workers = normalizeWorkers(record.data);
-    const workerName = personalInfo.fullName || workers[0]?.fullName || "-";
+    const workerName = resolveWorkerNameForDisplay(record);
     const employerLabel = personalInfo.employerName || record.data.company || record.data.employerId || "-";
     const formIdCell = document.createElement("td");
     formIdCell.textContent = record.formId;
@@ -2093,7 +2102,7 @@ const exportRecordsToCsv = () => {
     const data = record.data || {};
     const personalInfo = data.personalInfo || {};
     const workers = normalizeWorkers(data);
-    const workerName = personalInfo.fullName || workers[0]?.fullName || "-";
+    const workerName = resolveWorkerNameForDisplay(record);
     const employerLabel = personalInfo.employerName || data.company || data.employerId || "-";
     const followup = data.followup || {};
     const cols = [
@@ -2569,7 +2578,7 @@ const openGeneralSearchResultsModal = (records, query) => {
       const workers = normalizeWorkers(record.data);
       const tr = document.createElement("tr");
       const employer = personalInfo.employerName || record.data.company || record.data.employerId || "-";
-      const workerName = personalInfo.fullName || workers[0]?.fullName || "-";
+      const workerName = resolveWorkerNameForDisplay(record);
       tr.innerHTML = `<td>${record.formId || "-"}</td>
         <td>${record.formTypeLabel || "-"}</td>
         <td>${employer}</td>
@@ -2614,14 +2623,16 @@ const saveRecord = async (status = "draft") => {
     currentEditId = submittingEditId;
   }
   const formId = submittingEditId;
+  const primaryNameCleared = formData.personalInfo?.fullName === "";
   const workerNames = (formData.workers || []).map((worker) => worker.fullName).filter(Boolean);
   const workerCountLabel = workerNames.length
     ? ` (${workerNames.length} ${translations[currentLanguage].workerCountSuffix})`
     : "";
+  const displayWorkerName = primaryNameCleared ? "" : formData.personalInfo?.fullName || workerNames[0] || "";
   const displayName =
     formData.personalInfo?.employerName?.trim()
       ? `${formData.personalInfo.employerName}${workerCountLabel}`
-      : formData.personalInfo?.fullName || workerNames[0] || formData.employerId || formId;
+      : displayWorkerName || formData.employerId || formId;
   const recordPayload = {
     ...(formId ? { formId } : {}),
     formType: formData.formType,

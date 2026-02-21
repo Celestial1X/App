@@ -2593,9 +2593,9 @@ const saveRecord = async (status = "draft") => {
   }
 
   const finalRecord = {
-    ...recordPayload,
     ...savedServerRecord,
-    formId: String(savedServerRecord.formId || ""),
+    ...recordPayload,
+    formId: String(savedServerRecord.formId || formId || ""),
   };
 
   if (formId && String(finalRecord.formId || "") !== String(formId)) {

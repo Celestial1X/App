@@ -241,23 +241,29 @@ const saveRecord = async (payload) => {
     return normalizedPayload;
   }
   const saved = await response.json();
-  if (incomingId && String(saved?.formId || "").trim() && String(saved.formId).trim() !== incomingId) {
+  const normalizedSaved = {
+    ...(saved && typeof saved === "object" ? saved : {}),
+    ...payload,
+    formId: String(saved?.formId || incomingId || "").trim(),
+    updatedAt: payload.updatedAt || new Date().toISOString(),
+  };
+  if (incomingId && String(normalizedSaved?.formId || "").trim() && String(normalizedSaved.formId).trim() !== incomingId) {
     // Legacy POST-upsert may create new id even for edit; keep edited row id in local cache.
-    saved.formId = incomingId;
+    normalizedSaved.formId = incomingId;
   }
   const localRows = readLocalRecords();
-  const savedId = String(saved?.formId || incomingId || "").trim();
+  const savedId = String(normalizedSaved?.formId || incomingId || "").trim();
   if (savedId) {
     const index = localRows.findIndex((item) => String(item?.formId || "") === savedId);
     if (index >= 0) {
-      localRows[index] = saved;
+      localRows[index] = normalizedSaved;
     } else {
-      localRows.unshift(saved);
+      localRows.unshift(normalizedSaved);
     }
     writeLocalRecords(localRows);
   }
   refreshNameSuggestions();
-  return saved;
+  return normalizedSaved;
 };
 
 const toReport90Payload = (values, formId = "") => ({

@@ -139,6 +139,35 @@ const nextLocalId = (rows) => {
   return String(maxId + 1);
 };
 
+const updateInputDatalist = (inputId, datalistId, values) => {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  let datalist = document.getElementById(datalistId);
+  if (!datalist) {
+    datalist = document.createElement("datalist");
+    datalist.id = datalistId;
+    document.body.appendChild(datalist);
+  }
+  const unique = [...new Set((values || []).map((v) => String(v || "").trim()).filter(Boolean))].slice(0, 200);
+  datalist.innerHTML = unique.map((value) => `<option value="${value.replace(/"/g, "&quot;")}"></option>`).join("");
+  input.setAttribute("list", datalistId);
+};
+
+const refreshNameSuggestions = () => {
+  const rows = readLocalRecords();
+  const workers = [];
+  const employers = [];
+  rows.forEach((record) => {
+    const info = record?.data?.personalInfo || {};
+    if (info.fullName) workers.push(info.fullName);
+    if (info.employerName) employers.push(info.employerName);
+  });
+  updateInputDatalist("r90WorkerName", "workerNameSuggestions", workers);
+  updateInputDatalist("visaWorkerName", "workerNameSuggestions", workers);
+  updateInputDatalist("r90Employer", "employerNameSuggestions", employers);
+  updateInputDatalist("visaEmployer", "employerNameSuggestions", employers);
+};
+
 const toTimestamp = (value) => {
   const time = Date.parse(String(value || ""));
   return Number.isNaN(time) ? 0 : time;
@@ -166,8 +195,10 @@ const fetchRecordsByType = async (type) => {
     const localRows = readLocalRecords();
     const merged = mergeRecordsPreferLatest(localRows, rows);
     writeLocalRecords(merged);
+    refreshNameSuggestions();
     return merged.filter((record) => record.formType === type);
   } catch (_error) {
+    refreshNameSuggestions();
     return readLocalRecords().filter((record) => record?.formType === type);
   }
 };
@@ -206,6 +237,7 @@ const saveRecord = async (payload) => {
       localRows.unshift(normalizedPayload);
     }
     writeLocalRecords(localRows);
+    refreshNameSuggestions();
     return normalizedPayload;
   }
   const saved = await response.json();
@@ -224,6 +256,7 @@ const saveRecord = async (payload) => {
     }
     writeLocalRecords(localRows);
   }
+  refreshNameSuggestions();
   return saved;
 };
 

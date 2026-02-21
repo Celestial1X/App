@@ -38,7 +38,7 @@
               <div class="grid-3">
                 <div class="form-row">
                   <label for="workerFullName">ชื่อต่างด้าว</label>
-                  <input id="workerFullName" type="text" placeholder="กรอกชื่อต่างด้าว" />
+                  <input id="workerFullName" type="text" list="workerNameSuggestions" placeholder="กรอกชื่อต่างด้าว" />
                 </div>
                 <div class="form-row">
                   <label for="workerGender">เพศ</label>
@@ -125,7 +125,7 @@
                 </div>
                 <div class="form-row">
                   <label for="employerName">ชื่อนายจ้าง</label>
-                  <input id="employerName" type="text" placeholder="กรอกชื่อนายจ้าง" />
+                  <input id="employerName" type="text" list="employerNameSuggestions" placeholder="กรอกชื่อนายจ้าง" />
                   <label for="employerEmail">เมลนายจ้าง</label>
                   <input id="employerEmail" type="email" placeholder="company@email.com" />
                 </div>
@@ -241,6 +241,8 @@
               <button type="button" class="secondary" id="verifyRecord">ตรวจสอบข้อมูล</button>
             </div>
           </div>
+          <datalist id="workerNameSuggestions"></datalist>
+  <datalist id="employerNameSuggestions"></datalist>
         </form>
       </section>
     </main>

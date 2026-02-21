@@ -1077,6 +1077,36 @@ const nextLocalFormId = (records) => {
   return String(maxId + 1);
 };
 
+const updateInputDatalist = (input, datalistId, values) => {
+  if (!input) return;
+  let datalist = document.getElementById(datalistId);
+  if (!datalist) {
+    datalist = document.createElement("datalist");
+    datalist.id = datalistId;
+    document.body.appendChild(datalist);
+  }
+  const unique = [...new Set((values || []).map((v) => String(v || "").trim()).filter(Boolean))].slice(0, 200);
+  datalist.innerHTML = unique.map((value) => `<option value="${value.replace(/"/g, "&quot;")}"></option>`).join("");
+  input.setAttribute("list", datalistId);
+};
+
+const refreshNameSuggestions = () => {
+  const records = loadRecords();
+  const workerNames = [];
+  const employerNames = [];
+  records.forEach((record) => {
+    const info = record?.data?.personalInfo || {};
+    if (info.fullName) workerNames.push(info.fullName);
+    if (info.employerName) employerNames.push(info.employerName);
+    const workers = normalizeWorkers(record?.data || {});
+    workers.forEach((worker) => {
+      if (worker.fullName) workerNames.push(worker.fullName);
+    });
+  });
+  updateInputDatalist(workerFullName, "workerNameSuggestions", workerNames);
+  updateInputDatalist(employerName, "employerNameSuggestions", employerNames);
+};
+
 const saveRecords = (records) => {
   localStorage.setItem("workerRecords", JSON.stringify(records));
 };
@@ -1115,6 +1145,7 @@ const syncRecordsFromServer = async () => {
       const localRows = loadRecords();
       const merged = mergeRecordsPreferLatest(localRows, records);
       saveRecords(merged);
+      refreshNameSuggestions();
       renderRecords();
       renderLatestRecordCard();
     }
@@ -2509,6 +2540,9 @@ const saveRecord = async (status = "draft") => {
   }
   const records = loadRecords();
   const submittingEditId = String(currentEditId || getEditIdFromQuery() || localStorage.getItem(EDIT_KEY) || "").trim();
+  if (submittingEditId) {
+    currentEditId = submittingEditId;
+  }
   const formId = submittingEditId;
   const workerNames = (formData.workers || []).map((worker) => worker.fullName).filter(Boolean);
   const workerCountLabel = workerNames.length
@@ -2543,6 +2577,7 @@ const saveRecord = async (status = "draft") => {
       records.unshift(fallbackRecord);
     }
     saveRecords(records);
+    refreshNameSuggestions();
     localStorage.removeItem(FORM_DRAFT_KEY);
     currentEditId = fallbackId;
     localStorage.removeItem(EDIT_KEY);
@@ -2577,6 +2612,7 @@ const saveRecord = async (status = "draft") => {
   }
 
   saveRecords(records);
+  refreshNameSuggestions();
   localStorage.removeItem(FORM_DRAFT_KEY);
   setStatus(formSaveStatus, `${translations[currentLanguage].saveDraftSuccess}: ${finalRecord.formId}`, "ok");
   currentEditId = finalRecord.formId;
@@ -2804,6 +2840,7 @@ updateBusinessTypeCustomVisibility();
 ensureWorkerCards();
 updateUploadPreview();
 updatePaymentSlipPreview();
+refreshNameSuggestions();
 loadFormDraft();
 initTheme();
 renderRecords();

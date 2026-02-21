@@ -30,9 +30,9 @@
         <h2>Visa run</h2>
         <form id="visaRunForm" class="form-grid">
           <div class="grid-3">
-            <div class="form-row"><label for="visaWorkerName">ชื่อต่างด้าว</label><input id="visaWorkerName" type="text" /></div>
+            <div class="form-row"><label for="visaWorkerName">ชื่อต่างด้าว</label><input id="visaWorkerName" type="text" list="workerNameSuggestions" /></div>
             <div class="form-row"><label for="visaGender">เพศ</label><select id="visaGender"><option value="">เลือก</option><option value="female">female</option><option value="male">male</option><option value="other">other</option></select></div>
-            <div class="form-row"><label for="visaEmployer">ชื่อนายจ้าง</label><input id="visaEmployer" type="text" /></div>
+            <div class="form-row"><label for="visaEmployer">ชื่อนายจ้าง</label><input id="visaEmployer" type="text" list="employerNameSuggestions" /></div>
           </div>
           <div class="grid-3">
             <div class="form-row"><label for="visaStartDate">วันเริ่ม Visa</label><input id="visaStartDate" type="date" /></div>
@@ -68,6 +68,8 @@
           </table>
         </div>
       </section>
+      <datalist id="workerNameSuggestions"></datalist>
+  <datalist id="employerNameSuggestions"></datalist>
     </main>
 
     <div class="modal" id="followupModal" aria-hidden="true">

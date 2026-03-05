@@ -1,6 +1,4 @@
 const DAY_MS = 24 * 60 * 60 * 1000;
-const FOLLOWUP_CYCLE_DAYS = 90;
-const FOLLOWUP_OFFSET_DAYS = FOLLOWUP_CYCLE_DAYS - 1;
 const WARNING_DAYS = 7;
 const API_BASE_KEY = "recordsApiBaseUrl";
 
@@ -92,14 +90,6 @@ const fmtDate = (value) => {
   return `${day}/${month}/${year}`;
 };
 const fmtCheck = (value) => (value ? "✓" : "-");
-
-
-const getCycleDaysInclusive = (startValue, endValue) => {
-  const start = toDateOnly(startValue);
-  const end = toDateOnly(endValue);
-  if (!start || !end) return null;
-  return Math.floor((end.getTime() - start.getTime()) / DAY_MS) + 1;
-};
 
 const renderWarning = (days, nearText, overText) => {
   if (days === null) return { text: "-", alert: false, tone: "deadline-box--none" };
@@ -475,19 +465,16 @@ const runReport90Page = () => {
     list.innerHTML = "";
     const alerts = rows.filter((item) => renderWarning(diffDays(item.nextDate), "ใกล้ถึง 90 วันถัดไป", "เกินกำหนด 90 วัน").alert);
     if (alerts.length) {
-      alert.textContent = `แจ้งเตือน: มี ${alerts.length} รายการใกล้กำหนดติดตาม`;
+      alert.textContent = `แจ้งเตือน: มี ${alerts.length} รายการที่ใกล้ถึง 90 วันถัดไป/เกินกำหนด`;
       alert.classList.remove("is-hidden");
     } else {
       alert.classList.add("is-hidden");
     }
 
     rows.forEach((item) => {
-      const cycleDays = getCycleDaysInclusive(item.startDate, item.nextDate);
-      const cycleOk = cycleDays === FOLLOWUP_CYCLE_DAYS;
-      const cycleText = cycleDays === null ? "-" : (cycleOk ? `รอบ ${FOLLOWUP_CYCLE_DAYS} วัน (ถูกต้อง)` : `รอบ ${cycleDays} วัน (ควรเป็น ${FOLLOWUP_CYCLE_DAYS} วัน)`);
-      const cycleTone = cycleDays === null ? "deadline-box--none" : (cycleOk ? "deadline-box--safe" : "deadline-box--danger");
+      const w = renderWarning(diffDays(item.nextDate), "ใกล้ถึง 90 วันถัดไป", "เกินกำหนด 90 วัน");
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${getAggregateBookStats(rows, item, "report90").total}</td><td>${getAggregateBookStats(rows, item, "report90").latestText}</td><td>${fmtDate(item.nextDate)}</td><td><span class="deadline-box ${cycleTone}">${cycleText}</span></td>`;
+      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${getAggregateBookStats(rows, item, "report90").total}</td><td>${getAggregateBookStats(rows, item, "report90").latestText}</td><td>${fmtDate(item.nextDate)}</td><td><span class="deadline-box ${w.tone}">${w.text}</span></td>`;
       const actionCell = document.createElement("td");
       const actionWrap = document.createElement("div");
       actionWrap.className = "table-actions";
@@ -526,7 +513,7 @@ const runReport90Page = () => {
   };
 
   const updateReport90NextDate = () => {
-    nextDate.value = addDays(startDate.value, FOLLOWUP_OFFSET_DAYS);
+    nextDate.value = addDays(startDate.value, 90);
   };
   startDate?.addEventListener("change", updateReport90NextDate);
   startDate?.addEventListener("input", updateReport90NextDate);
@@ -539,7 +526,7 @@ const runReport90Page = () => {
       employerName: document.getElementById("r90Employer").value.trim(),
       recordedBy: document.getElementById("r90RecordedBy").value.trim(),
       startDate: startDate.value,
-      nextDate: addDays(startDate.value, FOLLOWUP_OFFSET_DAYS),
+      nextDate: addDays(startDate.value, 90),
       documentReceivedDate: document.getElementById("r90DocReceiveDate").value,
       documentReturnDate: document.getElementById("r90DocReturnDate").value,
       overdueFine: document.getElementById("r90Overdue").checked,
@@ -660,12 +647,9 @@ const runVisaPage = () => {
     }
 
     rows.forEach((item) => {
-      const cycleDays = getCycleDaysInclusive(item.startDate, item.endDate);
-      const cycleOk = cycleDays === FOLLOWUP_CYCLE_DAYS;
-      const cycleText = cycleDays === null ? "-" : (cycleOk ? `รอบ ${FOLLOWUP_CYCLE_DAYS} วัน (ถูกต้อง)` : `รอบ ${cycleDays} วัน (ควรเป็น ${FOLLOWUP_CYCLE_DAYS} วัน)`);
-      const cycleTone = cycleDays === null ? "deadline-box--none" : (cycleOk ? "deadline-box--safe" : "deadline-box--danger");
+      const w = renderWarning(diffDays(item.endDate), "Visa ใกล้หมดอายุ", "Visa หมดอายุแล้ว");
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${getAggregateBookStats(rows, item, "visarun").total}</td><td>${getAggregateBookStats(rows, item, "visarun").latestText}</td><td>${fmtDate(item.endDate)}</td><td><span class="deadline-box ${cycleTone}">${cycleText}</span></td>`;
+      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${getAggregateBookStats(rows, item, "visarun").total}</td><td>${getAggregateBookStats(rows, item, "visarun").latestText}</td><td>${fmtDate(item.endDate)}</td><td><span class="deadline-box ${w.tone}">${w.text}</span></td>`;
       const actionCell = document.createElement("td");
       const actionWrap = document.createElement("div");
       actionWrap.className = "table-actions";
@@ -704,7 +688,7 @@ const runVisaPage = () => {
   };
 
   const updateVisaEndDate = () => {
-    endDate.value = addDays(startDate.value, FOLLOWUP_OFFSET_DAYS);
+    endDate.value = addDays(startDate.value, 90);
   };
   startDate?.addEventListener("change", updateVisaEndDate);
   startDate?.addEventListener("input", updateVisaEndDate);
@@ -717,7 +701,7 @@ const runVisaPage = () => {
       employerName: document.getElementById("visaEmployer").value.trim(),
       recordedBy: document.getElementById("visaRecordedBy").value.trim(),
       startDate: startDate.value,
-      endDate: addDays(startDate.value, FOLLOWUP_OFFSET_DAYS),
+      endDate: addDays(startDate.value, 90),
       documentReceivedDate: document.getElementById("visaDocReceiveDate").value,
       documentReturnDate: document.getElementById("visaDocReturnDate").value,
       visaOverdue: document.getElementById("visaOverdue").checked,

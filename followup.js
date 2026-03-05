@@ -77,6 +77,13 @@ const normalizeDateInputValue = (value) => {
   return formatDateInputValue(dt);
 };
 
+const computeFollowupDateFromStart = (startDateValue) => {
+  const normalized = normalizeDateInputValue(startDateValue);
+  if (!normalized) return "";
+  return addDays(normalized, 90);
+};
+
+
 
 const diffDays = (value) => {
   const dt = toDateOnly(value);
@@ -348,7 +355,7 @@ const toReport90Payload = (values, formId = "") => ({
     followupType: "report90",
     followup: {
       startDate: values.startDate,
-      nextDate: addDays(values.startDate, 90),
+      nextDate: computeFollowupDateFromStart(values.startDate),
       documentReceivedDate: values.documentReceivedDate,
       documentReturnDate: values.documentReturnDate,
       overdueFine: values.overdueFine,
@@ -382,7 +389,7 @@ const toVisaRunPayload = (values, formId = "") => ({
     followupType: "visarun",
     followup: {
       startDate: values.startDate,
-      endDate: addDays(values.startDate, 90),
+      endDate: computeFollowupDateFromStart(values.startDate),
       documentReceivedDate: values.documentReceivedDate,
       documentReturnDate: values.documentReturnDate,
       visaOverdue: values.visaOverdue,
@@ -418,8 +425,8 @@ const runReport90Page = () => {
   const mapRecord = (record) => {
     const info = record?.data?.personalInfo || {};
     const followup = record?.data?.followup || {};
-    const startDateValue = followup.startDate || record?.data?.startDate || "";
-    const nextDateValue = startDateValue ? addDays(startDateValue, 90) : (followup.nextDate || "");
+    const startDateValue = followup.startDate || "";
+    const nextDateValue = computeFollowupDateFromStart(startDateValue);
     return {
       id: record.formId,
       workerName: info.fullName || "",
@@ -516,7 +523,7 @@ const runReport90Page = () => {
     for (const item of rows) {
       const source = serverRows.find((row) => String(row?.formId || "") === String(item.id || ""));
       const sourceFollowup = source?.data?.followup || {};
-      if (item.startDate && sourceFollowup.nextDate && String(sourceFollowup.nextDate) !== String(item.nextDate || "")) {
+      if (sourceFollowup.startDate && String(sourceFollowup.nextDate || "") !== String(item.nextDate || "")) {
         saveRecord(toReport90Payload({
           workerName: item.workerName,
           gender: item.gender,
@@ -574,7 +581,7 @@ const runReport90Page = () => {
     try {
       const submittingEditId = editFormId || requestedEditId || "";
       startDate.value = values.startDate;
-      nextDate.value = addDays(values.startDate, 90);
+      nextDate.value = computeFollowupDateFromStart(values.startDate);
       await saveRecord(toReport90Payload(values, submittingEditId));
       const wasEdit = Boolean(submittingEditId);
       resetForm();
@@ -618,8 +625,8 @@ const runVisaPage = () => {
   const mapRecord = (record) => {
     const info = record?.data?.personalInfo || {};
     const followup = record?.data?.followup || {};
-    const startDateValue = followup.startDate || record?.data?.startDate || "";
-    const endDateValue = startDateValue ? addDays(startDateValue, 90) : (followup.endDate || "");
+    const startDateValue = followup.startDate || "";
+    const endDateValue = computeFollowupDateFromStart(startDateValue);
     return {
       id: record.formId,
       workerName: info.fullName || "",
@@ -721,7 +728,7 @@ const runVisaPage = () => {
     for (const item of rows) {
       const source = serverRows.find((row) => String(row?.formId || "") === String(item.id || ""));
       const sourceFollowup = source?.data?.followup || {};
-      if (item.startDate && sourceFollowup.endDate && String(sourceFollowup.endDate) !== String(item.endDate || "")) {
+      if (sourceFollowup.startDate && String(sourceFollowup.endDate || "") !== String(item.endDate || "")) {
         saveRecord(toVisaRunPayload({
           workerName: item.workerName,
           gender: item.gender,
@@ -783,7 +790,7 @@ const runVisaPage = () => {
     try {
       const submittingEditId = editFormId || requestedEditId || "";
       startDate.value = values.startDate;
-      endDate.value = addDays(values.startDate, 90);
+      endDate.value = computeFollowupDateFromStart(values.startDate);
       await saveRecord(toVisaRunPayload(values, submittingEditId));
       const wasEdit = Boolean(submittingEditId);
       resetForm();

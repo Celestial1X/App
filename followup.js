@@ -364,7 +364,7 @@ const toReport90Payload = (values, formId = "") => ({
     followupType: "report90",
     followup: {
       startDate: values.startDate,
-      nextDate: computeFollowupDateFromStart(values.startDate),
+      nextDate: normalizeDateInputValue(values.nextDate) || computeFollowupDateFromStart(values.startDate),
       documentReceivedDate: values.documentReceivedDate,
       documentReturnDate: values.documentReturnDate,
       overdueFine: values.overdueFine,
@@ -398,7 +398,7 @@ const toVisaRunPayload = (values, formId = "") => ({
     followupType: "visarun",
     followup: {
       startDate: values.startDate,
-      endDate: computeFollowupDateFromStart(values.startDate),
+      endDate: normalizeDateInputValue(values.endDate) || computeFollowupDateFromStart(values.startDate),
       documentReceivedDate: values.documentReceivedDate,
       documentReturnDate: values.documentReturnDate,
       visaOverdue: values.visaOverdue,
@@ -531,28 +531,6 @@ const runReport90Page = () => {
   const refreshRows = async () => {
     const serverRows = await fetchRecordsByType(type);
     rows = serverRows.map(mapRecord);
-    // self-heal legacy rows: if startDate exists but nextDate/endDate was stale, resave corrected date
-    for (const item of rows) {
-      const source = serverRows.find((row) => String(row?.formId || "") === String(item.id || ""));
-      const sourceFollowup = source?.data?.followup || {};
-      const sourceStartDate = sourceFollowup.startDate || "";
-      const correctedNextDate = computeFollowupDateFromStart(sourceStartDate);
-      if (sourceStartDate && correctedNextDate && String(sourceFollowup.nextDate || "") !== String(correctedNextDate)) {
-        saveRecord(toReport90Payload({
-          workerName: item.workerName,
-          gender: item.gender,
-          employerName: item.employerName,
-          recordedBy: item.recordedBy,
-          startDate: sourceStartDate,
-          nextDate: correctedNextDate,
-          documentReceivedDate: item.documentReceivedDate,
-          documentReturnDate: item.documentReturnDate,
-          overdueFine: item.overdueFine,
-          sentImmigration: item.sentImmigration,
-          returnBook: item.returnBook,
-        }, String(item.id || ""))).catch(() => {});
-      }
-    }
     renderRows();
     if (requestedEditId) {
       const matched = rows.find((item) => String(item.id) === requestedEditId);
@@ -564,7 +542,9 @@ const runReport90Page = () => {
   };
 
   const updateReport90NextDate = () => {
-    nextDate.value = addDays(startDate.value, 90);
+    if (!nextDate.value) {
+      nextDate.value = addDays(startDate.value, 90);
+    }
   };
   startDate?.addEventListener("change", updateReport90NextDate);
   startDate?.addEventListener("input", updateReport90NextDate);
@@ -577,7 +557,7 @@ const runReport90Page = () => {
       employerName: document.getElementById("r90Employer").value.trim(),
       recordedBy: document.getElementById("r90RecordedBy").value.trim(),
       startDate: startDate.value,
-      nextDate: addDays(startDate.value, 90),
+      nextDate: nextDate.value,
       documentReceivedDate: document.getElementById("r90DocReceiveDate").value,
       documentReturnDate: document.getElementById("r90DocReturnDate").value,
       overdueFine: document.getElementById("r90Overdue").checked,
@@ -595,7 +575,6 @@ const runReport90Page = () => {
     try {
       const submittingEditId = editFormId || requestedEditId || "";
       startDate.value = values.startDate;
-      nextDate.value = computeFollowupDateFromStart(values.startDate);
       await saveRecord(toReport90Payload(values, submittingEditId));
       const wasEdit = Boolean(submittingEditId);
       resetForm();
@@ -742,29 +721,6 @@ const runVisaPage = () => {
   const refreshRows = async () => {
     const serverRows = await fetchRecordsByType(type);
     rows = serverRows.map(mapRecord);
-    for (const item of rows) {
-      const source = serverRows.find((row) => String(row?.formId || "") === String(item.id || ""));
-      const sourceFollowup = source?.data?.followup || {};
-      const sourceStartDate = sourceFollowup.startDate || "";
-      const correctedEndDate = computeFollowupDateFromStart(sourceStartDate);
-      if (sourceStartDate && correctedEndDate && String(sourceFollowup.endDate || "") !== String(correctedEndDate)) {
-        saveRecord(toVisaRunPayload({
-          workerName: item.workerName,
-          gender: item.gender,
-          employerName: item.employerName,
-          recordedBy: item.recordedBy,
-          startDate: sourceStartDate,
-          endDate: correctedEndDate,
-          documentReceivedDate: item.documentReceivedDate,
-          documentReturnDate: item.documentReturnDate,
-          visaOverdue: item.visaOverdue,
-          sentImmigration: item.sentImmigration,
-          returnBook: item.returnBook,
-          p60: item.p60,
-          p30: item.p30,
-        }, String(item.id || ""))).catch(() => {});
-      }
-    }
     renderRows();
     if (requestedEditId) {
       const matched = rows.find((item) => String(item.id) === requestedEditId);
@@ -776,7 +732,9 @@ const runVisaPage = () => {
   };
 
   const updateVisaEndDate = () => {
-    endDate.value = addDays(startDate.value, 90);
+    if (!endDate.value) {
+      endDate.value = addDays(startDate.value, 90);
+    }
   };
   startDate?.addEventListener("change", updateVisaEndDate);
   startDate?.addEventListener("input", updateVisaEndDate);
@@ -789,7 +747,7 @@ const runVisaPage = () => {
       employerName: document.getElementById("visaEmployer").value.trim(),
       recordedBy: document.getElementById("visaRecordedBy").value.trim(),
       startDate: startDate.value,
-      endDate: addDays(startDate.value, 90),
+      endDate: endDate.value,
       documentReceivedDate: document.getElementById("visaDocReceiveDate").value,
       documentReturnDate: document.getElementById("visaDocReturnDate").value,
       visaOverdue: document.getElementById("visaOverdue").checked,
@@ -809,7 +767,6 @@ const runVisaPage = () => {
     try {
       const submittingEditId = editFormId || requestedEditId || "";
       startDate.value = values.startDate;
-      endDate.value = computeFollowupDateFromStart(values.startDate);
       await saveRecord(toVisaRunPayload(values, submittingEditId));
       const wasEdit = Boolean(submittingEditId);
       resetForm();

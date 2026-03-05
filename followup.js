@@ -23,16 +23,32 @@ const getEditIdFromQuery = () => {
 };
 
 
+const normalizeThaiYear = (year) => {
+  if (!Number.isFinite(year)) return year;
+  return year >= 2400 ? year - 543 : year;
+};
+
 const toDateOnly = (value) => {
   if (!value) return null;
   const text = String(value).trim();
-  const parts = text.split("-").map((item) => Number.parseInt(item, 10));
-  if (parts.length === 3 && parts.every((item) => !Number.isNaN(item))) {
-    return new Date(parts[0], parts[1] - 1, parts[2]);
+
+  const dashParts = text.split("-").map((item) => Number.parseInt(item, 10));
+  if (dashParts.length === 3 && dashParts.every((item) => !Number.isNaN(item))) {
+    return new Date(normalizeThaiYear(dashParts[0]), dashParts[1] - 1, dashParts[2]);
   }
+
+  const slashParts = text.split("/").map((item) => Number.parseInt(item, 10));
+  if (slashParts.length === 3 && slashParts.every((item) => !Number.isNaN(item))) {
+    const isYearFirst = slashParts[0] > 31;
+    const yearRaw = isYearFirst ? slashParts[0] : slashParts[2];
+    const month = slashParts[1];
+    const day = isYearFirst ? slashParts[2] : slashParts[0];
+    return new Date(normalizeThaiYear(yearRaw), month - 1, day);
+  }
+
   const date = new Date(text);
   if (Number.isNaN(date.getTime())) return null;
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  return new Date(normalizeThaiYear(date.getFullYear()), date.getMonth(), date.getDate());
 };
 
 const formatDateInputValue = (date) => {
@@ -54,7 +70,9 @@ const diffDays = (value) => {
   if (!dt) return null;
   const today = new Date();
   const now = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  return Math.floor((dt.getTime() - now.getTime()) / DAY_MS);
+  const days = Math.floor((dt.getTime() - now.getTime()) / DAY_MS);
+  if (Math.abs(days) > 36500) return null;
+  return days;
 };
 const fmtDate = (value) => value || "-";
 const fmtCheck = (value) => (value ? "✓" : "-");

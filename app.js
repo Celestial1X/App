@@ -1335,16 +1335,37 @@ const formatDateTime = (value) => {
 };
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+const normalizeThaiYear = (year) => {
+  if (!Number.isFinite(year)) return year;
+  // convert Buddhist Era (e.g. 2569) to Gregorian
+  return year >= 2400 ? year - 543 : year;
+};
+
 const parseDateOnlyLocal = (value) => {
   if (!value) return null;
   const text = String(value).trim();
-  const parts = text.split("-").map((item) => Number.parseInt(item, 10));
-  if (parts.length !== 3 || parts.some((item) => Number.isNaN(item))) {
-    const date = new Date(text);
-    if (Number.isNaN(date.getTime())) return null;
-    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+  const dashParts = text.split("-").map((item) => Number.parseInt(item, 10));
+  if (dashParts.length === 3 && dashParts.every((item) => !Number.isNaN(item))) {
+    const year = normalizeThaiYear(dashParts[0]);
+    return new Date(year, dashParts[1] - 1, dashParts[2]);
   }
-  return new Date(parts[0], parts[1] - 1, parts[2]);
+
+  const slashParts = text.split("/").map((item) => Number.parseInt(item, 10));
+  if (slashParts.length === 3 && slashParts.every((item) => !Number.isNaN(item))) {
+    // support both dd/mm/yyyy and yyyy/mm/dd
+    const isYearFirst = slashParts[0] > 31;
+    const yearRaw = isYearFirst ? slashParts[0] : slashParts[2];
+    const month = isYearFirst ? slashParts[1] : slashParts[1];
+    const day = isYearFirst ? slashParts[2] : slashParts[0];
+    const year = normalizeThaiYear(yearRaw);
+    return new Date(year, month - 1, day);
+  }
+
+  const date = new Date(text);
+  if (Number.isNaN(date.getTime())) return null;
+  const year = normalizeThaiYear(date.getFullYear());
+  return new Date(year, date.getMonth(), date.getDate());
 };
 
 const getDaysUntil = (value) => {
@@ -1352,7 +1373,10 @@ const getDaysUntil = (value) => {
   if (!target) return null;
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  return Math.floor((target.getTime() - today.getTime()) / DAY_MS);
+  const days = Math.floor((target.getTime() - today.getTime()) / DAY_MS);
+  // ignore clearly invalid year-parsing artifacts
+  if (Math.abs(days) > 36500) return null;
+  return days;
 };
 
 const getDeadlineToneClass = (days) => {

@@ -425,7 +425,7 @@ const runReport90Page = () => {
   const mapRecord = (record) => {
     const info = record?.data?.personalInfo || {};
     const followup = record?.data?.followup || {};
-    const startDateValue = followup.startDate || "";
+    const startDateValue = followup.startDate || record?.data?.startDate || "";
     const nextDateValue = computeFollowupDateFromStart(startDateValue);
     return {
       id: record.formId,
@@ -523,14 +523,16 @@ const runReport90Page = () => {
     for (const item of rows) {
       const source = serverRows.find((row) => String(row?.formId || "") === String(item.id || ""));
       const sourceFollowup = source?.data?.followup || {};
-      if (sourceFollowup.startDate && String(sourceFollowup.nextDate || "") !== String(item.nextDate || "")) {
+      const sourceStartDate = sourceFollowup.startDate || source?.data?.startDate || "";
+      const correctedNextDate = computeFollowupDateFromStart(sourceStartDate);
+      if (sourceStartDate && correctedNextDate && String(sourceFollowup.nextDate || "") !== String(correctedNextDate)) {
         saveRecord(toReport90Payload({
           workerName: item.workerName,
           gender: item.gender,
           employerName: item.employerName,
           recordedBy: item.recordedBy,
-          startDate: item.startDate,
-          nextDate: item.nextDate,
+          startDate: sourceStartDate,
+          nextDate: correctedNextDate,
           documentReceivedDate: item.documentReceivedDate,
           documentReturnDate: item.documentReturnDate,
           overdueFine: item.overdueFine,
@@ -625,7 +627,7 @@ const runVisaPage = () => {
   const mapRecord = (record) => {
     const info = record?.data?.personalInfo || {};
     const followup = record?.data?.followup || {};
-    const startDateValue = followup.startDate || "";
+    const startDateValue = followup.startDate || record?.data?.startDate || "";
     const endDateValue = computeFollowupDateFromStart(startDateValue);
     return {
       id: record.formId,
@@ -728,14 +730,16 @@ const runVisaPage = () => {
     for (const item of rows) {
       const source = serverRows.find((row) => String(row?.formId || "") === String(item.id || ""));
       const sourceFollowup = source?.data?.followup || {};
-      if (sourceFollowup.startDate && String(sourceFollowup.endDate || "") !== String(item.endDate || "")) {
+      const sourceStartDate = sourceFollowup.startDate || source?.data?.startDate || "";
+      const correctedEndDate = computeFollowupDateFromStart(sourceStartDate);
+      if (sourceStartDate && correctedEndDate && String(sourceFollowup.endDate || "") !== String(correctedEndDate)) {
         saveRecord(toVisaRunPayload({
           workerName: item.workerName,
           gender: item.gender,
           employerName: item.employerName,
           recordedBy: item.recordedBy,
-          startDate: item.startDate,
-          endDate: item.endDate,
+          startDate: sourceStartDate,
+          endDate: correctedEndDate,
           documentReceivedDate: item.documentReceivedDate,
           documentReturnDate: item.documentReturnDate,
           visaOverdue: item.visaOverdue,

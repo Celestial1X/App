@@ -67,6 +67,9 @@
           <span class="status-text" id="recordsStatus" data-i18n="recordsStatus">ยังไม่มีข้อมูลที่บันทึก</span>
           <div class="table-actions">
             <button type="button" class="secondary" id="exportRecords">ส่งออก Excel (CSV)</button>
+            <button type="button" class="secondary" id="backupAllData">สำรองข้อมูลทั้งระบบ</button>
+            <button type="button" class="secondary" id="restoreAllData">อัปโหลดข้อมูลสำรอง</button>
+            <input id="restoreAllDataInput" type="file" accept="application/json" hidden />
             <button type="button" class="secondary" id="clearRecords" data-i18n="clearButton">
               ลบข้อมูลทั้งหมด
             </button>

@@ -954,3 +954,93 @@ button {
   font-weight: 700;
 }
 
+
+/* UX polish + deadline highlighting */
+body, input, select, textarea, button {
+  font-family: "Sarabun", system-ui, sans-serif;
+}
+
+button,
+.primary,
+.secondary,
+.danger,
+.ghost,
+.tab-btn {
+  border-radius: 12px;
+  border-width: 1px;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+}
+
+button:hover,
+.primary:hover,
+.secondary:hover,
+.danger:hover,
+.ghost:hover,
+.tab-btn:hover {
+  transform: translateY(-1px);
+}
+
+.records-table td,
+.records-table th,
+.result-grid-table td,
+.result-grid-table th {
+  vertical-align: middle;
+}
+
+.deadline-box {
+  display: inline-block;
+  min-width: 180px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+
+.deadline-box--safe {
+  background: #ecfdf3;
+  color: #057a55;
+  border-color: #84e1bc;
+}
+
+.deadline-box--warn {
+  background: #fffaeb;
+  color: #b54708;
+  border-color: #fecd6b;
+}
+
+.deadline-box--danger {
+  background: #fef3f2;
+  color: #b42318;
+  border-color: #fda29b;
+}
+
+.deadline-box--none {
+  background: #f3f4f6;
+  color: #475467;
+  border-color: #d0d5dd;
+}
+
+.summary-grid--followup {
+  margin-top: 16px;
+}
+
+.mini-summary-list {
+  display: grid;
+  gap: 10px;
+}
+
+.mini-summary-item {
+  border-radius: 12px;
+  padding: 10px 12px;
+  border: 1px solid #d0d5dd;
+  background: #fff;
+}
+
+.mini-summary-item p {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.mini-summary-item p + p {
+  margin-top: 2px;
+}

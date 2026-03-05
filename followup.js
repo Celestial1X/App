@@ -23,28 +23,48 @@ const getEditIdFromQuery = () => {
 };
 
 
-const toDateOnly = (value) => (value ? new Date(`${value}T00:00:00`) : null);
+const toDateOnly = (value) => {
+  if (!value) return null;
+  const text = String(value).trim();
+  const parts = text.split("-").map((item) => Number.parseInt(item, 10));
+  if (parts.length === 3 && parts.every((item) => !Number.isNaN(item))) {
+    return new Date(parts[0], parts[1] - 1, parts[2]);
+  }
+  const date = new Date(text);
+  if (Number.isNaN(date.getTime())) return null;
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+};
+
+const formatDateInputValue = (date) => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+};
+
 const addDays = (value, days) => {
   const dt = toDateOnly(value);
   if (!dt) return "";
   dt.setDate(dt.getDate() + days);
-  return dt.toISOString().slice(0, 10);
+  return formatDateInputValue(dt);
 };
+
 const diffDays = (value) => {
   const dt = toDateOnly(value);
   if (!dt) return null;
   const today = new Date();
   const now = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  return Math.ceil((dt - now) / DAY_MS);
+  return Math.floor((dt.getTime() - now.getTime()) / DAY_MS);
 };
 const fmtDate = (value) => value || "-";
 const fmtCheck = (value) => (value ? "✓" : "-");
 
 const renderWarning = (days, nearText, overText) => {
-  if (days === null) return { text: "-", alert: false };
-  if (days < 0) return { text: `${overText} (${Math.abs(days)} วัน)`, alert: true };
-  if (days <= WARNING_DAYS) return { text: `${nearText} (${days} วัน)`, alert: true };
-  return { text: `ปกติ (${days} วัน)`, alert: false };
+  if (days === null) return { text: "-", alert: false, tone: "deadline-box--none" };
+  if (days < 0) return { text: `${overText} (${Math.abs(days)} วัน)`, alert: true, tone: "deadline-box--danger" };
+  if (days < 30) return { text: `ต่ำกว่า 30 วัน (${days} วัน)`, alert: true, tone: "deadline-box--danger" };
+  if (days < 60) return { text: `ต่ำกว่า 60 วัน (${days} วัน)`, alert: true, tone: "deadline-box--warn" };
+  return { text: `มากกว่า 60 วัน (${days} วัน)`, alert: false, tone: "deadline-box--safe" };
 };
 
 
@@ -422,7 +442,7 @@ const runReport90Page = () => {
     rows.forEach((item) => {
       const w = renderWarning(diffDays(item.nextDate), "ใกล้ถึง 90 วันถัดไป", "เกินกำหนด 90 วัน");
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${getAggregateBookStats(rows, item, "report90").total}</td><td>${getAggregateBookStats(rows, item, "report90").latestText}</td><td>${fmtDate(item.nextDate)}</td><td class="${w.alert ? "text-alert" : ""}">${w.text}</td>`;
+      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${getAggregateBookStats(rows, item, "report90").total}</td><td>${getAggregateBookStats(rows, item, "report90").latestText}</td><td>${fmtDate(item.nextDate)}</td><td><span class="deadline-box ${w.tone}">${w.text}</span></td>`;
       const actionCell = document.createElement("td");
       const actionWrap = document.createElement("div");
       actionWrap.className = "table-actions";
@@ -595,7 +615,7 @@ const runVisaPage = () => {
     rows.forEach((item) => {
       const w = renderWarning(diffDays(item.endDate), "Visa ใกล้หมดอายุ", "Visa หมดอายุแล้ว");
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${getAggregateBookStats(rows, item, "visarun").total}</td><td>${getAggregateBookStats(rows, item, "visarun").latestText}</td><td>${fmtDate(item.endDate)}</td><td class="${w.alert ? "text-alert" : ""}">${w.text}</td>`;
+      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${getAggregateBookStats(rows, item, "visarun").total}</td><td>${getAggregateBookStats(rows, item, "visarun").latestText}</td><td>${fmtDate(item.endDate)}</td><td><span class="deadline-box ${w.tone}">${w.text}</span></td>`;
       const actionCell = document.createElement("td");
       const actionWrap = document.createElement("div");
       actionWrap.className = "table-actions";

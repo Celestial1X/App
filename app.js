@@ -90,6 +90,9 @@ const recordFilter = document.getElementById("recordFilter");
 const recordsStatus = document.getElementById("recordsStatus");
 const recordsList = document.getElementById("recordsList");
 const exportRecordsButton = document.getElementById("exportRecords");
+const backupAllDataButton = document.getElementById("backupAllData");
+const restoreAllDataButton = document.getElementById("restoreAllData");
+const restoreAllDataInput = document.getElementById("restoreAllDataInput");
 const summaryTodayCount = document.getElementById("summaryTodayCount");
 const summaryYesterdayCount = document.getElementById("summaryYesterdayCount");
 const summaryMonthCount = document.getElementById("summaryMonthCount");
@@ -101,6 +104,8 @@ const generalSearchButton = document.getElementById("generalSearchButton");
 const generalSearchStatus = document.getElementById("generalSearchStatus");
 const latestRecordTitle = document.getElementById("latestRecordTitle");
 const latestRecordMeta = document.getElementById("latestRecordMeta");
+const indexReport90Summary = document.getElementById("indexReport90Summary");
+const indexVisaSummary = document.getElementById("indexVisaSummary");
 const verifyRecordButton = document.getElementById("verifyRecord");
 const recordModal = document.getElementById("recordModal");
 const recordModalTitle = document.getElementById("recordModalTitle");
@@ -797,12 +802,8 @@ const EXPIRY_WARNING_DAYS = 30;
 
 const getExpiryState = (dateValue) => {
   if (!dateValue) return { state: "none", days: null };
-  const selectedDate = new Date(dateValue);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  selectedDate.setHours(0, 0, 0, 0);
-  const diffMs = selectedDate - today;
-  const days = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  const days = getDaysUntil(dateValue);
+  if (days === null) return { state: "none", days: null };
   if (days < 0) return { state: "expired", days };
   if (days <= EXPIRY_WARNING_DAYS) return { state: "warning", days };
   return { state: "ok", days };
@@ -1332,6 +1333,43 @@ const formatDateTime = (value) => {
   if (Number.isNaN(date.getTime())) return "-";
   return date.toLocaleString(currentLanguage === "th" ? "th-TH" : "en-US");
 };
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const parseDateOnlyLocal = (value) => {
+  if (!value) return null;
+  const text = String(value).trim();
+  const parts = text.split("-").map((item) => Number.parseInt(item, 10));
+  if (parts.length !== 3 || parts.some((item) => Number.isNaN(item))) {
+    const date = new Date(text);
+    if (Number.isNaN(date.getTime())) return null;
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  }
+  return new Date(parts[0], parts[1] - 1, parts[2]);
+};
+
+const getDaysUntil = (value) => {
+  const target = parseDateOnlyLocal(value);
+  if (!target) return null;
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return Math.floor((target.getTime() - today.getTime()) / DAY_MS);
+};
+
+const getDeadlineToneClass = (days) => {
+  if (days === null) return "deadline-box--none";
+  if (days < 30) return "deadline-box--danger";
+  if (days < 60) return "deadline-box--warn";
+  return "deadline-box--safe";
+};
+
+const getDeadlineToneText = (days) => {
+  if (days === null) return "-";
+  if (days < 0) return `เกินกำหนด ${Math.abs(days)} วัน`;
+  if (days < 30) return `ต่ำกว่า 30 วัน (${days} วัน)`;
+  if (days < 60) return `ต่ำกว่า 60 วัน (${days} วัน)`;
+  return `มากกว่า 60 วัน (${days} วัน)`;
+};
+
 
 const toDateOnlyKey = (value) => {
   const date = new Date(value);
@@ -1391,6 +1429,7 @@ const renderLatestRecordCard = () => {
   if (!records.length) {
     latestRecordTitle.textContent = "-";
     latestRecordMeta.textContent = "ยังไม่มีข้อมูล";
+    renderHomeFollowupSummaries();
     return;
   }
   const latest = [...records].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))[0];
@@ -1398,6 +1437,50 @@ const renderLatestRecordCard = () => {
   latestRecordMeta.textContent = `${formatDateTime(latest.updatedAt)} • ${
     latest.data?.personalInfo?.fullName || latest.data?.personalInfo?.employerName || latest.displayName || "-"
   }`;
+  renderHomeFollowupSummaries();
+};
+
+const renderFollowupSummaryList = (target, records, typeLabel, dateField) => {
+  if (!target) return;
+  const rows = (records || [])
+    .map((record) => {
+      const info = record?.data?.personalInfo || {};
+      const followup = record?.data?.followup || {};
+      const dateValue = followup?.[dateField] || "";
+      const days = getDaysUntil(dateValue);
+      return {
+        formId: record?.formId || "-",
+        updatedAt: record?.updatedAt,
+        name: info.fullName || info.employerName || record?.displayName || "-",
+        days,
+        dateValue,
+        typeLabel,
+      };
+    })
+    .filter((item) => item.days !== null)
+    .sort((a, b) => a.days - b.days)
+    .slice(0, 5);
+
+  if (!rows.length) {
+    target.innerHTML = '<p class="status-text">ยังไม่มีข้อมูล</p>';
+    return;
+  }
+
+  target.innerHTML = rows
+    .map((item) => {
+      const toneClass = getDeadlineToneClass(item.days);
+      return `<div class="mini-summary-item ${toneClass}"><p>${item.formId} • ${item.typeLabel}</p><p>${formatDateTime(item.updatedAt)} • ${item.name}</p><p>${item.dateValue || "-"} • ${getDeadlineToneText(item.days)}</p></div>`;
+    })
+    .join("");
+};
+
+const renderHomeFollowupSummaries = () => {
+  if (!indexReport90Summary && !indexVisaSummary) return;
+  const all = loadRecords();
+  const r90 = all.filter((item) => item?.formType === "report90");
+  const visa = all.filter((item) => item?.formType === "visarun");
+  renderFollowupSummaryList(indexReport90Summary, r90, "รายงานตัว 90 วัน", "nextDate");
+  renderFollowupSummaryList(indexVisaSummary, visa, "Visa run", "endDate");
 };
 
 const getFormTypeLabel = (value) => {
@@ -2062,6 +2145,72 @@ const toCsvValue = (value) => {
   return `"${text.replace(/"/g, '""')}"`;
 };
 
+const exportBackupData = async () => {
+  const localRecords = loadRecords();
+  let serverRecords = [];
+  if (canUseServerSync()) {
+    try {
+      const response = await fetch(RECORDS_API_URL, { method: "GET" });
+      if (response.ok) {
+        const rows = await response.json();
+        if (Array.isArray(rows)) {
+          serverRecords = rows;
+        }
+      }
+    } catch (_error) {
+      // keep local-only backup when server is unavailable
+    }
+  }
+
+  const mergedRecords = mergeRecordsPreferLatest(localRecords, serverRecords);
+  const payload = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    records: mergedRecords,
+    settings: {
+      apiBaseUrl: localStorage.getItem(API_BASE_KEY) || "",
+      language: currentLanguage,
+    },
+  };
+
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const fileName = `worker-records-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = fileName;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+  setStatus(recordsStatus || formSaveStatus, `สำรองข้อมูลสำเร็จ: ${fileName}`, "ok");
+};
+
+const importBackupData = async (file) => {
+  if (!file) return;
+  const text = await file.text();
+  const parsed = JSON.parse(text || "{}");
+  const incoming = Array.isArray(parsed?.records) ? parsed.records : [];
+  if (!incoming.length) {
+    throw new Error("ไฟล์สำรองไม่มีข้อมูล records");
+  }
+
+  const merged = mergeRecordsPreferLatest(loadRecords(), incoming);
+  saveRecords(merged);
+  refreshNameSuggestions();
+  renderRecords();
+  renderLatestRecordCard();
+
+  if (canUseServerSync()) {
+    for (const record of merged) {
+      // best-effort sync back to server
+      await upsertRecordToServer(record);
+    }
+  }
+
+  setStatus(recordsStatus || formSaveStatus, `นำเข้าข้อมูลสำเร็จ ${merged.length} รายการ`, "ok");
+};
+
 const exportRecordsToCsv = () => {
   const rows = latestRenderedRecords.length ? latestRenderedRecords : loadRecords();
   if (!rows.length) {
@@ -2532,6 +2681,12 @@ const buildRecordSearchText = (record) => {
     caseStatus.appointmentNote,
     documents.documentJobType,
     documents.note,
+    record.data.followupType,
+    record.data.followup?.startDate,
+    record.data.followup?.nextDate,
+    record.data.followup?.endDate,
+    record.data.followup?.documentReceivedDate,
+    record.data.followup?.documentReturnDate,
     workerText,
   ]
     .filter(Boolean)
@@ -3030,6 +3185,25 @@ if (clearRecordsButton) {
 }
 if (exportRecordsButton) {
   exportRecordsButton.addEventListener("click", exportRecordsToCsv);
+}
+if (backupAllDataButton) {
+  backupAllDataButton.addEventListener("click", () => {
+    exportBackupData().catch(() => setStatus(recordsStatus || formSaveStatus, "ไม่สามารถสำรองข้อมูลได้", "error"));
+  });
+}
+if (restoreAllDataButton && restoreAllDataInput) {
+  restoreAllDataButton.addEventListener("click", () => restoreAllDataInput.click());
+  restoreAllDataInput.addEventListener("change", async (event) => {
+    const file = event?.target?.files?.[0];
+    if (!file) return;
+    try {
+      await importBackupData(file);
+    } catch (_error) {
+      setStatus(recordsStatus || formSaveStatus, "ไม่สามารถนำเข้าข้อมูลสำรองได้", "error");
+    } finally {
+      restoreAllDataInput.value = "";
+    }
+  });
 }
 if (passportCheckButton) {
   passportCheckButton.addEventListener("click", () => {

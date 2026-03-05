@@ -32,19 +32,26 @@ const toDateOnly = (value) => {
   if (!value) return null;
   const text = String(value).trim();
 
+  const parseWithParts = (parts) => {
+    if (parts.length !== 3 || parts.some((item) => Number.isNaN(item))) return null;
+    const [a, b, c] = parts;
+    const isYearFirst = a > 31;
+    const isYearLast = c > 31;
+    const yearRaw = isYearFirst ? a : c;
+    const month = b;
+    const day = isYearFirst ? c : a;
+    if (!isYearFirst && !isYearLast) return null;
+    if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+    return new Date(normalizeThaiYear(yearRaw), month - 1, day);
+  };
+
   const dashParts = text.split("-").map((item) => Number.parseInt(item, 10));
-  if (dashParts.length === 3 && dashParts.every((item) => !Number.isNaN(item))) {
-    return new Date(normalizeThaiYear(dashParts[0]), dashParts[1] - 1, dashParts[2]);
-  }
+  const dashDate = parseWithParts(dashParts);
+  if (dashDate) return dashDate;
 
   const slashParts = text.split("/").map((item) => Number.parseInt(item, 10));
-  if (slashParts.length === 3 && slashParts.every((item) => !Number.isNaN(item))) {
-    const isYearFirst = slashParts[0] > 31;
-    const yearRaw = isYearFirst ? slashParts[0] : slashParts[2];
-    const month = slashParts[1];
-    const day = isYearFirst ? slashParts[2] : slashParts[0];
-    return new Date(normalizeThaiYear(yearRaw), month - 1, day);
-  }
+  const slashDate = parseWithParts(slashParts);
+  if (slashDate) return slashDate;
 
   const date = new Date(text);
   if (Number.isNaN(date.getTime())) return null;

@@ -410,14 +410,16 @@ const runReport90Page = () => {
   const mapRecord = (record) => {
     const info = record?.data?.personalInfo || {};
     const followup = record?.data?.followup || {};
+    const startDateValue = followup.startDate || "";
+    const nextDateValue = startDateValue ? addDays(startDateValue, 90) : (followup.nextDate || "");
     return {
       id: record.formId,
       workerName: info.fullName || "",
       gender: info.gender || info.nationality || "",
       employerName: info.employerName || "",
       recordedBy: record?.data?.recordedBy || "",
-      startDate: followup.startDate || "",
-      nextDate: followup.nextDate || "",
+      startDate: startDateValue,
+      nextDate: nextDateValue,
       documentReceivedDate: followup.documentReceivedDate || "",
       documentReturnDate: followup.documentReturnDate || "",
       overdueFine: !!followup.overdueFine,
@@ -579,14 +581,16 @@ const runVisaPage = () => {
   const mapRecord = (record) => {
     const info = record?.data?.personalInfo || {};
     const followup = record?.data?.followup || {};
+    const startDateValue = followup.startDate || "";
+    const endDateValue = startDateValue ? addDays(startDateValue, 90) : (followup.endDate || "");
     return {
       id: record.formId,
       workerName: info.fullName || "",
       gender: info.gender || info.nationality || "",
       employerName: info.employerName || "",
       recordedBy: record?.data?.recordedBy || "",
-      startDate: followup.startDate || "",
-      endDate: followup.endDate || "",
+      startDate: startDateValue,
+      endDate: endDateValue,
       documentReceivedDate: followup.documentReceivedDate || "",
       documentReturnDate: followup.documentReturnDate || "",
       visaOverdue: !!followup.visaOverdue,

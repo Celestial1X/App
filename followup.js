@@ -435,7 +435,7 @@ const runReport90Page = () => {
     const info = record?.data?.personalInfo || {};
     const followup = record?.data?.followup || {};
     const startDateValue = followup.startDate || "";
-    const nextDateValue = computeFollowupDateFromStart(startDateValue);
+    const nextDateValue = normalizeDateInputValue(followup.nextDate) || computeFollowupDateFromStart(startDateValue);
     return {
       id: record.formId,
       workerName: info.fullName || "",
@@ -619,7 +619,7 @@ const runVisaPage = () => {
     const info = record?.data?.personalInfo || {};
     const followup = record?.data?.followup || {};
     const startDateValue = followup.startDate || "";
-    const endDateValue = computeFollowupDateFromStart(startDateValue);
+    const endDateValue = normalizeDateInputValue(followup.endDate) || computeFollowupDateFromStart(startDateValue);
     return {
       id: record.formId,
       workerName: info.fullName || "",

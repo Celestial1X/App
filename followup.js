@@ -94,6 +94,15 @@ const diffDays = (value) => {
   if (Math.abs(days) > 36500) return null;
   return days;
 };
+const diffDaysBetween = (startValue, endValue) => {
+  const start = toDateOnly(startValue);
+  const end = toDateOnly(endValue);
+  if (!start || !end) return null;
+  const days = Math.floor((end.getTime() - start.getTime()) / DAY_MS);
+  if (Math.abs(days) > 36500) return null;
+  return days;
+};
+
 const fmtDate = (value) => {
   const dt = toDateOnly(value);
   if (!dt) return value || "-";
@@ -489,9 +498,12 @@ const runReport90Page = () => {
     }
 
     rows.forEach((item) => {
-      const w = renderWarning(diffDays(item.nextDate), "ใกล้ถึง 90 วันถัดไป", "เกินกำหนด 90 วัน");
+      const cycleDays = diffDaysBetween(item.startDate, item.nextDate);
+      const isCorrectCycle = cycleDays === 90;
+      const cycleText = cycleDays === null ? "-" : (isCorrectCycle ? "รอบ 90 วัน (ถูกต้อง)" : `รอบ ${cycleDays} วัน (ผิด)`);
+      const cycleTone = cycleDays === null ? "deadline-box--none" : (isCorrectCycle ? "deadline-box--safe" : "deadline-box--danger");
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${getAggregateBookStats(rows, item, "report90").total}</td><td>${getAggregateBookStats(rows, item, "report90").latestText}</td><td>${fmtDate(item.nextDate)}</td><td><span class="deadline-box ${w.tone}">${w.text}</span></td>`;
+      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${getAggregateBookStats(rows, item, "report90").total}</td><td>${getAggregateBookStats(rows, item, "report90").latestText}</td><td>${fmtDate(item.nextDate)}</td><td><span class="deadline-box ${cycleTone}">${cycleText}</span></td>`;
       const actionCell = document.createElement("td");
       const actionWrap = document.createElement("div");
       actionWrap.className = "table-actions";
@@ -697,9 +709,12 @@ const runVisaPage = () => {
     }
 
     rows.forEach((item) => {
-      const w = renderWarning(diffDays(item.endDate), "Visa ใกล้หมดอายุ", "Visa หมดอายุแล้ว");
+      const cycleDays = diffDaysBetween(item.startDate, item.endDate);
+      const isCorrectCycle = cycleDays === 90;
+      const cycleText = cycleDays === null ? "-" : (isCorrectCycle ? "รอบ 90 วัน (ถูกต้อง)" : `รอบ ${cycleDays} วัน (ผิด)`);
+      const cycleTone = cycleDays === null ? "deadline-box--none" : (isCorrectCycle ? "deadline-box--safe" : "deadline-box--danger");
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${getAggregateBookStats(rows, item, "visarun").total}</td><td>${getAggregateBookStats(rows, item, "visarun").latestText}</td><td>${fmtDate(item.endDate)}</td><td><span class="deadline-box ${w.tone}">${w.text}</span></td>`;
+      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${getAggregateBookStats(rows, item, "visarun").total}</td><td>${getAggregateBookStats(rows, item, "visarun").latestText}</td><td>${fmtDate(item.endDate)}</td><td><span class="deadline-box ${cycleTone}">${cycleText}</span></td>`;
       const actionCell = document.createElement("td");
       const actionWrap = document.createElement("div");
       actionWrap.className = "table-actions";

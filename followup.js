@@ -505,9 +505,11 @@ const runReport90Page = () => {
     }
   };
 
-  startDate?.addEventListener("change", () => {
+  const updateReport90NextDate = () => {
     nextDate.value = addDays(startDate.value, 90);
-  });
+  };
+  startDate?.addEventListener("change", updateReport90NextDate);
+  startDate?.addEventListener("input", updateReport90NextDate);
 
   form?.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -517,7 +519,7 @@ const runReport90Page = () => {
       employerName: document.getElementById("r90Employer").value.trim(),
       recordedBy: document.getElementById("r90RecordedBy").value.trim(),
       startDate: startDate.value,
-      nextDate: nextDate.value,
+      nextDate: addDays(startDate.value, 90),
       documentReceivedDate: document.getElementById("r90DocReceiveDate").value,
       documentReturnDate: document.getElementById("r90DocReturnDate").value,
       overdueFine: document.getElementById("r90Overdue").checked,
@@ -678,9 +680,11 @@ const runVisaPage = () => {
     }
   };
 
-  startDate?.addEventListener("change", () => {
+  const updateVisaEndDate = () => {
     endDate.value = addDays(startDate.value, 90);
-  });
+  };
+  startDate?.addEventListener("change", updateVisaEndDate);
+  startDate?.addEventListener("input", updateVisaEndDate);
 
   form?.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -690,7 +694,7 @@ const runVisaPage = () => {
       employerName: document.getElementById("visaEmployer").value.trim(),
       recordedBy: document.getElementById("visaRecordedBy").value.trim(),
       startDate: startDate.value,
-      endDate: endDate.value,
+      endDate: addDays(startDate.value, 90),
       documentReceivedDate: document.getElementById("visaDocReceiveDate").value,
       documentReturnDate: document.getElementById("visaDocReturnDate").value,
       visaOverdue: document.getElementById("visaOverdue").checked,

@@ -496,9 +496,12 @@ const runReport90Page = () => {
 
   const renderRows = () => {
     list.innerHTML = "";
-    const alerts = rows.filter((item) => renderWarning(diffDays(item.nextDate), "ใกล้ถึง 90 วันถัดไป", "เกินกำหนด 90 วัน").alert);
+    const alerts = rows.filter((item) => {
+      const days = diffDays(item.nextDate);
+      return days !== null && days >= 0 && days <= 90;
+    });
     if (alerts.length) {
-      alert.textContent = `แจ้งเตือน: มี ${alerts.length} รายการที่ใกล้ถึง 90 วันถัดไป/เกินกำหนด`;
+      alert.textContent = `แจ้งเตือน: มี ${alerts.length} รายการที่ใกล้จะหมดอายุ 90 วัน`;
       alert.classList.remove("is-hidden");
     } else {
       alert.classList.add("is-hidden");
@@ -508,7 +511,7 @@ const runReport90Page = () => {
       const remainingDays = diffDays(item.nextDate);
       const cycleDays = diffDaysBetween(item.startDate, item.nextDate);
       const cycleText = cycleDays === null ? "-" : `${fmtDate(item.nextDate)} (${cycleDays} วัน)`;
-      const cycleTone = getDeadlineToneByRemainingDays(remainingDays);
+      const cycleTone = getDeadlineToneByRemainingDays(cycleDays);
       const tr = document.createElement("tr");
       tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${getAggregateBookStats(rows, item, "report90").total}</td><td>${getAggregateBookStats(rows, item, "report90").latestText}</td><td>${fmtDate(item.nextDate)}</td><td><span class="deadline-box ${cycleTone}">${cycleText}</span></td>`;
       const actionCell = document.createElement("td");
@@ -686,9 +689,12 @@ const runVisaPage = () => {
 
   const renderRows = () => {
     list.innerHTML = "";
-    const alerts = rows.filter((item) => renderWarning(diffDays(item.endDate), "Visa ใกล้หมดอายุ", "Visa หมดอายุแล้ว").alert);
+    const alerts = rows.filter((item) => {
+      const days = diffDays(item.endDate);
+      return days !== null && days >= 0 && days <= 90;
+    });
     if (alerts.length) {
-      alert.textContent = `แจ้งเตือน: มี ${alerts.length} รายการที่ Visa ใกล้หมดอายุ/หมดอายุ`;
+      alert.textContent = `แจ้งเตือน: มี ${alerts.length} รายการที่ใกล้จะหมดอายุ 90 วัน`;
       alert.classList.remove("is-hidden");
     } else {
       alert.classList.add("is-hidden");
@@ -698,7 +704,7 @@ const runVisaPage = () => {
       const remainingDays = diffDays(item.endDate);
       const cycleDays = diffDaysBetween(item.startDate, item.endDate);
       const cycleText = cycleDays === null ? "-" : `${fmtDate(item.endDate)} (${cycleDays} วัน)`;
-      const cycleTone = getDeadlineToneByRemainingDays(remainingDays);
+      const cycleTone = getDeadlineToneByRemainingDays(cycleDays);
       const tr = document.createElement("tr");
       tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${getAggregateBookStats(rows, item, "visarun").total}</td><td>${getAggregateBookStats(rows, item, "visarun").latestText}</td><td>${fmtDate(item.endDate)}</td><td><span class="deadline-box ${cycleTone}">${cycleText}</span></td>`;
       const actionCell = document.createElement("td");

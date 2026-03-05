@@ -341,7 +341,7 @@ const toReport90Payload = (values, formId = "") => ({
     followupType: "report90",
     followup: {
       startDate: values.startDate,
-      nextDate: values.nextDate,
+      nextDate: addDays(values.startDate, 90),
       documentReceivedDate: values.documentReceivedDate,
       documentReturnDate: values.documentReturnDate,
       overdueFine: values.overdueFine,
@@ -374,7 +374,7 @@ const toVisaRunPayload = (values, formId = "") => ({
     followupType: "visarun",
     followup: {
       startDate: values.startDate,
-      endDate: values.endDate,
+      endDate: addDays(values.startDate, 90),
       documentReceivedDate: values.documentReceivedDate,
       documentReturnDate: values.documentReturnDate,
       visaOverdue: values.visaOverdue,

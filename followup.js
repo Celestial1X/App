@@ -71,6 +71,12 @@ const addDays = (value, days) => {
   dt.setDate(dt.getDate() + days);
   return formatDateInputValue(dt);
 };
+const normalizeDateInputValue = (value) => {
+  const dt = toDateOnly(value);
+  if (!dt) return "";
+  return formatDateInputValue(dt);
+};
+
 
 const diffDays = (value) => {
   const dt = toDateOnly(value);
@@ -536,8 +542,17 @@ const runReport90Page = () => {
       returnBook: document.getElementById("r90ReturnBook").checked,
     };
 
+    values.startDate = normalizeDateInputValue(values.startDate);
+    if (!values.startDate) {
+      status.textContent = "กรุณาใส่วันที่เริ่มรายงานตัวก่อนบันทึก";
+      status.classList.add("error");
+      return;
+    }
+
     try {
       const submittingEditId = editFormId || requestedEditId || "";
+      startDate.value = values.startDate;
+      nextDate.value = addDays(values.startDate, 90);
       await saveRecord(toReport90Payload(values, submittingEditId));
       const wasEdit = Boolean(submittingEditId);
       resetForm();
@@ -715,8 +730,17 @@ const runVisaPage = () => {
       p30: document.getElementById("visaP30").checked,
     };
 
+    values.startDate = normalizeDateInputValue(values.startDate);
+    if (!values.startDate) {
+      status.textContent = "กรุณาใส่วันเริ่ม Visa ก่อนบันทึก";
+      status.classList.add("error");
+      return;
+    }
+
     try {
       const submittingEditId = editFormId || requestedEditId || "";
+      startDate.value = values.startDate;
+      endDate.value = addDays(values.startDate, 90);
       await saveRecord(toVisaRunPayload(values, submittingEditId));
       const wasEdit = Boolean(submittingEditId);
       resetForm();

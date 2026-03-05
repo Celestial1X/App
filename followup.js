@@ -120,6 +120,13 @@ const renderWarning = (days, nearText, overText) => {
   if (days < 90) return { text: `ต่ำกว่า 90 วัน (${days} วัน)`, alert: true, tone: "deadline-box--warn" };
   return { text: `มากกว่า 90 วัน (${days} วัน)`, alert: false, tone: "deadline-box--safe" };
 };
+const getDeadlineToneByRemainingDays = (days) => {
+  if (days === null) return "deadline-box--none";
+  if (days < 30) return "deadline-box--danger";
+  if (days <= 90) return "deadline-box--warn";
+  return "deadline-box--safe";
+};
+
 
 
 const getBookTypes = (item, type) => {
@@ -498,10 +505,10 @@ const runReport90Page = () => {
     }
 
     rows.forEach((item) => {
+      const remainingDays = diffDays(item.nextDate);
       const cycleDays = diffDaysBetween(item.startDate, item.nextDate);
-      const isCorrectCycle = cycleDays === 90;
       const cycleText = cycleDays === null ? "-" : `${fmtDate(item.nextDate)} (${cycleDays} วัน)`;
-      const cycleTone = cycleDays === null ? "deadline-box--none" : (isCorrectCycle ? "deadline-box--safe" : "deadline-box--danger");
+      const cycleTone = getDeadlineToneByRemainingDays(remainingDays);
       const tr = document.createElement("tr");
       tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${getAggregateBookStats(rows, item, "report90").total}</td><td>${getAggregateBookStats(rows, item, "report90").latestText}</td><td>${fmtDate(item.nextDate)}</td><td><span class="deadline-box ${cycleTone}">${cycleText}</span></td>`;
       const actionCell = document.createElement("td");
@@ -688,10 +695,10 @@ const runVisaPage = () => {
     }
 
     rows.forEach((item) => {
+      const remainingDays = diffDays(item.endDate);
       const cycleDays = diffDaysBetween(item.startDate, item.endDate);
-      const isCorrectCycle = cycleDays === 90;
       const cycleText = cycleDays === null ? "-" : `${fmtDate(item.endDate)} (${cycleDays} วัน)`;
-      const cycleTone = cycleDays === null ? "deadline-box--none" : (isCorrectCycle ? "deadline-box--safe" : "deadline-box--danger");
+      const cycleTone = getDeadlineToneByRemainingDays(remainingDays);
       const tr = document.createElement("tr");
       tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${getAggregateBookStats(rows, item, "visarun").total}</td><td>${getAggregateBookStats(rows, item, "visarun").latestText}</td><td>${fmtDate(item.endDate)}</td><td><span class="deadline-box ${cycleTone}">${cycleText}</span></td>`;
       const actionCell = document.createElement("td");

@@ -500,7 +500,7 @@ const runReport90Page = () => {
     rows.forEach((item) => {
       const cycleDays = diffDaysBetween(item.startDate, item.nextDate);
       const isCorrectCycle = cycleDays === 90;
-      const cycleText = cycleDays === null ? "-" : (isCorrectCycle ? "รอบ 90 วัน (ถูกต้อง)" : `รอบ ${cycleDays} วัน (ผิด)`);
+      const cycleText = cycleDays === null ? "-" : `${fmtDate(item.nextDate)} (${cycleDays} วัน)`;
       const cycleTone = cycleDays === null ? "deadline-box--none" : (isCorrectCycle ? "deadline-box--safe" : "deadline-box--danger");
       const tr = document.createElement("tr");
       tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${getAggregateBookStats(rows, item, "report90").total}</td><td>${getAggregateBookStats(rows, item, "report90").latestText}</td><td>${fmtDate(item.nextDate)}</td><td><span class="deadline-box ${cycleTone}">${cycleText}</span></td>`;
@@ -711,7 +711,7 @@ const runVisaPage = () => {
     rows.forEach((item) => {
       const cycleDays = diffDaysBetween(item.startDate, item.endDate);
       const isCorrectCycle = cycleDays === 90;
-      const cycleText = cycleDays === null ? "-" : (isCorrectCycle ? "รอบ 90 วัน (ถูกต้อง)" : `รอบ ${cycleDays} วัน (ผิด)`);
+      const cycleText = cycleDays === null ? "-" : `${fmtDate(item.endDate)} (${cycleDays} วัน)`;
       const cycleTone = cycleDays === null ? "deadline-box--none" : (isCorrectCycle ? "deadline-box--safe" : "deadline-box--danger");
       const tr = document.createElement("tr");
       tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${getAggregateBookStats(rows, item, "visarun").total}</td><td>${getAggregateBookStats(rows, item, "visarun").latestText}</td><td>${fmtDate(item.endDate)}</td><td><span class="deadline-box ${cycleTone}">${cycleText}</span></td>`;

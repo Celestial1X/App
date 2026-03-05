@@ -334,6 +334,7 @@ const toReport90Payload = (values, formId = "") => ({
   data: {
     recordedBy: values.recordedBy || "",
     company: "",
+    startDate: values.startDate || "",
     personalInfo: {
       fullName: values.workerName,
       gender: values.gender,
@@ -367,6 +368,7 @@ const toVisaRunPayload = (values, formId = "") => ({
   data: {
     recordedBy: values.recordedBy || "",
     company: "",
+    startDate: values.startDate || "",
     personalInfo: {
       fullName: values.workerName,
       gender: values.gender,
@@ -416,7 +418,7 @@ const runReport90Page = () => {
   const mapRecord = (record) => {
     const info = record?.data?.personalInfo || {};
     const followup = record?.data?.followup || {};
-    const startDateValue = followup.startDate || "";
+    const startDateValue = followup.startDate || record?.data?.startDate || "";
     const nextDateValue = startDateValue ? addDays(startDateValue, 90) : (followup.nextDate || "");
     return {
       id: record.formId,
@@ -510,6 +512,26 @@ const runReport90Page = () => {
   const refreshRows = async () => {
     const serverRows = await fetchRecordsByType(type);
     rows = serverRows.map(mapRecord);
+    // self-heal legacy rows: if startDate exists but nextDate/endDate was stale, resave corrected date
+    for (const item of rows) {
+      const source = serverRows.find((row) => String(row?.formId || "") === String(item.id || ""));
+      const sourceFollowup = source?.data?.followup || {};
+      if (item.startDate && sourceFollowup.nextDate && String(sourceFollowup.nextDate) !== String(item.nextDate || "")) {
+        saveRecord(toReport90Payload({
+          workerName: item.workerName,
+          gender: item.gender,
+          employerName: item.employerName,
+          recordedBy: item.recordedBy,
+          startDate: item.startDate,
+          nextDate: item.nextDate,
+          documentReceivedDate: item.documentReceivedDate,
+          documentReturnDate: item.documentReturnDate,
+          overdueFine: item.overdueFine,
+          sentImmigration: item.sentImmigration,
+          returnBook: item.returnBook,
+        }, String(item.id || ""))).catch(() => {});
+      }
+    }
     renderRows();
     if (requestedEditId) {
       const matched = rows.find((item) => String(item.id) === requestedEditId);
@@ -596,7 +618,7 @@ const runVisaPage = () => {
   const mapRecord = (record) => {
     const info = record?.data?.personalInfo || {};
     const followup = record?.data?.followup || {};
-    const startDateValue = followup.startDate || "";
+    const startDateValue = followup.startDate || record?.data?.startDate || "";
     const endDateValue = startDateValue ? addDays(startDateValue, 90) : (followup.endDate || "");
     return {
       id: record.formId,
@@ -696,6 +718,27 @@ const runVisaPage = () => {
   const refreshRows = async () => {
     const serverRows = await fetchRecordsByType(type);
     rows = serverRows.map(mapRecord);
+    for (const item of rows) {
+      const source = serverRows.find((row) => String(row?.formId || "") === String(item.id || ""));
+      const sourceFollowup = source?.data?.followup || {};
+      if (item.startDate && sourceFollowup.endDate && String(sourceFollowup.endDate) !== String(item.endDate || "")) {
+        saveRecord(toVisaRunPayload({
+          workerName: item.workerName,
+          gender: item.gender,
+          employerName: item.employerName,
+          recordedBy: item.recordedBy,
+          startDate: item.startDate,
+          endDate: item.endDate,
+          documentReceivedDate: item.documentReceivedDate,
+          documentReturnDate: item.documentReturnDate,
+          visaOverdue: item.visaOverdue,
+          sentImmigration: item.sentImmigration,
+          returnBook: item.returnBook,
+          p60: item.p60,
+          p30: item.p30,
+        }, String(item.id || ""))).catch(() => {});
+      }
+    }
     renderRows();
     if (requestedEditId) {
       const matched = rows.find((item) => String(item.id) === requestedEditId);

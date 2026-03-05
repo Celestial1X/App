@@ -108,8 +108,8 @@ const renderWarning = (days, nearText, overText) => {
   if (days === null) return { text: "-", alert: false, tone: "deadline-box--none" };
   if (days < 0) return { text: `${overText} (${Math.abs(days)} วัน)`, alert: true, tone: "deadline-box--danger" };
   if (days < 30) return { text: `ต่ำกว่า 30 วัน (${days} วัน)`, alert: true, tone: "deadline-box--danger" };
-  if (days < 60) return { text: `ต่ำกว่า 60 วัน (${days} วัน)`, alert: true, tone: "deadline-box--warn" };
-  return { text: `มากกว่า 60 วัน (${days} วัน)`, alert: false, tone: "deadline-box--safe" };
+  if (days < 90) return { text: `ต่ำกว่า 90 วัน (${days} วัน)`, alert: true, tone: "deadline-box--warn" };
+  return { text: `มากกว่า 90 วัน (${days} วัน)`, alert: false, tone: "deadline-box--safe" };
 };
 
 
@@ -425,7 +425,7 @@ const runReport90Page = () => {
   const mapRecord = (record) => {
     const info = record?.data?.personalInfo || {};
     const followup = record?.data?.followup || {};
-    const startDateValue = followup.startDate || record?.data?.startDate || "";
+    const startDateValue = followup.startDate || "";
     const nextDateValue = computeFollowupDateFromStart(startDateValue);
     return {
       id: record.formId,
@@ -523,7 +523,7 @@ const runReport90Page = () => {
     for (const item of rows) {
       const source = serverRows.find((row) => String(row?.formId || "") === String(item.id || ""));
       const sourceFollowup = source?.data?.followup || {};
-      const sourceStartDate = sourceFollowup.startDate || source?.data?.startDate || "";
+      const sourceStartDate = sourceFollowup.startDate || "";
       const correctedNextDate = computeFollowupDateFromStart(sourceStartDate);
       if (sourceStartDate && correctedNextDate && String(sourceFollowup.nextDate || "") !== String(correctedNextDate)) {
         saveRecord(toReport90Payload({
@@ -627,7 +627,7 @@ const runVisaPage = () => {
   const mapRecord = (record) => {
     const info = record?.data?.personalInfo || {};
     const followup = record?.data?.followup || {};
-    const startDateValue = followup.startDate || record?.data?.startDate || "";
+    const startDateValue = followup.startDate || "";
     const endDateValue = computeFollowupDateFromStart(startDateValue);
     return {
       id: record.formId,
@@ -730,7 +730,7 @@ const runVisaPage = () => {
     for (const item of rows) {
       const source = serverRows.find((row) => String(row?.formId || "") === String(item.id || ""));
       const sourceFollowup = source?.data?.followup || {};
-      const sourceStartDate = sourceFollowup.startDate || source?.data?.startDate || "";
+      const sourceStartDate = sourceFollowup.startDate || "";
       const correctedEndDate = computeFollowupDateFromStart(sourceStartDate);
       if (sourceStartDate && correctedEndDate && String(sourceFollowup.endDate || "") !== String(correctedEndDate)) {
         saveRecord(toVisaRunPayload({

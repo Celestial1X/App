@@ -1397,7 +1397,7 @@ const getDaysUntil = (value) => {
 const getDeadlineToneClass = (days) => {
   if (days === null) return "deadline-box--none";
   if (days < 30) return "deadline-box--danger";
-  if (days < 60) return "deadline-box--warn";
+  if (days < 90) return "deadline-box--warn";
   return "deadline-box--safe";
 };
 
@@ -1405,8 +1405,8 @@ const getDeadlineToneText = (days) => {
   if (days === null) return "-";
   if (days < 0) return `เกินกำหนด ${Math.abs(days)} วัน`;
   if (days < 30) return `ต่ำกว่า 30 วัน (${days} วัน)`;
-  if (days < 60) return `ต่ำกว่า 60 วัน (${days} วัน)`;
-  return `มากกว่า 60 วัน (${days} วัน)`;
+  if (days < 90) return `ต่ำกว่า 90 วัน (${days} วัน)`;
+  return `มากกว่า 90 วัน (${days} วัน)`;
 };
 
 

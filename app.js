@@ -823,13 +823,14 @@ const formatExpiryLabel = (state, days) => {
 const formatExpiryDisplay = (dateValue) => {
   if (!dateValue) return "-";
   const { state, days } = getExpiryState(dateValue);
+  const formatted = formatDateOnlyDMY(dateValue);
   if (state === "ok") {
-    return dateValue;
+    return formatted;
   }
   if (state === "warning" || state === "expired") {
-    return `${dateValue} (${formatExpiryLabel(state, days)})`;
+    return `${formatted} (${formatExpiryLabel(state, days)})`;
   }
-  return dateValue;
+  return formatted;
 };
 
 const validatePassport = (value, target) => {
@@ -1368,6 +1369,15 @@ const parseDateOnlyLocal = (value) => {
   return new Date(year, date.getMonth(), date.getDate());
 };
 
+const formatDateOnlyDMY = (value) => {
+  const date = parseDateOnlyLocal(value);
+  if (!date) return value || "-";
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = currentLanguage === "th" ? date.getFullYear() + 543 : date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
 const getDaysUntil = (value) => {
   const target = parseDateOnlyLocal(value);
   if (!target) return null;
@@ -1493,7 +1503,7 @@ const renderFollowupSummaryList = (target, records, typeLabel, dateField) => {
   target.innerHTML = rows
     .map((item) => {
       const toneClass = getDeadlineToneClass(item.days);
-      return `<div class="mini-summary-item ${toneClass}"><p>${item.formId} • ${item.typeLabel}</p><p>${formatDateTime(item.updatedAt)} • ${item.name}</p><p>${item.dateValue || "-"} • ${getDeadlineToneText(item.days)}</p></div>`;
+      return `<div class="mini-summary-item ${toneClass}"><p>${item.formId} • ${item.typeLabel}</p><p>${formatDateTime(item.updatedAt)} • ${item.name}</p><p>${formatDateOnlyDMY(item.dateValue)} • ${getDeadlineToneText(item.days)}</p></div>`;
     })
     .join("");
 };
@@ -1554,7 +1564,7 @@ const getCaseStatusDisplay = (caseStatus = {}) => {
   if (status === "appointment") {
     if (caseStatus.appointmentDate) {
       const waitingLabel = currentLanguage === "th" ? "รอวันนัด" : "Awaiting appointment";
-      return `${waitingLabel} (${caseStatus.appointmentDate})`;
+      return `${waitingLabel} (${formatDateOnlyDMY(caseStatus.appointmentDate)})`;
     }
     return getCaseStatusLabel(status);
   }
@@ -2290,9 +2300,9 @@ const exportRecordsToCsv = () => {
       formatDateTime(record.updatedAt),
       getCaseStatusDisplay(data.caseStatus || {}),
       data.followupType || "-",
-      followup.startDate || "-",
-      followup.nextDate || "-",
-      followup.endDate || "-",
+      formatDateOnlyDMY(followup.startDate),
+      formatDateOnlyDMY(followup.nextDate),
+      formatDateOnlyDMY(followup.endDate),
       followup.sentImmigration ? "yes" : "no",
       followup.returnBook ? "yes" : "no",
       followup.sentBookCount ?? "-",
@@ -2405,7 +2415,7 @@ const openRecordModal = (record) => {
       addRow("เลข Pass", personalInfo.passNumber);
     }
     if (personalInfo.personalVisaExpiryDate) {
-      addRow("วันหมดอายุ Visa", personalInfo.personalVisaExpiryDate);
+      addRow("วันหมดอายุ Visa", formatDateOnlyDMY(personalInfo.personalVisaExpiryDate));
     }
     if (personalInfo.businessType) {
       addRow(translations[currentLanguage].businessTypeLabel, personalInfo.businessType);
@@ -2429,10 +2439,10 @@ const openRecordModal = (record) => {
       addRow(translations[currentLanguage].documentReceiverLabel, personalInfo.documentReceiver);
     }
     if (personalInfo.documentReceivedDate) {
-      addRow(translations[currentLanguage].documentReceivedDateLabel, personalInfo.documentReceivedDate);
+      addRow(translations[currentLanguage].documentReceivedDateLabel, formatDateOnlyDMY(personalInfo.documentReceivedDate));
     }
     if (personalInfo.documentReturnDate) {
-      addRow(translations[currentLanguage].documentReturnDateLabel, personalInfo.documentReturnDate);
+      addRow(translations[currentLanguage].documentReturnDateLabel, formatDateOnlyDMY(personalInfo.documentReturnDate));
     }
     if (documentParts.length) {
       addRow(translations[currentLanguage].documentsTitle, documentParts.join(", "));
@@ -2447,7 +2457,7 @@ const openRecordModal = (record) => {
       addRow(translations[currentLanguage].statusTitle, getCaseStatusLabel(caseStatus.status));
     }
     if (caseStatus.appointmentDate) {
-      addRow(translations[currentLanguage].statusAppointmentDateLabel, caseStatus.appointmentDate);
+      addRow(translations[currentLanguage].statusAppointmentDateLabel, formatDateOnlyDMY(caseStatus.appointmentDate));
     }
     table.appendChild(body);
     recordModalBody.appendChild(title);

@@ -74,7 +74,14 @@ const diffDays = (value) => {
   if (Math.abs(days) > 36500) return null;
   return days;
 };
-const fmtDate = (value) => value || "-";
+const fmtDate = (value) => {
+  const dt = toDateOnly(value);
+  if (!dt) return value || "-";
+  const day = String(dt.getDate()).padStart(2, "0");
+  const month = String(dt.getMonth() + 1).padStart(2, "0");
+  const year = dt.getFullYear() + 543;
+  return `${day}/${month}/${year}`;
+};
 const fmtCheck = (value) => (value ? "✓" : "-");
 
 const renderWarning = (days, nearText, overText) => {

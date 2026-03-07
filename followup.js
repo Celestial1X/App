@@ -386,6 +386,24 @@ const saveRecord = async (payload) => {
   return normalizedSaved;
 };
 
+
+const deleteRecordById = async (id) => {
+  const targetId = String(id || "").trim();
+  if (!targetId) return;
+  try {
+    const response = await fetch(`${RECORDS_API_URL}/${encodeURIComponent(targetId)}`, { method: "DELETE" });
+    if (!response.ok && response.status !== 404) {
+      throw new Error("Delete failed");
+    }
+  } catch (_error) {
+    // fallback to local-only delete
+  }
+
+  const localRows = readLocalRecords().filter((item) => String(item?.formId || "") !== targetId);
+  writeLocalRecords(localRows);
+  refreshNameSuggestions();
+};
+
 const toReport90Payload = (values, formId = "") => ({
   formId,
   formType: "report90",
@@ -874,6 +892,7 @@ const runMouLaosPage = () => {
   const endDate = document.getElementById("mouEndDate");
   const status = document.getElementById("mouStatus");
   const list = document.getElementById("mouList");
+  const alert = document.getElementById("mouAlert");
   const modal = setupModal();
   let rows = [];
   let editFormId = "";
@@ -939,6 +958,19 @@ const runMouLaosPage = () => {
 
   const renderRows = () => {
     list.innerHTML = "";
+    const alerts = rows.filter((item) => {
+      const days = diffDays(item.endDate);
+      return days !== null && days >= 0 && days <= 90;
+    });
+    if (alert) {
+      if (alerts.length) {
+        alert.textContent = `แจ้งเตือน: มี ${alerts.length} รายการที่ใกล้หมดอายุ`;
+        alert.classList.remove("is-hidden");
+      } else {
+        alert.classList.add("is-hidden");
+      }
+    }
+
     rows.forEach((item) => {
       const tr = document.createElement("tr");
       tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.alienId || "-"}</td><td>${fmtDate(item.startDate)}</td><td>${fmtDate(item.endDate)}</td><td>${fmtDate(item.documentReceivedDate)}</td><td>${fmtDate(item.documentReturnDate)}</td><td>${item.recordedBy || "-"}</td><td><span class="deadline-box">${formatRemainingYMD(item.endDate)}</span></td>`;

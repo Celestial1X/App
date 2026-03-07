@@ -106,6 +106,8 @@ const latestRecordTitle = document.getElementById("latestRecordTitle");
 const latestRecordMeta = document.getElementById("latestRecordMeta");
 const indexReport90Summary = document.getElementById("indexReport90Summary");
 const indexVisaSummary = document.getElementById("indexVisaSummary");
+const indexMouSummary = document.getElementById("indexMouSummary");
+const indexExpiryAlert = document.getElementById("indexExpiryAlert");
 const verifyRecordButton = document.getElementById("verifyRecord");
 const recordModal = document.getElementById("recordModal");
 const recordModalTitle = document.getElementById("recordModalTitle");
@@ -1525,12 +1527,30 @@ const renderFollowupSummaryList = (target, records, typeLabel, dateField) => {
 };
 
 const renderHomeFollowupSummaries = () => {
-  if (!indexReport90Summary && !indexVisaSummary) return;
+  if (!indexReport90Summary && !indexVisaSummary && !indexMouSummary) return;
   const all = loadRecords();
   const r90 = all.filter((item) => item?.formType === "report90");
   const visa = all.filter((item) => item?.formType === "visarun");
+  const mou = all.filter((item) => item?.formType === "mouLaos");
+
   renderFollowupSummaryList(indexReport90Summary, r90, "รายงานตัว 90 วัน", "nextDate");
   renderFollowupSummaryList(indexVisaSummary, visa, "Visa run", "endDate");
+  renderFollowupSummaryList(indexMouSummary, mou, "MOU ลาว", "endDate");
+
+  if (indexExpiryAlert) {
+    const nearExpiryCount = all.filter((record) => {
+      const followup = record?.data?.followup || {};
+      const targetDate = followup.nextDate || followup.endDate || "";
+      const days = getDaysUntil(targetDate);
+      return days !== null && days >= 0 && days <= 90;
+    }).length;
+    if (nearExpiryCount > 0) {
+      indexExpiryAlert.textContent = `แจ้งเตือน: มี ${nearExpiryCount} รายการที่ใกล้หมดอายุ`;
+      indexExpiryAlert.classList.remove("is-hidden");
+    } else {
+      indexExpiryAlert.classList.add("is-hidden");
+    }
+  }
 };
 
 const getFormTypeLabel = (value) => {

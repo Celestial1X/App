@@ -32,23 +32,16 @@
         <form id="mouLaosForm" class="form-grid">
           <div class="grid-3">
             <div class="form-row"><label for="mouWorkerName">ชื่อต่างด้าว</label><input id="mouWorkerName" type="text" list="workerNameSuggestions" /></div>
-            <div class="form-row"><label for="mouGender">เพศ</label><select id="mouGender"><option value="">เลือก</option><option value="female">female</option><option value="male">male</option><option value="other">other</option></select></div>
-            <div class="form-row"><label for="mouEmployer">ชื่อนายจ้าง</label><input id="mouEmployer" type="text" list="employerNameSuggestions" /></div>
-          </div>
-          <div class="grid-3">
-            <div class="form-row"><label for="mouStartDate">วันเริ่ม MOU</label><input id="mouStartDate" type="date" /></div>
-            <div class="form-row"><label for="mouEndDate">ครบกำหนด 2 ปี</label><input id="mouEndDate" type="date" /></div>
+            <div class="form-row"><label for="mouAlienId">เลขประจำตัว</label><input id="mouAlienId" type="text" /></div>
             <div class="form-row"><label for="mouRecordedBy">ผู้บันทึกข้อมูล</label><input id="mouRecordedBy" type="text" /></div>
           </div>
           <div class="grid-3">
+            <div class="form-row"><label for="mouStartDate">วันเริ่ม MOU</label><input id="mouStartDate" type="date" /></div>
+            <div class="form-row"><label for="mouEndDate">วันครบกำหนด MOU</label><input id="mouEndDate" type="date" /></div>
             <div class="form-row"><label for="mouDocReceiveDate">วันรับเอกสาร</label><input id="mouDocReceiveDate" type="date" /></div>
-            <div class="form-row"><label for="mouDocReturnDate">วันคืนเอกสาร</label><input id="mouDocReturnDate" type="date" /></div>
-            <div class="form-row"><label for="mouDocSentDate">วันที่ส่งเอกสาร</label><input id="mouDocSentDate" type="date" /></div>
           </div>
           <div class="grid-3">
-            <label class="checkbox-item"><input id="mouSentImm" type="checkbox" /><span>ส่งเล่มไป ตม.</span></label>
-            <label class="checkbox-item"><input id="mouReturnBook" type="checkbox" /><span>ส่งเล่มคืน</span></label>
-            <label class="checkbox-item"><input id="mouOverdue" type="checkbox" /><span>เกินกำหนด</span></label>
+            <div class="form-row"><label for="mouDocReturnDate">วันคืนเอกสาร</label><input id="mouDocReturnDate" type="date" /></div>
           </div>
           <div class="form-actions"><span class="status-text" id="mouStatus"></span><button class="primary" type="submit">บันทึกข้อมูล</button></div>
         </form>
@@ -56,16 +49,14 @@
 
       <section class="panel">
         <h3>ข้อมูลบันทึก MOU ลาว</h3>
-        <div id="mouAlert" class="warning-banner is-hidden"></div>
         <div class="records-table-wrapper">
           <table class="records-table">
-            <thead><tr><th>ชื่อต่างด้าว</th><th>นายจ้าง</th><th>ผู้บันทึก</th><th>รวมเล่มที่บันทึก</th><th>เล่มที่บันทึกล่าสุด</th><th>ครบกำหนด 2 ปี</th><th>สถานะเตือน</th><th>การจัดการ</th></tr></thead>
+            <thead><tr><th>ชื่อต่างด้าว</th><th>เลขประจำตัว</th><th>วันเริ่ม MOU</th><th>วันครบกำหนด MOU</th><th>วันรับเอกสาร</th><th>วันคืนเอกสาร</th><th>ผู้บันทึก</th><th>คงเหลือ</th><th>การจัดการ</th></tr></thead>
             <tbody id="mouList"></tbody>
           </table>
         </div>
       </section>
       <datalist id="workerNameSuggestions"></datalist>
-      <datalist id="employerNameSuggestions"></datalist>
     </main>
 
     <div class="modal" id="followupModal" aria-hidden="true">

@@ -119,6 +119,33 @@ const fmtDate = (value) => {
 };
 const fmtCheck = (value) => (value ? "✓" : "-");
 
+const formatRemainingYMD = (targetValue) => {
+  const target = toDateOnly(targetValue);
+  if (!target) return "-";
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const sign = target.getTime() >= today.getTime() ? 1 : -1;
+  const from = sign >= 0 ? today : target;
+  const to = sign >= 0 ? target : today;
+
+  let years = to.getFullYear() - from.getFullYear();
+  let months = to.getMonth() - from.getMonth();
+  let days = to.getDate() - from.getDate();
+
+  if (days < 0) {
+    months -= 1;
+    const prevMonthLastDay = new Date(to.getFullYear(), to.getMonth(), 0).getDate();
+    days += prevMonthLastDay;
+  }
+  if (months < 0) {
+    years -= 1;
+    months += 12;
+  }
+
+  const text = `${years} ปี ${months} เดือน ${days} วัน`;
+  return sign >= 0 ? `เหลือ ${text}` : `เกิน ${text}`;
+};
+
 const renderWarning = (days, nearText, overText) => {
   if (days === null) return { text: "-", alert: false, tone: "deadline-box--none" };
   if (days < 0) return { text: `${overText} (${Math.abs(days)} วัน)`, alert: true, tone: "deadline-box--danger" };
@@ -251,6 +278,7 @@ const refreshNameSuggestions = () => {
   });
   updateInputDatalist("r90WorkerName", "workerNameSuggestions", workers);
   updateInputDatalist("visaWorkerName", "workerNameSuggestions", workers);
+  updateInputDatalist("mouWorkerName", "workerNameSuggestions", workers);
   updateInputDatalist("r90Employer", "employerNameSuggestions", employers);
   updateInputDatalist("visaEmployer", "employerNameSuggestions", employers);
 };
@@ -442,8 +470,7 @@ const toMouLaosPayload = (values, formId = "") => ({
     startDate: values.startDate || "",
     personalInfo: {
       fullName: values.workerName,
-      gender: values.gender,
-      employerName: values.employerName,
+      alienId: values.alienId,
     },
     caseStatus: {
       status: "registered",
@@ -456,10 +483,6 @@ const toMouLaosPayload = (values, formId = "") => ({
       endDate: normalizeDateInputValue(values.endDate) || addYears(values.startDate, 2),
       documentReceivedDate: values.documentReceivedDate,
       documentReturnDate: values.documentReturnDate,
-      documentSentDate: values.documentSentDate,
-      visaOverdue: values.overdue,
-      sentImmigration: values.sentImmigration,
-      returnBook: values.returnBook,
     },
   },
 });
@@ -851,7 +874,6 @@ const runMouLaosPage = () => {
   const endDate = document.getElementById("mouEndDate");
   const status = document.getElementById("mouStatus");
   const list = document.getElementById("mouList");
-  const alert = document.getElementById("mouAlert");
   const modal = setupModal();
   let rows = [];
   let editFormId = "";
@@ -871,33 +893,23 @@ const runMouLaosPage = () => {
     return {
       id: record.formId,
       workerName: info.fullName || "",
-      gender: info.gender || info.nationality || "",
-      employerName: info.employerName || "",
+      alienId: info.alienId || "",
       recordedBy: record?.data?.recordedBy || "",
       startDate: startDateValue,
       endDate: endDateValue,
       documentReceivedDate: followup.documentReceivedDate || "",
       documentReturnDate: followup.documentReturnDate || "",
-      documentSentDate: followup.documentSentDate || "",
-      overdue: !!followup.visaOverdue,
-      sentImmigration: !!followup.sentImmigration,
-      returnBook: !!followup.returnBook,
     };
   };
 
   const fillForEdit = (item) => {
     document.getElementById("mouWorkerName").value = item.workerName || "";
-    document.getElementById("mouGender").value = item.gender || "";
-    document.getElementById("mouEmployer").value = item.employerName || "";
+    document.getElementById("mouAlienId").value = item.alienId || "";
     document.getElementById("mouRecordedBy").value = item.recordedBy || "";
     startDate.value = item.startDate || "";
     endDate.value = item.endDate || "";
     document.getElementById("mouDocReceiveDate").value = item.documentReceivedDate || "";
     document.getElementById("mouDocReturnDate").value = item.documentReturnDate || "";
-    document.getElementById("mouDocSentDate").value = item.documentSentDate || "";
-    document.getElementById("mouOverdue").checked = !!item.overdue;
-    document.getElementById("mouSentImm").checked = !!item.sentImmigration;
-    document.getElementById("mouReturnBook").checked = !!item.returnBook;
     editFormId = item.id;
   };
 
@@ -905,14 +917,13 @@ const runMouLaosPage = () => {
     modal.open("ตรวจสอบข้อมูล MOU ลาว", [
       ["เลขฟอร์ม", item.id || "-"],
       ["ชื่อต่างด้าว", item.workerName || "-"],
-      ["เพศ", item.gender || "-"],
-      ["ชื่อนายจ้าง", item.employerName || "-"],
-      ["ผู้บันทึกข้อมูล", item.recordedBy || "-"],
+      ["เลขประจำตัว", item.alienId || "-"],
       ["วันเริ่ม MOU", fmtDate(item.startDate)],
-      ["ครบกำหนด 2 ปี", fmtDate(item.endDate)],
+      ["วันครบกำหนด MOU", fmtDate(item.endDate)],
       ["วันรับเอกสาร", fmtDate(item.documentReceivedDate)],
-      ["วันส่งเอกสาร", fmtDate(item.documentSentDate)],
       ["วันคืนเอกสาร", fmtDate(item.documentReturnDate)],
+      ["ผู้บันทึกข้อมูล", item.recordedBy || "-"],
+      ["คงเหลือ", formatRemainingYMD(item.endDate)],
     ]);
   };
 
@@ -928,23 +939,9 @@ const runMouLaosPage = () => {
 
   const renderRows = () => {
     list.innerHTML = "";
-    const alerts = rows.filter((item) => {
-      const days = diffDaysBetween(item.startDate, item.endDate);
-      return days !== null && days >= 0 && days <= 730;
-    });
-    if (alerts.length) {
-      alert.textContent = `แจ้งเตือน: มี ${alerts.length} รายการที่อยู่ในรอบ 2 ปี`;
-      alert.classList.remove("is-hidden");
-    } else {
-      alert.classList.add("is-hidden");
-    }
-
     rows.forEach((item) => {
-      const cycleDays = diffDaysBetween(item.startDate, item.endDate);
-      const cycleText = cycleDays === null ? "-" : `${fmtDate(item.endDate)} (${cycleDays} วัน)`;
-      const cycleTone = getDeadlineToneByRemainingDays(cycleDays);
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${getAggregateBookStats(rows, item, "visarun").total}</td><td>${getAggregateBookStats(rows, item, "visarun").latestText}</td><td>${fmtDate(item.endDate)}</td><td><span class="deadline-box ${cycleTone}">${cycleText}</span></td>`;
+      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.alienId || "-"}</td><td>${fmtDate(item.startDate)}</td><td>${fmtDate(item.endDate)}</td><td>${fmtDate(item.documentReceivedDate)}</td><td>${fmtDate(item.documentReturnDate)}</td><td>${item.recordedBy || "-"}</td><td><span class="deadline-box">${formatRemainingYMD(item.endDate)}</span></td>`;
       const actionCell = document.createElement("td");
       const actionWrap = document.createElement("div");
       actionWrap.className = "table-actions";
@@ -979,7 +976,7 @@ const runMouLaosPage = () => {
 
     if (!rows.length) {
       const tr = document.createElement("tr");
-      tr.innerHTML = '<td colspan="8">ยังไม่มีข้อมูล</td>';
+      tr.innerHTML = '<td colspan="9">ยังไม่มีข้อมูล</td>';
       list.appendChild(tr);
     }
   };
@@ -996,17 +993,12 @@ const runMouLaosPage = () => {
     event.preventDefault();
     const values = {
       workerName: document.getElementById("mouWorkerName").value.trim(),
-      gender: document.getElementById("mouGender").value,
-      employerName: document.getElementById("mouEmployer").value.trim(),
+      alienId: document.getElementById("mouAlienId").value.trim(),
       recordedBy: document.getElementById("mouRecordedBy").value.trim(),
       startDate: startDate.value,
       endDate: endDate.value,
       documentReceivedDate: document.getElementById("mouDocReceiveDate").value,
       documentReturnDate: document.getElementById("mouDocReturnDate").value,
-      documentSentDate: document.getElementById("mouDocSentDate").value,
-      overdue: document.getElementById("mouOverdue").checked,
-      sentImmigration: document.getElementById("mouSentImm").checked,
-      returnBook: document.getElementById("mouReturnBook").checked,
     };
 
     values.startDate = normalizeDateInputValue(values.startDate);
@@ -1023,9 +1015,7 @@ const runMouLaosPage = () => {
       const wasEdit = Boolean(submittingEditId);
       resetForm();
       await refreshRows();
-      const latest = rows.find((row) => row.workerName === values.workerName && row.employerName === values.employerName);
-      const stats = latest ? getAggregateBookStats(rows, latest, "visarun") : { total: 0, latestText: "-" };
-      status.textContent = `${wasEdit ? "แก้ไขข้อมูลเรียบร้อย" : "บันทึกข้อมูลเรียบร้อย"} • รวม ${stats.total} เล่ม • ล่าสุด: ${stats.latestText}`;
+      status.textContent = wasEdit ? "แก้ไขข้อมูลเรียบร้อย" : "บันทึกข้อมูลเรียบร้อย";
     } catch {
       status.textContent = "ไม่สามารถบันทึกข้อมูลได้ กรุณาตรวจสอบเซิร์ฟเวอร์";
       status.classList.add("error");

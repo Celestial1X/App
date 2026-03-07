@@ -299,17 +299,22 @@ const saveRecord = async (payload) => {
       body: JSON.stringify(payload),
     });
 
-  let response = await send(
-    incomingId ? `${RECORDS_API_URL}/${encodeURIComponent(incomingId)}` : RECORDS_API_URL,
-    incomingId ? "PUT" : "POST"
-  );
+  let response = null;
+  try {
+    response = await send(
+      incomingId ? `${RECORDS_API_URL}/${encodeURIComponent(incomingId)}` : RECORDS_API_URL,
+      incomingId ? "PUT" : "POST"
+    );
 
-  if (!response.ok && incomingId && [404, 405, 501].includes(response.status)) {
-    // backward compatibility: some deployments still expose upsert via POST only
-    response = await send(RECORDS_API_URL, "POST");
+    if (!response.ok && incomingId && [404, 405, 501].includes(response.status)) {
+      // backward compatibility: some deployments still expose upsert via POST only
+      response = await send(RECORDS_API_URL, "POST");
+    }
+  } catch (_error) {
+    response = null;
   }
 
-  if (!response.ok) {
+  if (!response || !response.ok) {
     const localRows = readLocalRecords();
     const fallbackId = incomingId || nextLocalId(localRows);
     const normalizedPayload = {
@@ -912,7 +917,7 @@ const runMouLaosPage = () => {
   };
 
   const refreshRows = async () => {
-    const records = await getRecordsByType("mouLaos");
+    const records = await fetchRecordsByType("mouLaos");
     rows = records.map(mapRecord).sort((a, b) => (b.id || "").localeCompare(a.id || "", "th"));
     renderRows();
     if (requestedEditId && !editFormId) {

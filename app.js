@@ -3074,9 +3074,11 @@ const updateFormStepVisibility = () => {
 updateFormStepVisibility();
 
 if (nextStepLink) {
-  nextStepLink.addEventListener("click", () => {
+  nextStepLink.addEventListener("click", (event) => {
+    event.preventDefault();
     saveFormDraft();
-    showLoader();
+    currentFormStep = 2;
+    updateFormStepVisibility();
   });
 } else if (nextStepButton) {
   nextStepButton.addEventListener("click", () => {

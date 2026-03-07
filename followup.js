@@ -94,6 +94,15 @@ const diffDays = (value) => {
   if (Math.abs(days) > 36500) return null;
   return days;
 };
+const diffDaysBetween = (startValue, endValue) => {
+  const start = toDateOnly(startValue);
+  const end = toDateOnly(endValue);
+  if (!start || !end) return null;
+  const days = Math.floor((end.getTime() - start.getTime()) / DAY_MS);
+  if (days < 0 || Math.abs(days) > 36500) return null;
+  return days;
+};
+
 const fmtDate = (value) => {
   const dt = toDateOnly(value);
   if (!dt) return value || "-";
@@ -488,7 +497,7 @@ const runReport90Page = () => {
   const renderRows = () => {
     list.innerHTML = "";
     const alerts = rows.filter((item) => {
-      const days = diffDays(item.nextDate);
+      const days = diffDaysBetween(item.startDate, item.nextDate);
       return days !== null && days >= 0 && days <= 90;
     });
     if (alerts.length) {
@@ -499,9 +508,9 @@ const runReport90Page = () => {
     }
 
     rows.forEach((item) => {
-      const remainingDays = diffDays(item.nextDate);
-      const cycleText = remainingDays === null ? "-" : `${fmtDate(item.nextDate)} (${remainingDays} วัน)`;
-      const cycleTone = getDeadlineToneByRemainingDays(remainingDays);
+      const cycleDays = diffDaysBetween(item.startDate, item.nextDate);
+      const cycleText = cycleDays === null ? "-" : `${fmtDate(item.nextDate)} (${cycleDays} วัน)`;
+      const cycleTone = getDeadlineToneByRemainingDays(cycleDays);
       const tr = document.createElement("tr");
       tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${getAggregateBookStats(rows, item, "report90").total}</td><td>${getAggregateBookStats(rows, item, "report90").latestText}</td><td>${fmtDate(item.nextDate)}</td><td><span class="deadline-box ${cycleTone}">${cycleText}</span></td>`;
       const actionCell = document.createElement("td");
@@ -680,7 +689,7 @@ const runVisaPage = () => {
   const renderRows = () => {
     list.innerHTML = "";
     const alerts = rows.filter((item) => {
-      const days = diffDays(item.endDate);
+      const days = diffDaysBetween(item.startDate, item.endDate);
       return days !== null && days >= 0 && days <= 90;
     });
     if (alerts.length) {
@@ -691,9 +700,9 @@ const runVisaPage = () => {
     }
 
     rows.forEach((item) => {
-      const remainingDays = diffDays(item.endDate);
-      const cycleText = remainingDays === null ? "-" : `${fmtDate(item.endDate)} (${remainingDays} วัน)`;
-      const cycleTone = getDeadlineToneByRemainingDays(remainingDays);
+      const cycleDays = diffDaysBetween(item.startDate, item.endDate);
+      const cycleText = cycleDays === null ? "-" : `${fmtDate(item.endDate)} (${cycleDays} วัน)`;
+      const cycleTone = getDeadlineToneByRemainingDays(cycleDays);
       const tr = document.createElement("tr");
       tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${getAggregateBookStats(rows, item, "visarun").total}</td><td>${getAggregateBookStats(rows, item, "visarun").latestText}</td><td>${fmtDate(item.endDate)}</td><td><span class="deadline-box ${cycleTone}">${cycleText}</span></td>`;
       const actionCell = document.createElement("td");

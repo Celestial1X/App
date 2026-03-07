@@ -27,11 +27,11 @@
         <a class="tab-btn is-active" href="form.html" data-i18n="tabForm">หน้าทำรายการต่างๆ</a>
         <a class="tab-btn" href="report90.html">รายงานตัว 90 วัน</a>
         <a class="tab-btn" href="visarun.html">Visa run</a>
-        <a class="tab-btn" href="nextform.html">รับเอกสาร</a>
+        <a class="tab-btn" href="nextform.html">MOU ลาว</a>
       </nav>
 
       <section class="panel" id="formPanel">
-        <h2>หน้าทำรายการต่างๆ</h2>
+        <h2>รับเอกสาร</h2>
         <form class="form-grid" id="workerForm">
           <div class="form-step" data-step="1">
             <div class="form-section">
@@ -203,31 +203,31 @@
 
             <div class="grid-3">
               <div class="form-row">
-                <label for="documentSender">ชื่อผู้ส่งเอกสาร</label>
-                <input id="documentSender" type="text" placeholder="กรอกชื่อผู้ส่งเอกสาร" />
+                <label for="documentReceivedDate">วันที่รับ</label>
+                <input id="documentReceivedDate" type="date" />
               </div>
               <div class="form-row">
                 <label for="documentSentDate">วันที่ส่ง</label>
                 <input id="documentSentDate" type="date" />
               </div>
               <div class="form-row">
-                <label for="documentReceiver">ชื่อผู้รับ</label>
-                <input id="documentReceiver" type="text" placeholder="กรอกชื่อผู้รับเอกสาร" />
+                <label for="recordedBy">ผู้บันทึกข้อมูล</label>
+                <input id="recordedBy" type="text" placeholder="กรอกชื่อผู้บันทึกข้อมูล" />
               </div>
             </div>
 
             <div class="grid-3">
               <div class="form-row">
-                <label for="documentReceivedDate">วันที่รับ</label>
-                <input id="documentReceivedDate" type="date" />
+                <label for="documentSender">ชื่อผู้ส่งเอกสาร</label>
+                <input id="documentSender" type="text" placeholder="กรอกชื่อผู้ส่งเอกสาร" />
+              </div>
+              <div class="form-row">
+                <label for="documentReceiver">ชื่อผู้รับ</label>
+                <input id="documentReceiver" type="text" placeholder="กรอกชื่อผู้รับเอกสาร" />
               </div>
               <div class="form-row">
                 <label for="documentReturnDate">วันที่ส่งเอกสารคืน</label>
                 <input id="documentReturnDate" type="date" />
-              </div>
-              <div class="form-row">
-                <label for="recordedBy">ผู้บันทึกข้อมูล</label>
-                <input id="recordedBy" type="text" placeholder="กรอกชื่อผู้บันทึกข้อมูล" />
               </div>
             </div>
 

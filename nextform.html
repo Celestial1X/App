@@ -3,260 +3,84 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>รับเอกสาร - ระบบตรวจสอบข้อมูลแรงงานต่างด้าว</title>
+    <title>MOU ลาว - ระบบตรวจสอบข้อมูลแรงงานต่างด้าว</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css?v=20260211" />
   </head>
-  <body>
+  <body data-page="moulaos">
     <header class="hero">
       <div class="hero__content">
         <div class="hero__top"></div>
-        <h1 data-i18n="heroTitle">ระบบตรวจสอบข้อมูลแรงงานต่างด้าว</h1>
+        <h1>ระบบตรวจสอบข้อมูลแรงงานต่างด้าว</h1>
       </div>
     </header>
 
     <main class="container">
       <nav class="page-tabs">
-        <a class="tab-btn" href="index.html" data-i18n="tabLookup">ค้นหาข้อมูล</a>
-        <a class="tab-btn" href="records.html" data-i18n="tabRecords">ข้อมูลบันทึก</a>
-        <a class="tab-btn" href="form.html" data-i18n="tabForm">หน้าทำรายการต่างๆ</a>
+        <a class="tab-btn" href="index.html">ค้นหาข้อมูล</a>
+        <a class="tab-btn" href="records.html">ข้อมูลบันทึก</a>
+        <a class="tab-btn" href="form.html">รับเอกสาร</a>
         <a class="tab-btn" href="report90.html">รายงานตัว 90 วัน</a>
         <a class="tab-btn" href="visarun.html">Visa run</a>
-        <a class="tab-btn is-active" href="nextform.html">รับเอกสาร</a>
+        <a class="tab-btn is-active" href="nextform.html">MOU ลาว</a>
       </nav>
 
-      <section class="panel" id="formPanel">
-        <h2>รับเอกสาร</h2>
-        <form class="form-grid" id="workerForm">
-          <div class="form-step" data-step="1">
-            <div class="form-section">
-              <h3>แบบฟอร์มข้อมูลส่วนตัวของต่างด้าว</h3>
-              <div class="grid-3">
-                <div class="form-row">
-                  <label for="workerFullName">ชื่อต่างด้าว</label>
-                  <input id="workerFullName" type="text" list="workerNameSuggestions" placeholder="กรอกชื่อต่างด้าว" />
-                </div>
-                <div class="form-row">
-                  <label for="workerGender">เพศ</label>
-                  <select id="workerGender">
-                    <option value="">เลือกเพศ</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-                <div class="form-row">
-                  <label for="workerNationality">สัญชาติ (Eng)</label>
-                  <input id="workerNationality" type="text" placeholder="เช่น MMR, LAO" />
-                </div>
-              </div>
-              <div class="grid-3">
-                <div class="form-row">
-                  <label for="workerEmail">Email ต่างด้าว</label>
-                  <input id="workerEmail" type="email" placeholder="example@email.com" />
-                </div>
-                <div class="form-row">
-                  <label for="workerCode">รหัส</label>
-                  <input id="workerCode" type="text" placeholder="กรอกรหัส" />
-                </div>
-                <div class="form-row">
-                  <label for="workerAlienId">เลขประจำตัวต่างด้าว</label>
-                  <input id="workerAlienId" type="text" placeholder="กรอกเลขประจำตัวต่างด้าว" />
-                </div>
-              </div>
-              <div class="grid-3">
-                <div class="form-row">
-                  <label for="workPermitExpiry">วันหมดอายุใบทำงาน</label>
-                  <input id="workPermitExpiry" type="date" />
-                </div>
-                <div class="form-row">
-                  <label for="passNumber">เลข Pass (ถ้ามี)</label>
-                  <input id="passNumber" type="text" placeholder="กรอกเลข Pass" />
-                </div>
-                <div class="form-row">
-                  <label for="passIssueDate">วันทำ Pass</label>
-                  <input id="passIssueDate" type="date" />
-                </div>
-              </div>
-              <div class="grid-3">
-                <div class="form-row">
-                  <label for="passExpiryDate">วันหมด Pass</label>
-                  <input id="passExpiryDate" type="date" />
-                  <label for="personalVisaExpiryDate">วันหมดอายุ Visa</label>
-                  <input id="personalVisaExpiryDate" type="date" />
-                </div>
-                <div class="form-row">
-                  <label for="businessType">ประเภทกิจการ</label>
-                  <select id="businessType"><option value="">เลือกประเภทกิจการ</option>
-                    <option value="BT01 ประมง กรรมกร">BT01 ประมง กรรมกร</option>
-                    <option value="BT01 ประมง ช่างเครื่องยนต์ในเรือประมง">BT01 ประมง ช่างเครื่องยนต์ในเรือประมง</option>
-                    <option value="BT02 ต่อเนื่องประมงทะเล กรรมกร">BT02 ต่อเนื่องประมงทะเล กรรมกร</option>
-                    <option value="BT03 เกษตรและปศุสัตว์ กรรมกร">BT03 เกษตรและปศุสัตว์ กรรมกร</option>
-                    <option value="BT04 กิจการก่อสร้าง กรรมกร">BT04 กิจการก่อสร้าง กรรมกร</option>
-                    <option value="BT05 ผู้รับใช้ในบ้าน ผู้รับใช้ในบ้าน">BT05 ผู้รับใช้ในบ้าน ผู้รับใช้ในบ้าน</option>
-                    <option value="BT06 กิจการต่อเนื่องการเกษตร กรรมกร">BT06 กิจการต่อเนื่องการเกษตร กรรมกร</option>
-                    <option value="BT07 ต่อเนื่องปศุสัตว์โรงฆ่าสัตว์ชำแหละ กรรมกร">BT07 ต่อเนื่องปศุสัตว์โรงฆ่าสัตว์ชำแหละ กรรมกร</option>
-                    <option value="BT08 กิจการรีไซเคิล กรรมกร">BT08 กิจการรีไซเคิล กรรมกร</option>
-                    <option value="BT09 เหมืองแร่/เหมืองหิน กรรมกร">BT09 เหมืองแร่/เหมืองหิน กรรมกร</option>
-                    <option value="BT10 จำหน่ายผลิตภัณฑ์โลหะ กรรมกร">BT10 จำหน่ายผลิตภัณฑ์โลหะ กรรมกร</option>
-                    <option value="BT11 จำหน่ายอาหารและเครื่องดื่ม กรรมกร">BT11 จำหน่ายอาหารและเครื่องดื่ม กรรมกร</option>
-                    <option value="BT12 ผลิตหรือจำหน่ายผลิตภัณฑ์จากดิน กรรมกร">BT12 ผลิตหรือจำหน่ายผลิตภัณฑ์จากดิน กรรมกร</option>
-                    <option value="BT13 ผลิตหรือจำหน่ายวัสดุก่อสร้าง กรรมกร">BT13 ผลิตหรือจำหน่ายวัสดุก่อสร้าง กรรมกร</option>
-                    <option value="BT14 แปรรูปหิน กรรมกร">BT14 แปรรูปหิน กรรมกร</option>
-                    <option value="BT15 ผลิตหรือจำหน่ายเสื้อผ้าสำเร็จรูป กรรมกร">BT15 ผลิตหรือจำหน่ายเสื้อผ้าสำเร็จรูป กรรมกร</option>
-                    <option value="BT16 ผลิตหรือจำหน่ายผลิตภัณฑ์พลาสติก กรรมกร">BT16 ผลิตหรือจำหน่ายผลิตภัณฑ์พลาสติก กรรมกร</option>
-                    <option value="BT17 ผลิตหรือจำหน่ายผลิตภัณฑ์กระดาษ กรรมกร">BT17 ผลิตหรือจำหน่ายผลิตภัณฑ์กระดาษ กรรมกร</option>
-                    <option value="BT18 ผลิตหรือจำหน่ายผลิตภัณฑ์อิเล็กทรอนิกส์ กรรมกร">BT18 ผลิตหรือจำหน่ายผลิตภัณฑ์อิเล็กทรอนิกส์ กรรมกร</option>
-                    <option value="BT19 ขนถ่ายสินค้าทางบก น้ำ คลังสินค้า กรรมกร">BT19 ขนถ่ายสินค้าทางบก น้ำ คลังสินค้า กรรมกร</option>
-                    <option value="BT20 ค้าส่ง ค้าปลีก แผงลอย กรรมกร">BT20 ค้าส่ง ค้าปลีก แผงลอย กรรมกร</option>
-                    <option value="BT21 อู่ซ่อมรถ ล้าง อัดฉีด กรรมกร">BT21 อู่ซ่อมรถ ล้าง อัดฉีด กรรมกร</option>
-                    <option value="BT22 สถานีบริการน้ำมัน แก๊ส เชื้อเพลิง กรรมกร">BT22 สถานีบริการน้ำมัน แก๊ส เชื้อเพลิง กรรมกร</option>
-                    <option value="BT23 สถานศึกษา มูลนิธิ สมาคม สถานพยาบาล กรรมกร">BT23 สถานศึกษา มูลนิธิ สมาคม สถานพยาบาล กรรมกร</option>
-                    <option value="BT24 การให้บริการต่างๆ กรรมกร">BT24 การให้บริการต่างๆ กรรมกร</option>
-                    <option value="BT25 แปรรูปสัตว์น้ำ กรรมกร">BT25 แปรรูปสัตว์น้ำ กรรมกร</option>
-                    <option value="BT26 งานผู้ประสานงานด้านภาษากัมพูชา ลาว หรือเมียนมา">BT26 งานผู้ประสานงานด้านภาษากัมพูชา ลาว หรือเมียนมา</option>
-                    <option value="other">อื่น ๆ (ระบุเอง)</option>
-                  </select>
-                  <input id="businessTypeCustom" type="text" class="is-hidden" placeholder="กรอกประเภทกิจการเพิ่มเติม" />
-                </div>
-                <div class="form-row">
-                  <label for="employerName">ชื่อนายจ้าง</label>
-                  <input id="employerName" type="text" list="employerNameSuggestions" placeholder="กรอกชื่อนายจ้าง" />
-                  <label for="employerEmail">เมลนายจ้าง</label>
-                  <input id="employerEmail" type="email" placeholder="company@email.com" />
-                </div>
-              </div>
-              <div class="form-row">
-                <label for="employerAddress">ที่อยู่นายจ้าง</label>
-                <textarea id="employerAddress" rows="2" placeholder="บ้านเลขที่/ถนน/ตำบล/อำเภอ/จังหวัด/รหัสไปรษณีย์"></textarea>
-              </div>
-            </div>
-            <div class="form-actions">
-              <button type="button" class="secondary" id="nextStepButton">ถัดไป</button>
-            </div>
+      <section class="panel">
+        <h2>MOU ลาว</h2>
+        <form id="mouLaosForm" class="form-grid">
+          <div class="grid-3">
+            <div class="form-row"><label for="mouWorkerName">ชื่อต่างด้าว</label><input id="mouWorkerName" type="text" list="workerNameSuggestions" /></div>
+            <div class="form-row"><label for="mouGender">เพศ</label><select id="mouGender"><option value="">เลือก</option><option value="female">female</option><option value="male">male</option><option value="other">other</option></select></div>
+            <div class="form-row"><label for="mouEmployer">ชื่อนายจ้าง</label><input id="mouEmployer" type="text" list="employerNameSuggestions" /></div>
           </div>
-
-          <div class="form-step is-hidden" data-step="2">
-            <div class="form-row">
-              <label>ประเภทงาน</label>
-              <div class="radio-grid">
-                <label class="radio-item"><input type="radio" name="formType" value="changeEmployer" checked /><span>เปลี่ยนนายจ้าง</span></label>
-                <label class="radio-item"><input type="radio" name="formType" value="residence37_38" /><span>แจ้งที่พัก 37,38</span></label>
-                <label class="radio-item"><input type="radio" name="formType" value="visaStamp" /><span>ลงตรา Visa</span></label>
-                <label class="radio-item"><input type="radio" name="formType" value="ciReport" /><span>ทำเล่ม CI</span></label>
-                <label class="radio-item"><input type="radio" name="formType" value="workPermitRenewal" /><span>ต่ออนุญาตทำงานแรงงานต่างด้าว</span></label>
-                <label class="radio-item"><input type="radio" name="formType" value="noDocsRegister" /><span>ขึ้นทะเบียนคนไม่มีเอกสาร</span></label>
-                <label class="radio-item"><input type="radio" name="formType" value="exitNotice" /><span>แจ้งออก</span></label>
-                <label class="radio-item"><input type="radio" name="formType" value="other" /><span>อื่น ๆ</span></label>
-              </div>
-              <div class="form-row is-hidden" id="formTypeOtherRow">
-                <label for="formTypeOtherDetail">ระบุรายละเอียดอื่น ๆ</label>
-                <input id="formTypeOtherDetail" type="text" placeholder="ระบุประเภทงานอื่น ๆ" />
-              </div>
-            </div>
-
-            <div class="form-section" data-section="all">
-              <h3>ข้อมูลเอกสารที่ได้รับมา</h3>
-              <div class="checkbox-grid">
-                <label class="checkbox-item"><input type="checkbox" id="docWorkPermit" /><span>ใบอนุญาตการทำงาน</span></label>
-                <label class="checkbox-item"><input type="checkbox" id="docReceipt" /><span>ใบเสร็จ</span></label>
-                <label class="checkbox-item"><input type="checkbox" id="docRequestForm" /><span>ใบคำขอ</span></label>
-                <label class="checkbox-item"><input type="checkbox" id="docNameList" /><span>เนมลิส</span></label>
-                <label class="checkbox-item"><input type="checkbox" id="docPassPage" /><span>หน้า Pass (ตัวจริง)</span></label>
-                <label class="checkbox-item"><input type="checkbox" id="docVisaPage" /><span>หน้า Visa (ตัวจริง)</span></label>
-                <label class="checkbox-item"><input type="checkbox" id="docPassCopy" /><span>หน้า Pass (สำเนา)</span></label>
-                <label class="checkbox-item"><input type="checkbox" id="docVisaCopy" /><span>หน้า visa (สำเนา)</span></label>
-                <label class="checkbox-item"><input type="checkbox" id="docWorkPermitCopy" /><span>ใบอนุญาติทำงาน (สำเนา)</span></label>
-                <label class="checkbox-item"><input type="checkbox" id="docHealthCard" /><span>บัตรสุขภาพ</span></label>
-                <label class="checkbox-item"><input type="checkbox" id="docExitNotice" /><span>ใบแจ้งออก</span></label>
-                <label class="checkbox-item"><input type="checkbox" id="docHouseReg" /><span>ทะเบียนบ้านนายจ้าง</span></label>
-                <label class="checkbox-item"><input type="checkbox" id="docEmployerIdCard" /><span>บัตรประชาชนหน้าหลัง</span></label>
-                <label class="checkbox-item"><input type="checkbox" id="docCompanyCert" /><span>หนังสือรับรองบริษัท</span></label>
-              </div>
-              <div class="form-row">
-                <label for="documentJobType">ประเภทงาน</label>
-                <input id="documentJobType" type="text" placeholder="ระบุประเภทงาน" />
-                <label for="documentsNote">หมายเหตุเอกสาร</label>
-                <textarea id="documentsNote" rows="3" placeholder="บันทึกเอกสารที่ขาด หรือเอกสารมีปัญหา"></textarea>
-              </div>
-            </div>
-
-            <div class="form-section" data-section="all">
-              <h3>สถานะ</h3>
-              <div class="radio-grid">
-                <label class="radio-item"><input type="radio" name="caseStatus" value="registered" checked /><span>ลงระบบ</span></label>
-                <label class="radio-item"><input type="radio" name="caseStatus" value="pending" /><span>รออนุมัติ</span></label>
-                <label class="radio-item"><input type="radio" name="caseStatus" value="appointment" /><span>นัดหมาย</span></label>
-              </div>
-              <div class="form-row is-hidden" id="appointmentDateRow">
-                <label for="appointmentDate">วันที่นัดหมาย</label>
-                <input id="appointmentDate" type="date" />
-                <label for="appointmentNote">รายละเอียดนัดหมาย</label>
-                <input id="appointmentNote" type="text" placeholder="ระบุรายละเอียดนัดหมาย" />
-              </div>
-            </div>
-
-            <div class="grid-3">
-              <div class="form-row">
-                <label for="documentReceivedDate">วันที่รับ</label>
-                <input id="documentReceivedDate" type="date" />
-              </div>
-              <div class="form-row">
-                <label for="documentSentDate">วันที่ส่ง</label>
-                <input id="documentSentDate" type="date" />
-              </div>
-              <div class="form-row">
-                <label for="recordedBy">ผู้บันทึกข้อมูล</label>
-                <input id="recordedBy" type="text" placeholder="กรอกชื่อผู้บันทึกข้อมูล" />
-              </div>
-            </div>
-
-            <div class="grid-3">
-              <div class="form-row">
-                <label for="documentSender">ชื่อผู้ส่งเอกสาร</label>
-                <input id="documentSender" type="text" placeholder="กรอกชื่อผู้ส่งเอกสาร" />
-              </div>
-              <div class="form-row">
-                <label for="documentReceiver">ชื่อผู้รับ</label>
-                <input id="documentReceiver" type="text" placeholder="กรอกชื่อผู้รับเอกสาร" />
-              </div>
-              <div class="form-row">
-                <label for="documentReturnDate">วันที่ส่งเอกสารคืน</label>
-                <input id="documentReturnDate" type="date" />
-              </div>
-            </div>
-
-            <div class="form-actions">
-              <span class="status-text" id="formSaveStatus"></span>
-              <button type="button" class="secondary" id="prevStepButton">ย้อนกลับ</button>
-              <button type="button" class="secondary" id="clearFormDraft">ล้างข้อมูลแบบฟอร์ม</button>
-              <button type="button" class="secondary" id="draftButton">บันทึกฉบับร่าง</button>
-              <button type="submit" class="primary">บันทึกข้อมูล</button>
-              <button type="button" class="secondary" id="verifyRecord">ตรวจสอบข้อมูล</button>
-            </div>
+          <div class="grid-3">
+            <div class="form-row"><label for="mouStartDate">วันเริ่ม MOU</label><input id="mouStartDate" type="date" /></div>
+            <div class="form-row"><label for="mouEndDate">ครบกำหนด 2 ปี</label><input id="mouEndDate" type="date" /></div>
+            <div class="form-row"><label for="mouRecordedBy">ผู้บันทึกข้อมูล</label><input id="mouRecordedBy" type="text" /></div>
           </div>
-          <datalist id="workerNameSuggestions"></datalist>
-  <datalist id="employerNameSuggestions"></datalist>
+          <div class="grid-3">
+            <div class="form-row"><label for="mouDocReceiveDate">วันรับเอกสาร</label><input id="mouDocReceiveDate" type="date" /></div>
+            <div class="form-row"><label for="mouDocReturnDate">วันคืนเอกสาร</label><input id="mouDocReturnDate" type="date" /></div>
+            <div class="form-row"><label for="mouDocSentDate">วันที่ส่งเอกสาร</label><input id="mouDocSentDate" type="date" /></div>
+          </div>
+          <div class="grid-3">
+            <label class="checkbox-item"><input id="mouSentImm" type="checkbox" /><span>ส่งเล่มไป ตม.</span></label>
+            <label class="checkbox-item"><input id="mouReturnBook" type="checkbox" /><span>ส่งเล่มคืน</span></label>
+            <label class="checkbox-item"><input id="mouOverdue" type="checkbox" /><span>เกินกำหนด</span></label>
+          </div>
+          <div class="form-actions"><span class="status-text" id="mouStatus"></span><button class="primary" type="submit">บันทึกข้อมูล</button></div>
         </form>
       </section>
+
+      <section class="panel">
+        <h3>ข้อมูลบันทึก MOU ลาว</h3>
+        <div id="mouAlert" class="warning-banner is-hidden"></div>
+        <div class="records-table-wrapper">
+          <table class="records-table">
+            <thead><tr><th>ชื่อต่างด้าว</th><th>นายจ้าง</th><th>ผู้บันทึก</th><th>รวมเล่มที่บันทึก</th><th>เล่มที่บันทึกล่าสุด</th><th>ครบกำหนด 2 ปี</th><th>สถานะเตือน</th><th>การจัดการ</th></tr></thead>
+            <tbody id="mouList"></tbody>
+          </table>
+        </div>
+      </section>
+      <datalist id="workerNameSuggestions"></datalist>
+      <datalist id="employerNameSuggestions"></datalist>
     </main>
 
-    <div class="page-loader is-active" id="pageLoader" aria-hidden="true">
-      <div class="page-loader__content">
-        <div class="page-loader__dots" aria-hidden="true">
-          <span></span>
-          <span></span>
-          <span></span>
+    <div class="modal" id="followupModal" aria-hidden="true">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="followupModalTitle">ตรวจสอบข้อมูล</h3>
+          <button type="button" class="modal-close" id="followupModalClose" aria-label="ปิด">✕</button>
         </div>
-        <p data-i18n="loadingText">กำลังโหลด...</p>
+        <div id="followupModalBody" class="modal-body"></div>
+        <div class="modal-actions">
+          <button type="button" class="secondary" id="followupModalCloseButton">ปิดหน้าต่าง</button>
+        </div>
       </div>
     </div>
 
-    <script src="app.js?v=20260211"></script>
+    <script src="followup.js?v=20260211"></script>
   </body>
 </html>

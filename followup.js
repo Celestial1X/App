@@ -71,6 +71,12 @@ const addDays = (value, days) => {
   dt.setDate(dt.getDate() + days);
   return formatDateInputValue(dt);
 };
+const addYears = (value, years) => {
+  const dt = toDateOnly(value);
+  if (!dt) return "";
+  dt.setFullYear(dt.getFullYear() + years);
+  return formatDateInputValue(dt);
+};
 const normalizeDateInputValue = (value) => {
   const dt = toDateOnly(value);
   if (!dt) return "";
@@ -413,6 +419,42 @@ const toVisaRunPayload = (values, formId = "") => ({
       returnBook: values.returnBook,
       p60: values.p60,
       p30: values.p30,
+    },
+  },
+});
+
+
+const toMouLaosPayload = (values, formId = "") => ({
+  formId,
+  formType: "mouLaos",
+  formTypeLabel: "MOU ลาว",
+  displayName: `MOU ลาว - ${values.workerName || "-"}`,
+  status: "final",
+  updatedAt: new Date().toISOString(),
+  data: {
+    recordedBy: values.recordedBy || "",
+    company: "",
+    startDate: values.startDate || "",
+    personalInfo: {
+      fullName: values.workerName,
+      gender: values.gender,
+      employerName: values.employerName,
+    },
+    caseStatus: {
+      status: "registered",
+      appointmentDate: "",
+      appointmentNote: "",
+    },
+    followupType: "moulaos",
+    followup: {
+      startDate: values.startDate,
+      endDate: normalizeDateInputValue(values.endDate) || addYears(values.startDate, 2),
+      documentReceivedDate: values.documentReceivedDate,
+      documentReturnDate: values.documentReturnDate,
+      documentSentDate: values.documentSentDate,
+      visaOverdue: values.overdue,
+      sentImmigration: values.sentImmigration,
+      returnBook: values.returnBook,
     },
   },
 });
@@ -797,9 +839,206 @@ const runVisaPage = () => {
   });
 };
 
+
+const runMouLaosPage = () => {
+  const form = document.getElementById("mouLaosForm");
+  const startDate = document.getElementById("mouStartDate");
+  const endDate = document.getElementById("mouEndDate");
+  const status = document.getElementById("mouStatus");
+  const list = document.getElementById("mouList");
+  const alert = document.getElementById("mouAlert");
+  const modal = setupModal();
+  let rows = [];
+  let editFormId = "";
+  const requestedEditId = getEditIdFromQuery();
+  if (requestedEditId) editFormId = requestedEditId;
+
+  const resetForm = () => {
+    form.reset();
+    editFormId = "";
+  };
+
+  const mapRecord = (record) => {
+    const info = record?.data?.personalInfo || {};
+    const followup = record?.data?.followup || {};
+    const startDateValue = followup.startDate || "";
+    const endDateValue = normalizeDateInputValue(followup.endDate) || addYears(startDateValue, 2);
+    return {
+      id: record.formId,
+      workerName: info.fullName || "",
+      gender: info.gender || info.nationality || "",
+      employerName: info.employerName || "",
+      recordedBy: record?.data?.recordedBy || "",
+      startDate: startDateValue,
+      endDate: endDateValue,
+      documentReceivedDate: followup.documentReceivedDate || "",
+      documentReturnDate: followup.documentReturnDate || "",
+      documentSentDate: followup.documentSentDate || "",
+      overdue: !!followup.visaOverdue,
+      sentImmigration: !!followup.sentImmigration,
+      returnBook: !!followup.returnBook,
+    };
+  };
+
+  const fillForEdit = (item) => {
+    document.getElementById("mouWorkerName").value = item.workerName || "";
+    document.getElementById("mouGender").value = item.gender || "";
+    document.getElementById("mouEmployer").value = item.employerName || "";
+    document.getElementById("mouRecordedBy").value = item.recordedBy || "";
+    startDate.value = item.startDate || "";
+    endDate.value = item.endDate || "";
+    document.getElementById("mouDocReceiveDate").value = item.documentReceivedDate || "";
+    document.getElementById("mouDocReturnDate").value = item.documentReturnDate || "";
+    document.getElementById("mouDocSentDate").value = item.documentSentDate || "";
+    document.getElementById("mouOverdue").checked = !!item.overdue;
+    document.getElementById("mouSentImm").checked = !!item.sentImmigration;
+    document.getElementById("mouReturnBook").checked = !!item.returnBook;
+    editFormId = item.id;
+  };
+
+  const showDetail = (item) => {
+    modal.open("ตรวจสอบข้อมูล MOU ลาว", [
+      ["เลขฟอร์ม", item.id || "-"],
+      ["ชื่อต่างด้าว", item.workerName || "-"],
+      ["เพศ", item.gender || "-"],
+      ["ชื่อนายจ้าง", item.employerName || "-"],
+      ["ผู้บันทึกข้อมูล", item.recordedBy || "-"],
+      ["วันเริ่ม MOU", fmtDate(item.startDate)],
+      ["ครบกำหนด 2 ปี", fmtDate(item.endDate)],
+      ["วันรับเอกสาร", fmtDate(item.documentReceivedDate)],
+      ["วันส่งเอกสาร", fmtDate(item.documentSentDate)],
+      ["วันคืนเอกสาร", fmtDate(item.documentReturnDate)],
+    ]);
+  };
+
+  const refreshRows = async () => {
+    const records = await getRecordsByType("mouLaos");
+    rows = records.map(mapRecord).sort((a, b) => (b.id || "").localeCompare(a.id || "", "th"));
+    renderRows();
+    if (requestedEditId && !editFormId) {
+      const target = rows.find((item) => String(item.id) === requestedEditId);
+      if (target) fillForEdit(target);
+    }
+  };
+
+  const renderRows = () => {
+    list.innerHTML = "";
+    const alerts = rows.filter((item) => {
+      const days = diffDaysBetween(item.startDate, item.endDate);
+      return days !== null && days >= 0 && days <= 730;
+    });
+    if (alerts.length) {
+      alert.textContent = `แจ้งเตือน: มี ${alerts.length} รายการที่อยู่ในรอบ 2 ปี`;
+      alert.classList.remove("is-hidden");
+    } else {
+      alert.classList.add("is-hidden");
+    }
+
+    rows.forEach((item) => {
+      const cycleDays = diffDaysBetween(item.startDate, item.endDate);
+      const cycleText = cycleDays === null ? "-" : `${fmtDate(item.endDate)} (${cycleDays} วัน)`;
+      const cycleTone = getDeadlineToneByRemainingDays(cycleDays);
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${getAggregateBookStats(rows, item, "visarun").total}</td><td>${getAggregateBookStats(rows, item, "visarun").latestText}</td><td>${fmtDate(item.endDate)}</td><td><span class="deadline-box ${cycleTone}">${cycleText}</span></td>`;
+      const actionCell = document.createElement("td");
+      const actionWrap = document.createElement("div");
+      actionWrap.className = "table-actions";
+
+      const verifyButton = document.createElement("button");
+      verifyButton.type = "button";
+      verifyButton.className = "secondary";
+      verifyButton.textContent = "ตรวจสอบ";
+      verifyButton.addEventListener("click", () => showDetail(item));
+
+      const editButton = document.createElement("button");
+      editButton.type = "button";
+      editButton.className = "secondary";
+      editButton.textContent = "แก้ไข";
+      editButton.addEventListener("click", () => fillForEdit(item));
+
+      const deleteButton = document.createElement("button");
+      deleteButton.type = "button";
+      deleteButton.className = "danger";
+      deleteButton.textContent = "ลบ";
+      deleteButton.addEventListener("click", async () => {
+        if (!window.confirm(`ยืนยันการลบข้อมูล MOU ลาว ของ ${item.workerName || "-"} ?`)) return;
+        await deleteRecordById(item.id);
+        await refreshRows();
+      });
+
+      actionWrap.append(verifyButton, editButton, deleteButton);
+      actionCell.appendChild(actionWrap);
+      tr.appendChild(actionCell);
+      list.appendChild(tr);
+    });
+
+    if (!rows.length) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = '<td colspan="8">ยังไม่มีข้อมูล</td>';
+      list.appendChild(tr);
+    }
+  };
+
+  const updateMouEndDate = () => {
+    if (!endDate.value) {
+      endDate.value = addYears(startDate.value, 2);
+    }
+  };
+  startDate?.addEventListener("change", updateMouEndDate);
+  startDate?.addEventListener("input", updateMouEndDate);
+
+  form?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const values = {
+      workerName: document.getElementById("mouWorkerName").value.trim(),
+      gender: document.getElementById("mouGender").value,
+      employerName: document.getElementById("mouEmployer").value.trim(),
+      recordedBy: document.getElementById("mouRecordedBy").value.trim(),
+      startDate: startDate.value,
+      endDate: endDate.value,
+      documentReceivedDate: document.getElementById("mouDocReceiveDate").value,
+      documentReturnDate: document.getElementById("mouDocReturnDate").value,
+      documentSentDate: document.getElementById("mouDocSentDate").value,
+      overdue: document.getElementById("mouOverdue").checked,
+      sentImmigration: document.getElementById("mouSentImm").checked,
+      returnBook: document.getElementById("mouReturnBook").checked,
+    };
+
+    values.startDate = normalizeDateInputValue(values.startDate);
+    if (!values.startDate) {
+      status.textContent = "กรุณาใส่วันเริ่ม MOU ก่อนบันทึก";
+      status.classList.add("error");
+      return;
+    }
+
+    try {
+      const submittingEditId = editFormId || requestedEditId || "";
+      startDate.value = values.startDate;
+      await saveRecord(toMouLaosPayload(values, submittingEditId));
+      const wasEdit = Boolean(submittingEditId);
+      resetForm();
+      await refreshRows();
+      const latest = rows.find((row) => row.workerName === values.workerName && row.employerName === values.employerName);
+      const stats = latest ? getAggregateBookStats(rows, latest, "visarun") : { total: 0, latestText: "-" };
+      status.textContent = `${wasEdit ? "แก้ไขข้อมูลเรียบร้อย" : "บันทึกข้อมูลเรียบร้อย"} • รวม ${stats.total} เล่ม • ล่าสุด: ${stats.latestText}`;
+    } catch {
+      status.textContent = "ไม่สามารถบันทึกข้อมูลได้ กรุณาตรวจสอบเซิร์ฟเวอร์";
+      status.classList.add("error");
+    }
+  });
+
+  refreshRows().catch(() => {
+    status.textContent = "ไม่สามารถโหลดข้อมูลกลางได้ กรุณาตรวจสอบการเชื่อมต่อเซิร์ฟเวอร์";
+    status.classList.add("error");
+  });
+};
+
 if (document.body.dataset.page === "report90") {
   runReport90Page();
 }
 if (document.body.dataset.page === "visarun") {
   runVisaPage();
+}
+if (document.body.dataset.page === "moulaos") {
+  runMouLaosPage();
 }

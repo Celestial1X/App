@@ -493,7 +493,7 @@ const translations = {
     paymentNotesPlaceholder: "รายละเอียดเพิ่มเติม",
     tabLookup: "การค้นหาข้อมูล",
     tabRecords: "รายการบันทึก",
-    tabForm: "หน้าทำรายการต่างๆ",
+    tabForm: "รับเอกสาร",
     recordedByLabel: "ผู้บันทึกข้อมูล",
     recordedByPlaceholder: "กรอกชื่อผู้บันทึกข้อมูล",
     workerCountSuffix: "คน",
@@ -764,7 +764,7 @@ const translations = {
     paymentNotesPlaceholder: "Additional details",
     tabLookup: "Lookup",
     tabRecords: "Records",
-    tabForm: "Task page",
+    tabForm: "Receive documents",
     recordedByLabel: "Recorded by",
     recordedByPlaceholder: "Enter recorder name",
     workerCountSuffix: "workers",
@@ -2139,6 +2139,8 @@ const renderRecords = () => {
       const followupPageMap = {
         report90: "report90.html",
         visarun: "visarun.html",
+        mouLaos: "nextform.html",
+        mouLaosRenew: "nextform.html",
       };
       const targetPage = followupPageMap[record.formType] || "form.html";
       if (targetPage === "form.html") {

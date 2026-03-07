@@ -77,6 +77,12 @@ const normalizeDateInputValue = (value) => {
   return formatDateInputValue(dt);
 };
 
+const computeFollowupDateFromStart = (startDateValue) => {
+  const normalized = normalizeDateInputValue(startDateValue);
+  if (!normalized) return "";
+  return addDays(normalized, 90);
+};
+
 
 
 const diffDays = (value) => {
@@ -365,7 +371,7 @@ const toReport90Payload = (values, formId = "") => ({
     followupType: "report90",
     followup: {
       startDate: values.startDate,
-      nextDate: normalizeDateInputValue(values.nextDate) || "",
+      nextDate: normalizeDateInputValue(values.nextDate) || computeFollowupDateFromStart(values.startDate),
       documentReceivedDate: values.documentReceivedDate,
       documentReturnDate: values.documentReturnDate,
       overdueFine: values.overdueFine,
@@ -399,7 +405,7 @@ const toVisaRunPayload = (values, formId = "") => ({
     followupType: "visarun",
     followup: {
       startDate: values.startDate,
-      endDate: normalizeDateInputValue(values.endDate) || "",
+      endDate: normalizeDateInputValue(values.endDate) || computeFollowupDateFromStart(values.startDate),
       documentReceivedDate: values.documentReceivedDate,
       documentReturnDate: values.documentReturnDate,
       visaOverdue: values.visaOverdue,
@@ -436,7 +442,7 @@ const runReport90Page = () => {
     const info = record?.data?.personalInfo || {};
     const followup = record?.data?.followup || {};
     const startDateValue = followup.startDate || "";
-    const nextDateValue = normalizeDateInputValue(followup.nextDate) || "";
+    const nextDateValue = normalizeDateInputValue(followup.nextDate) || computeFollowupDateFromStart(startDateValue);
     return {
       id: record.formId,
       workerName: info.fullName || "",
@@ -544,6 +550,13 @@ const runReport90Page = () => {
     }
   };
 
+  const updateReport90NextDate = () => {
+    if (!nextDate.value) {
+      nextDate.value = addDays(startDate.value, 90);
+    }
+  };
+  startDate?.addEventListener("change", updateReport90NextDate);
+  startDate?.addEventListener("input", updateReport90NextDate);
 
   form?.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -562,14 +575,8 @@ const runReport90Page = () => {
     };
 
     values.startDate = normalizeDateInputValue(values.startDate);
-    values.nextDate = normalizeDateInputValue(values.nextDate);
     if (!values.startDate) {
       status.textContent = "กรุณาใส่วันที่เริ่มรายงานตัวก่อนบันทึก";
-      status.classList.add("error");
-      return;
-    }
-    if (!values.nextDate) {
-      status.textContent = "กรุณาใส่วันที่ 90 วันถัดไปก่อนบันทึก";
       status.classList.add("error");
       return;
     }
@@ -621,7 +628,7 @@ const runVisaPage = () => {
     const info = record?.data?.personalInfo || {};
     const followup = record?.data?.followup || {};
     const startDateValue = followup.startDate || "";
-    const endDateValue = normalizeDateInputValue(followup.endDate) || "";
+    const endDateValue = normalizeDateInputValue(followup.endDate) || computeFollowupDateFromStart(startDateValue);
     return {
       id: record.formId,
       workerName: info.fullName || "",
@@ -735,6 +742,13 @@ const runVisaPage = () => {
     }
   };
 
+  const updateVisaEndDate = () => {
+    if (!endDate.value) {
+      endDate.value = addDays(startDate.value, 90);
+    }
+  };
+  startDate?.addEventListener("change", updateVisaEndDate);
+  startDate?.addEventListener("input", updateVisaEndDate);
 
   form?.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -755,14 +769,8 @@ const runVisaPage = () => {
     };
 
     values.startDate = normalizeDateInputValue(values.startDate);
-    values.endDate = normalizeDateInputValue(values.endDate);
     if (!values.startDate) {
       status.textContent = "กรุณาใส่วันเริ่ม Visa ก่อนบันทึก";
-      status.classList.add("error");
-      return;
-    }
-    if (!values.endDate) {
-      status.textContent = "กรุณาใส่วันหมด Visa ก่อนบันทึก";
       status.classList.add("error");
       return;
     }

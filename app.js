@@ -1394,15 +1394,6 @@ const getDaysUntil = (value) => {
   return days;
 };
 
-const getDaysBetweenDateValues = (startValue, endValue) => {
-  const start = parseDateOnlyLocal(startValue);
-  const end = parseDateOnlyLocal(endValue);
-  if (!start || !end) return null;
-  const days = Math.floor((end.getTime() - start.getTime()) / DAY_MS);
-  if (days < 0 || Math.abs(days) > 36500) return null;
-  return days;
-};
-
 const getDeadlineToneClass = (days) => {
   if (days === null) return "deadline-box--none";
   if (days < 30) return "deadline-box--danger";
@@ -1496,7 +1487,7 @@ const renderFollowupSummaryList = (target, records, typeLabel, dateField) => {
       const followup = record?.data?.followup || {};
       const startDate = followup?.startDate || "";
       const dateValue = followup?.[dateField] || "";
-      const days = getDaysBetweenDateValues(startDate, dateValue);
+      const days = getDaysUntil(dateValue);
       return {
         formId: record?.formId || "-",
         updatedAt: record?.updatedAt,
@@ -1519,7 +1510,7 @@ const renderFollowupSummaryList = (target, records, typeLabel, dateField) => {
   target.innerHTML = rows
     .map((item) => {
       const toneClass = getDeadlineToneClass(item.days);
-      return `<div class="mini-summary-item ${toneClass}"><p>${item.formId} • ${item.typeLabel}</p><p>${formatDateTime(item.updatedAt)} • ${item.name}</p><p>${formatDateOnlyDMY(item.startDate)} → ${formatDateOnlyDMY(item.dateValue)} • ${getDeadlineToneText(item.days)}</p></div>`;
+      return `<div class="mini-summary-item ${toneClass}"><p>${item.formId} • ${item.typeLabel}</p><p>${formatDateTime(item.updatedAt)} • ${item.name}</p><p>${formatDateOnlyDMY(item.startDate)} → ${formatDateOnlyDMY(item.dateValue)} • คงเหลือ ${getDeadlineToneText(item.days)}</p></div>`;
     })
     .join("");
 };

@@ -35,6 +35,7 @@ const workerNationality = document.getElementById("workerNationality");
 const workerEmail = document.getElementById("workerEmail");
 const workerCode = document.getElementById("workerCode");
 const workerAlienId = document.getElementById("workerAlienId");
+const workPermitNumber = document.getElementById("workPermitNumber");
 const workPermitExpiry = document.getElementById("workPermitExpiry");
 const passNumber = document.getElementById("passNumber");
 const passIssueDate = document.getElementById("passIssueDate");
@@ -85,6 +86,9 @@ const paymentSlipInput = document.getElementById("paymentSlip");
 const paymentSlipPreview = document.getElementById("paymentSlipPreview");
 const workerForm = document.getElementById("workerForm");
 const formSaveStatus = document.getElementById("formSaveStatus");
+const workPermitExpiryStatus = document.getElementById("workPermitExpiryStatus");
+const passExpiryDateStatus = document.getElementById("passExpiryDateStatus");
+const personalVisaExpiryDateStatus = document.getElementById("personalVisaExpiryDateStatus");
 const recordSearch = document.getElementById("recordSearch");
 const recordFilter = document.getElementById("recordFilter");
 const recordsStatus = document.getElementById("recordsStatus");
@@ -1662,6 +1666,24 @@ const updateExpiryStatusForInput = (input, statusElement) => {
   setStatus(statusElement, formatExpiryLabel(state, days), statusType);
 };
 
+const bindPersonalExpiryStatuses = () => {
+  const mappings = [
+    [workPermitExpiry, workPermitExpiryStatus],
+    [passExpiryDate, passExpiryDateStatus],
+    [personalVisaExpiryDate, personalVisaExpiryDateStatus],
+  ];
+  mappings.forEach(([input, status]) => {
+    if (!input || !status) return;
+    if (!input.dataset.expiryBound) {
+      const refresh = () => updateExpiryStatusForInput(input, status);
+      input.addEventListener("input", refresh);
+      input.addEventListener("change", refresh);
+      input.dataset.expiryBound = "true";
+    }
+    updateExpiryStatusForInput(input, status);
+  });
+};
+
 const updateWorkerCardTitle = (card, index) => {
   const title = card.querySelector(".worker-card__title");
   if (!title) return;
@@ -1971,6 +1993,7 @@ const collectFormData = () => {
       email: workerEmail?.value?.trim() || "",
       code: workerCode?.value?.trim() || "",
       alienId: workerAlienId?.value?.trim() || "",
+      workPermitNumber: workPermitNumber?.value?.trim() || "",
       workPermitExpiry: workPermitExpiry?.value || "",
       passNumber: passNumber?.value?.trim() || "",
       passIssueDate: passIssueDate?.value || "",
@@ -2449,6 +2472,12 @@ const openRecordModal = (record) => {
     if (personalInfo.alienId) {
       addRow("เลขประจำตัวต่างด้าว", personalInfo.alienId);
     }
+    if (personalInfo.workPermitNumber) {
+      addRow("เลขใบอนุญาตการทำงาน", personalInfo.workPermitNumber);
+    }
+    if (personalInfo.workPermitExpiry) {
+      addRow("วันหมดอายุใบทำงาน", formatDateOnlyDMY(personalInfo.workPermitExpiry));
+    }
     if (personalInfo.passNumber) {
       addRow("เลข Pass", personalInfo.passNumber);
     }
@@ -2734,6 +2763,7 @@ const buildRecordSearchText = (record) => {
     personalInfo.email,
     personalInfo.code,
     personalInfo.alienId,
+    personalInfo.workPermitNumber,
     personalInfo.workPermitExpiry,
     personalInfo.passNumber,
     personalInfo.passIssueDate,
@@ -2950,6 +2980,7 @@ if (formTypeInputs?.length) {
   if (workerEmail) workerEmail.value = record.data.personalInfo?.email || "";
   if (workerCode) workerCode.value = record.data.personalInfo?.code || "";
   if (workerAlienId) workerAlienId.value = record.data.personalInfo?.alienId || "";
+  if (workPermitNumber) workPermitNumber.value = record.data.personalInfo?.workPermitNumber || "";
   if (workPermitExpiry) workPermitExpiry.value = record.data.personalInfo?.workPermitExpiry || "";
   if (passNumber) passNumber.value = record.data.personalInfo?.passNumber || "";
   if (passIssueDate) passIssueDate.value = record.data.personalInfo?.passIssueDate || "";
@@ -3061,17 +3092,20 @@ if (formTypeInputs?.length) {
   updateUploadPreview();
   updatePaymentSlipPreview();
   updateBusinessTypeCustomVisibility();
+  bindPersonalExpiryStatuses();
 };
 
 const updateFormStepVisibility = () => {
   if (!formSteps?.length) return;
+  const isSinglePage = workerForm?.dataset?.singlePage === "true";
   formSteps.forEach((step) => {
     const stepNo = Number(step.dataset.step || 1);
-    step.classList.toggle("is-hidden", stepNo !== currentFormStep);
+    step.classList.toggle("is-hidden", !isSinglePage && stepNo !== currentFormStep);
   });
 };
 
 updateFormStepVisibility();
+bindPersonalExpiryStatuses();
 
 if (nextStepLink) {
   nextStepLink.addEventListener("click", (event) => {
@@ -3096,6 +3130,9 @@ if (nextStepLink) {
 }
 if (prevStepButton) {
   prevStepButton.addEventListener("click", () => {
+    if (workerForm?.dataset?.singlePage === "true") {
+      return;
+    }
     if (isNextFormPage) {
       saveFormDraft();
       showLoader();

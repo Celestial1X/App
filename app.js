@@ -85,9 +85,6 @@ const formSaveStatus = document.getElementById("formSaveStatus");
 const workPermitExpiryStatus = document.getElementById("workPermitExpiryStatus");
 const passExpiryDateStatus = document.getElementById("passExpiryDateStatus");
 const personalVisaExpiryDateStatus = document.getElementById("personalVisaExpiryDateStatus");
-const scanDocumentImageInput = document.getElementById("scanDocumentImage");
-const scanDocumentButton = document.getElementById("scanDocumentButton");
-const scanDocumentStatus = document.getElementById("scanDocumentStatus");
 const LEGACY_ATTACHMENT_KEYS = ["facePhoto", "idCard", "houseDoc", "paymentSlip"];
 const recordSearch = document.getElementById("recordSearch");
 const recordFilter = document.getElementById("recordFilter");
@@ -1613,100 +1610,6 @@ const bindPersonalExpiryStatuses = () => {
   });
 };
 
-const toInputDateValue = (value) => {
-  const date = parseDateOnlyLocal(value);
-  if (!date) return "";
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-};
-
-const parseScannedDocumentText = (text) => {
-  const extract = (...patterns) => {
-    for (const pattern of patterns) {
-      const match = text.match(pattern);
-      if (match?.[1]) return String(match[1]).trim();
-    }
-    return "";
-  };
-  const name = extract(/(?:Name|ชื่อ(?:ต่างด้าว)?)[\s:.-]*([\p{L}A-Za-z\s]+)$/imu);
-  const alienId = extract(/(?:เลขประจำตัว(?:ต่างด้าว)?|Alien\s*ID|ID\s*No\.?)[\s:.-]*([A-Z0-9-]{4,})/imu);
-  const nationality = extract(/(?:Nationality|สัญชาติ)[\s:.-]*([A-Z]{2,3}|[\p{L}A-Za-z]+)/imu);
-  const passNo = extract(/(?:Passport|Pass)(?:\s*(?:No\.?|Number))?[\s:.-]*([A-Z0-9-]{4,})/imu);
-  const workPermitNo = extract(/(?:Work\s*Permit(?:\s*No\.?)?|เลขใบอนุญาตการทำงาน)[\s:.-]*([A-Z0-9-]{4,})/imu);
-  const genderText = extract(/(?:Sex|Gender|เพศ)[\s:.-]*(Male|Female|ชาย|หญิง|Other)/imu).toLowerCase();
-  const gender = genderText.includes("male") || genderText.includes("ชาย") ? "male" : genderText.includes("female") || genderText.includes("หญิง") ? "female" : genderText ? "other" : "";
-
-  const dateCandidates = (text.match(/\b\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4}\b/g) || []).map((item) => item.replace(/\./g, "/"));
-  return {
-    fullName: name,
-    alienId,
-    nationality,
-    passNumber: passNo,
-    workPermitNumber: workPermitNo,
-    gender,
-    dateCandidates,
-  };
-};
-
-const fillFieldsFromScannedResult = (result) => {
-  if (workerFullName && result.fullName) workerFullName.value = result.fullName;
-  if (workerAlienId && result.alienId) workerAlienId.value = result.alienId;
-  if (workerNationality && result.nationality) workerNationality.value = normalizeNationality(result.nationality);
-  if (passNumber && result.passNumber) passNumber.value = result.passNumber;
-  if (workPermitNumber && result.workPermitNumber) workPermitNumber.value = result.workPermitNumber;
-  if (workerGender && result.gender) workerGender.value = result.gender;
-
-  if (result.dateCandidates?.length) {
-    const [d1, d2, d3] = result.dateCandidates.map(toInputDateValue);
-    if (workPermitExpiry && d1) workPermitExpiry.value = d1;
-    if (passExpiryDate && d2) passExpiryDate.value = d2;
-    if (personalVisaExpiryDate && d3) personalVisaExpiryDate.value = d3;
-    bindPersonalExpiryStatuses();
-  }
-};
-
-const loadTesseractRuntime = () =>
-  new Promise((resolve, reject) => {
-    if (window.Tesseract) {
-      resolve(window.Tesseract);
-      return;
-    }
-    const existing = document.querySelector('script[data-tesseract-runtime="true"]');
-    if (existing) {
-      existing.addEventListener("load", () => resolve(window.Tesseract));
-      existing.addEventListener("error", () => reject(new Error("โหลดโมดูลสแกนไม่สำเร็จ")));
-      return;
-    }
-    const script = document.createElement("script");
-    script.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
-    script.async = true;
-    script.dataset.tesseractRuntime = "true";
-    script.onload = () => resolve(window.Tesseract);
-    script.onerror = () => reject(new Error("โหลดโมดูลสแกนไม่สำเร็จ"));
-    document.head.appendChild(script);
-  });
-
-const runDocumentScan = async () => {
-  if (!scanDocumentImageInput?.files?.[0]) {
-    setStatus(scanDocumentStatus, "กรุณาเลือกรูปเอกสารก่อนสแกน", "warn");
-    return;
-  }
-  const file = scanDocumentImageInput.files[0];
-  setStatus(scanDocumentStatus, "กำลังสแกนเอกสาร...", "warn");
-  try {
-    const Tesseract = await loadTesseractRuntime();
-    const result = await Tesseract.recognize(file, "tha+eng");
-    const parsed = parseScannedDocumentText(result?.data?.text || "");
-    fillFieldsFromScannedResult(parsed);
-    setStatus(scanDocumentStatus, "สแกนสำเร็จ ตรวจสอบข้อมูลอีกครั้งก่อนบันทึก", "ok");
-  } catch (error) {
-    console.error("Document scan failed:", error);
-    setStatus(scanDocumentStatus, "สแกนไม่สำเร็จ กรุณากรอกข้อมูลเอง", "error");
-  }
-};
-
 const updateWorkerCardTitle = (card, index) => {
   const title = card.querySelector(".worker-card__title");
   if (!title) return;
@@ -3163,10 +3066,6 @@ if (addWorkerButton) {
     }
   });
 }
-if (scanDocumentButton) {
-  scanDocumentButton.addEventListener("click", runDocumentScan);
-}
-
 if (attachmentsInput) {
   attachmentsInput.addEventListener("change", () => handleGenericAttachmentInputChange(attachmentsInput));
 }

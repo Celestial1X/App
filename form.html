@@ -258,39 +258,20 @@
               <div class="grid-3">
                 <div class="form-row">
                   <label for="scanDocumentImage">สแกนเอกสารเพื่อเติมข้อมูลอัตโนมัติ</label>
-                  <input id="scanDocumentImage" type="file" accept="image/*" />
+                  <input id="scanDocumentImage" type="file" accept="image/*" capture="environment" />
                   <button type="button" class="secondary" id="scanDocumentButton">สแกนเอกสาร</button>
                   <span class="status-text" id="scanDocumentStatus"></span>
                 </div>
               </div>
-              <div class="upload-grid">
-                <label class="upload-card" data-upload="facePhoto">
-                  <input id="facePhoto" type="file" accept="image/*,.pdf" />
-                  <span class="upload-title">แนบรูปหน้าคน</span>
-                  <span class="upload-filename"></span>
-                  <img class="upload-thumb" alt="Face photo preview" />
-                </label>
-                <label class="upload-card" data-upload="idCard">
-                  <input id="idCard" type="file" accept="image/*,.pdf" />
-                  <span class="upload-title">แนบบัตรประชาชน/บัตรชมพู</span>
-                  <span class="upload-filename"></span>
-                  <img class="upload-thumb" alt="ID card preview" />
-                </label>
-                <label class="upload-card" data-upload="houseDoc">
-                  <input id="houseDoc" type="file" accept="image/*,.pdf" />
-                  <span class="upload-title">แนบทะเบียนบ้าน</span>
-                  <span class="upload-filename"></span>
-                  <img class="upload-thumb" alt="House doc preview" />
-                </label>
-                <label class="upload-card" data-upload="paymentSlip">
-                  <input id="paymentSlip" type="file" accept="image/*,.pdf" />
-                  <span class="upload-title">แนบสลิปการชำระเงิน</span>
-                  <span class="upload-filename"></span>
-                  <img class="upload-thumb" alt="Payment slip preview" />
-                </label>
+              <div class="form-row">
+                <label for="attachmentsInput">เพิ่มรูป/ไฟล์</label>
+                <div class="form-actions attachments-actions">
+                  <input id="attachmentsInput" type="file" accept="image/*,.pdf" multiple />
+                  <input id="attachmentsCameraInput" type="file" accept="image/*" capture="environment" class="is-hidden" />
+                  <button type="button" class="secondary" id="openCameraButton">เปิดกล้อง</button>
+                </div>
               </div>
-              <div class="upload-preview" id="uploadPreview"></div>
-              <div class="upload-preview" id="paymentSlipPreview"></div>
+              <div class="upload-preview" id="attachmentsPreview"></div>
             </div>
 
             <div class="form-actions">

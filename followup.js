@@ -174,16 +174,13 @@ const getBookTypes = (item, type) => {
 const getAggregateBookStats = (rows, item, type) => {
   const key = `${item.workerName || ""}|${item.employerName || ""}`;
   const related = rows.filter((row) => `${row.workerName || ""}|${row.employerName || ""}` === key);
-  let total = 0;
   const unique = new Set();
   related.forEach((row) => {
     const books = getBookTypes(row, type);
-    total += books.length;
     books.forEach((b) => unique.add(b));
   });
   const latest = getBookTypes(item, type);
   return {
-    total,
     latestText: latest.length ? latest.join(", ") : "-",
     allTypesText: unique.size ? Array.from(unique).join(", ") : "-",
   };
@@ -577,7 +574,6 @@ const runReport90Page = () => {
       ["ส่งเล่มไป ตม.", fmtCheck(item.sentImmigration)],
       ["เล่มที่บันทึกล่าสุด", getBookTypes(item, "report90").join(", ") || "-"],
       ["ประเภทเล่มที่เคยบันทึก", getAggregateBookStats(rows, item, "report90").allTypesText],
-      ["จำนวนเล่มที่บันทึกสะสม", String(getAggregateBookStats(rows, item, "report90").total)],
       ["ส่งเล่มคืน", fmtCheck(item.returnBook)],
     ]);
   };
@@ -600,7 +596,7 @@ const runReport90Page = () => {
       const cycleText = cycleDays === null ? "-" : `${fmtDate(item.nextDate)} (${cycleDays} วัน)`;
       const cycleTone = getDeadlineToneByRemainingDays(cycleDays);
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${getAggregateBookStats(rows, item, "report90").total}</td><td>${getAggregateBookStats(rows, item, "report90").latestText}</td><td>${fmtDate(item.nextDate)}</td><td><span class="deadline-box ${cycleTone}">${cycleText}</span></td>`;
+      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${getAggregateBookStats(rows, item, "report90").latestText}</td><td>${fmtDate(item.nextDate)}</td><td><span class="deadline-box ${cycleTone}">${cycleText}</span></td>`;
       const actionCell = document.createElement("td");
       const actionWrap = document.createElement("div");
       actionWrap.className = "table-actions";
@@ -677,8 +673,8 @@ const runReport90Page = () => {
       resetForm();
       await refreshRows();
       const latest = rows.find((row) => row.workerName === values.workerName && row.employerName === values.employerName);
-      const stats = latest ? getAggregateBookStats(rows, latest, "report90") : { total: 0, latestText: "-" };
-      status.textContent = `${wasEdit ? "แก้ไขข้อมูลเรียบร้อย" : "บันทึกข้อมูลเรียบร้อย"} • รวม ${stats.total} เล่ม • ล่าสุด: ${stats.latestText}`;
+      const stats = latest ? getAggregateBookStats(rows, latest, "report90") : { latestText: "-" };
+      status.textContent = `${wasEdit ? "แก้ไขข้อมูลเรียบร้อย" : "บันทึกข้อมูลเรียบร้อย"} • ล่าสุด: ${stats.latestText}`;
     } catch {
       status.textContent = "ไม่สามารถบันทึกข้อมูลได้ กรุณาตรวจสอบเซิร์ฟเวอร์";
       status.classList.add("error");
@@ -767,7 +763,6 @@ const runVisaPage = () => {
       ["ส่งเล่มไป ตม.", fmtCheck(item.sentImmigration)],
       ["เล่มที่บันทึกล่าสุด", getBookTypes(item, "visarun").join(", ") || "-"],
       ["ประเภทเล่มที่เคยบันทึก", getAggregateBookStats(rows, item, "visarun").allTypesText],
-      ["จำนวนเล่มที่บันทึกสะสม", String(getAggregateBookStats(rows, item, "visarun").total)],
       ["ส่งเล่มคืน", fmtCheck(item.returnBook)],
       ["ผ.60", fmtCheck(item.p60)],
       ["ผ.30", fmtCheck(item.p30)],
@@ -792,7 +787,7 @@ const runVisaPage = () => {
       const cycleText = cycleDays === null ? "-" : `${fmtDate(item.endDate)} (${cycleDays} วัน)`;
       const cycleTone = getDeadlineToneByRemainingDays(cycleDays);
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${getAggregateBookStats(rows, item, "visarun").total}</td><td>${getAggregateBookStats(rows, item, "visarun").latestText}</td><td>${fmtDate(item.endDate)}</td><td><span class="deadline-box ${cycleTone}">${cycleText}</span></td>`;
+      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${getAggregateBookStats(rows, item, "visarun").latestText}</td><td>${fmtDate(item.endDate)}</td><td><span class="deadline-box ${cycleTone}">${cycleText}</span></td>`;
       const actionCell = document.createElement("td");
       const actionWrap = document.createElement("div");
       actionWrap.className = "table-actions";
@@ -871,8 +866,8 @@ const runVisaPage = () => {
       resetForm();
       await refreshRows();
       const latest = rows.find((row) => row.workerName === values.workerName && row.employerName === values.employerName);
-      const stats = latest ? getAggregateBookStats(rows, latest, "visarun") : { total: 0, latestText: "-" };
-      status.textContent = `${wasEdit ? "แก้ไขข้อมูลเรียบร้อย" : "บันทึกข้อมูลเรียบร้อย"} • รวม ${stats.total} เล่ม • ล่าสุด: ${stats.latestText}`;
+      const stats = latest ? getAggregateBookStats(rows, latest, "visarun") : { latestText: "-" };
+      status.textContent = `${wasEdit ? "แก้ไขข้อมูลเรียบร้อย" : "บันทึกข้อมูลเรียบร้อย"} • ล่าสุด: ${stats.latestText}`;
     } catch {
       status.textContent = "ไม่สามารถบันทึกข้อมูลได้ กรุณาตรวจสอบเซิร์ฟเวอร์";
       status.classList.add("error");

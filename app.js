@@ -35,12 +35,17 @@ const workerNationality = document.getElementById("workerNationality");
 const workerEmail = document.getElementById("workerEmail");
 const workerCode = document.getElementById("workerCode");
 const workerAlienId = document.getElementById("workerAlienId");
+const workPermitNumber = document.getElementById("workPermitNumber");
 const workPermitExpiry = document.getElementById("workPermitExpiry");
 const passNumber = document.getElementById("passNumber");
 const passIssueDate = document.getElementById("passIssueDate");
 const passExpiryDate = document.getElementById("passExpiryDate");
+const personalVisaExpiryDate = document.getElementById("personalVisaExpiryDate");
 const businessType = document.getElementById("businessType");
+const businessTypeCustom = document.getElementById("businessTypeCustom");
 const employerName = document.getElementById("employerName");
+const employerEmail = document.getElementById("employerEmail");
+const employerAddress = document.getElementById("employerAddress");
 const documentSender = document.getElementById("documentSender");
 const documentSentDate = document.getElementById("documentSentDate");
 const documentReceiver = document.getElementById("documentReceiver");
@@ -52,6 +57,10 @@ const docRequestForm = document.getElementById("docRequestForm");
 const docNameList = document.getElementById("docNameList");
 const docPassPage = document.getElementById("docPassPage");
 const docVisaPage = document.getElementById("docVisaPage");
+const docPassCopy = document.getElementById("docPassCopy");
+const docVisaCopy = document.getElementById("docVisaCopy");
+const docWorkPermitCopy = document.getElementById("docWorkPermitCopy");
+const documentJobType = document.getElementById("documentJobType");
 const docHealthCard = document.getElementById("docHealthCard");
 const docExitNotice = document.getElementById("docExitNotice");
 const docHouseReg = document.getElementById("docHouseReg");
@@ -67,21 +76,24 @@ const pageLoader = document.getElementById("pageLoader");
 const facePhotoInput = document.getElementById("facePhoto");
 const idCardInput = document.getElementById("idCard");
 const houseDocInput = document.getElementById("houseDoc");
-const uploadInputs = document.querySelectorAll("#facePhoto, #idCard, #houseDoc");
-const facePhotoCard = document.querySelector('[data-upload="facePhoto"]');
-const idCardCard = document.querySelector('[data-upload="idCard"]');
-const houseDocCard = document.querySelector('[data-upload="houseDoc"]');
-const paymentSlipCard = document.querySelector('[data-upload="paymentSlip"]');
-const uploadPreview = document.getElementById("uploadPreview");
-const paymentSlipInput = document.getElementById("paymentSlip");
-const paymentSlipPreview = document.getElementById("paymentSlipPreview");
+const attachmentsInput = document.getElementById("attachmentsInput");
+const attachmentsCameraInput = document.getElementById("attachmentsCameraInput");
+const openCameraButton = document.getElementById("openCameraButton");
+const attachmentsPreview = document.getElementById("attachmentsPreview");
 const workerForm = document.getElementById("workerForm");
 const formSaveStatus = document.getElementById("formSaveStatus");
+const workPermitExpiryStatus = document.getElementById("workPermitExpiryStatus");
+const passExpiryDateStatus = document.getElementById("passExpiryDateStatus");
+const personalVisaExpiryDateStatus = document.getElementById("personalVisaExpiryDateStatus");
+const LEGACY_ATTACHMENT_KEYS = ["facePhoto", "idCard", "houseDoc", "paymentSlip"];
 const recordSearch = document.getElementById("recordSearch");
 const recordFilter = document.getElementById("recordFilter");
 const recordsStatus = document.getElementById("recordsStatus");
 const recordsList = document.getElementById("recordsList");
 const exportRecordsButton = document.getElementById("exportRecords");
+const backupAllDataButton = document.getElementById("backupAllData");
+const restoreAllDataButton = document.getElementById("restoreAllData");
+const restoreAllDataInput = document.getElementById("restoreAllDataInput");
 const summaryTodayCount = document.getElementById("summaryTodayCount");
 const summaryYesterdayCount = document.getElementById("summaryYesterdayCount");
 const summaryMonthCount = document.getElementById("summaryMonthCount");
@@ -93,6 +105,10 @@ const generalSearchButton = document.getElementById("generalSearchButton");
 const generalSearchStatus = document.getElementById("generalSearchStatus");
 const latestRecordTitle = document.getElementById("latestRecordTitle");
 const latestRecordMeta = document.getElementById("latestRecordMeta");
+const indexReport90Summary = document.getElementById("indexReport90Summary");
+const indexVisaSummary = document.getElementById("indexVisaSummary");
+const indexMouSummary = document.getElementById("indexMouSummary");
+const indexExpiryAlert = document.getElementById("indexExpiryAlert");
 const verifyRecordButton = document.getElementById("verifyRecord");
 const recordModal = document.getElementById("recordModal");
 const recordModalTitle = document.getElementById("recordModalTitle");
@@ -110,8 +126,9 @@ const prevStepButton = document.getElementById("prevStepButton");
 const EDIT_KEY = "editRecordId";
 const RECORD_SEARCH_KEY = "recordSearchQuery";
 const FORM_DRAFT_KEY = "workerFormDraft";
-const THEME_KEY = "uiTheme";
 const API_BASE_KEY = "recordsApiBaseUrl";
+const DIRTY_RECORD_IDS_KEY = "dirtyRecordIds";
+const DIRTY_RECORD_TTL_MS = 10 * 60 * 1000;
 
 const normalizeApiBaseUrl = (value) => String(value || "").trim().replace(/\/+$/, "");
 
@@ -133,20 +150,16 @@ const resolveApiBaseUrl = () => {
 
 const API_BASE_URL = resolveApiBaseUrl();
 const RECORDS_API_URL = API_BASE_URL ? `${API_BASE_URL}/api/records` : "/api/records";
+
+const getEditIdFromQuery = () => {
+  const params = new URLSearchParams(window.location.search || "");
+  return String(params.get("editId") || "").trim();
+};
+
 let currentEditId = null;
 let latestRenderedRecords = [];
-const uploadCache = {
-  facePhoto: { name: "", dataUrl: "" },
-  idCard: { name: "", dataUrl: "" },
-  houseDoc: { name: "", dataUrl: "" },
-  paymentSlip: { name: "", dataUrl: "" },
-};
-const uploadFieldConfigs = [
-  { key: "facePhoto", input: facePhotoInput, card: facePhotoCard },
-  { key: "idCard", input: idCardInput, card: idCardCard },
-  { key: "houseDoc", input: houseDocInput, card: houseDocCard },
-];
-const paymentSlipConfig = { key: "paymentSlip", input: paymentSlipInput, card: paymentSlipCard };
+const uploadCache = {};
+let genericAttachments = [];
 
 const getSelectedFormType = () => {
   const selected = Array.from(formTypeInputs || []).find((input) => input.checked);
@@ -191,6 +204,23 @@ const updateAppointmentVisibility = () => {
   }
 };
 
+const updateBusinessTypeCustomVisibility = () => {
+  if (!businessType || !businessTypeCustom) return;
+  const isCustom = businessType.value === "other";
+  businessTypeCustom.classList.toggle("is-hidden", !isCustom);
+  if (!isCustom) {
+    businessTypeCustom.value = "";
+  }
+};
+
+const getBusinessTypeValue = () => {
+  if (!businessType) return "";
+  if (businessType.value === "other") {
+    return businessTypeCustom?.value?.trim() || "";
+  }
+  return businessType.value?.trim() || "";
+};
+
 const translations = {
   th: {
     heroTitle: "ระบบตรวจสอบข้อมูลแรงงานต่างด้าว",
@@ -212,7 +242,7 @@ const translations = {
     formTypeChangeEmployer: "เปลี่ยนนายจ้าง",
     formTypeResidence: "แจ้งที่พัก 37,38",
     formTypeVisaStamp: "ลงตรา Visa",
-    formTypeCiReport: "รายงานทำเล่ม CI",
+    formTypeCiReport: "ทำเล่ม CI",
     formTypeWorkPermitRenewal: "ต่ออนุญาตทำงานแรงงานต่างด้าว",
     formTypeMouLaos: "MOU ลาว",
     formTypeMouLaosRenew: "MOU ลาว 2 ปีหลัง",
@@ -226,29 +256,29 @@ const translations = {
     workerFullNamePlaceholder: "กรอกชื่อต่างด้าว",
     workerGenderLabel: "เพศ",
     workerGenderPlaceholder: "เลือกเพศ",
-    workerGenderMale: "ชาย",
-    workerGenderFemale: "หญิง",
-    workerGenderOther: "อื่น ๆ",
+    workerGenderMale: "Male",
+    workerGenderFemale: "Female",
+    workerGenderOther: "Other",
     workerNationalityLabel: "สัญชาติ",
     workerNationalityPlaceholder: "กรอกสัญชาติ",
     businessTypeLabel: "ประเภทกิจการ",
     businessTypePlaceholder: "เช่น ก่อสร้าง เกษตรกร",
     employerNameLabel: "ชื่อนายจ้าง",
     employerNamePlaceholder: "กรอกชื่อนายจ้าง",
-    documentSenderLabel: "ชื่อผู้ส่งเอกสาร",
+    documentSenderLabel: "รับมาจากใคร",
     documentSenderPlaceholder: "กรอกชื่อผู้ส่งเอกสาร",
     documentSentDateLabel: "วันที่ส่งเอกสาร",
-    documentReceiverLabel: "ชื่อผู้รับเอกสาร",
+    documentReceiverLabel: "ชื่อผู้รับ",
     documentReceiverPlaceholder: "กรอกชื่อผู้รับเอกสาร",
-    documentReceivedDateLabel: "วันที่รับเอกสาร",
-    documentReturnDateLabel: "วันที่ส่งคืนเอกสาร",
+    documentReceivedDateLabel: "วันที่รับ",
+    documentReturnDateLabel: "วันที่ส่งเอกสารคืน",
     documentsTitle: "เอกสารที่ได้รับ",
     documentWorkPermit: "ใบอนุญาตการทำงาน",
     documentReceipt: "ใบเสร็จ",
     documentRequestForm: "ใบคำขอ",
     documentNameList: "เนมลิส",
-    documentPassPage: "หน้า Pass (ตัวจริง)",
-    documentVisaPage: "หน้า Visa (ตัวจริง)",
+    documentPassPage: "เล่ม Pass (ตัวจริง)",
+    documentVisaPage: "เล่ม Visa (ตัวจริง)",
     documentHealthCard: "บัตรสุขภาพ",
     documentExitNotice: "ใบแจ้งออก",
     documentHouseReg: "ทะเบียนบ้านนายจ้าง",
@@ -260,6 +290,7 @@ const translations = {
     statusRegistered: "ลงระบบ",
     statusPending: "รออนุมัติ",
     statusAppointment: "นัดหมาย",
+    statusReceivedDocuments: "รับเอกสารมา",
     statusAppointmentDateLabel: "วันที่นัดหมาย",
     workerListHelper: "เพิ่มรายชื่อแรงงานหลายคนต่อ 1 นายจ้าง โดยแต่ละคนมีชุดข้อมูลของตัวเอง",
     addWorkerButton: "เพิ่มรายชื่อ",
@@ -302,9 +333,9 @@ const translations = {
     nationalityPlaceholder: "เมียนมา / ลาว / กัมพูชา",
     dobLabel: "วันเดือนปีเกิด",
     genderLabel: "เพศ",
-    genderMale: "ชาย",
-    genderFemale: "หญิง",
-    genderOther: "อื่น ๆ",
+    genderMale: "Male",
+    genderFemale: "Female",
+    genderOther: "Other",
     employmentTitle: "ข้อมูลนายจ้าง",
     companyLabel: "ชื่อนายจ้าง",
     companyPlaceholder: "ระบุชื่อนายจ้าง",
@@ -456,7 +487,7 @@ const translations = {
     paymentNotesPlaceholder: "รายละเอียดเพิ่มเติม",
     tabLookup: "การค้นหาข้อมูล",
     tabRecords: "รายการบันทึก",
-    tabForm: "หน้าทำรายการต่างๆ",
+    tabForm: "กรอกแบบฟอร์ม",
     recordedByLabel: "ผู้บันทึกข้อมูล",
     recordedByPlaceholder: "กรอกชื่อผู้บันทึกข้อมูล",
     workerCountSuffix: "คน",
@@ -506,20 +537,20 @@ const translations = {
     businessTypePlaceholder: "e.g. Construction, agriculture",
     employerNameLabel: "Employer name",
     employerNamePlaceholder: "Enter employer name",
-    documentSenderLabel: "Document sender",
+    documentSenderLabel: "Received from",
     documentSenderPlaceholder: "Enter document sender",
     documentSentDateLabel: "Document sent date",
-    documentReceiverLabel: "Document receiver",
+    documentReceiverLabel: "Receiver",
     documentReceiverPlaceholder: "Enter document receiver",
-    documentReceivedDateLabel: "Document received date",
+    documentReceivedDateLabel: "Received date",
     documentReturnDateLabel: "Document return date",
     documentsTitle: "Received documents",
     documentWorkPermit: "Work permit",
     documentReceipt: "Receipt",
     documentRequestForm: "Request form",
     documentNameList: "Name list",
-    documentPassPage: "Passport page (original)",
-    documentVisaPage: "Visa page (original)",
+    documentPassPage: "Passport book (original)",
+    documentVisaPage: "Visa book (original)",
     documentHealthCard: "Health card",
     documentExitNotice: "Exit notice",
     documentHouseReg: "Employer house registration",
@@ -531,6 +562,7 @@ const translations = {
     statusRegistered: "Registered",
     statusPending: "Pending approval",
     statusAppointment: "Appointment",
+    statusReceivedDocuments: "Received documents",
     statusAppointmentDateLabel: "Appointment date",
     workerListHelper: "Add multiple workers per employer. Each person has their own details.",
     addWorkerButton: "Add worker",
@@ -727,7 +759,7 @@ const translations = {
     paymentNotesPlaceholder: "Additional details",
     tabLookup: "Lookup",
     tabRecords: "Records",
-    tabForm: "Task page",
+    tabForm: "Form entry",
     recordedByLabel: "Recorded by",
     recordedByPlaceholder: "Enter recorder name",
     workerCountSuffix: "workers",
@@ -765,12 +797,8 @@ const EXPIRY_WARNING_DAYS = 30;
 
 const getExpiryState = (dateValue) => {
   if (!dateValue) return { state: "none", days: null };
-  const selectedDate = new Date(dateValue);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  selectedDate.setHours(0, 0, 0, 0);
-  const diffMs = selectedDate - today;
-  const days = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  const days = getDaysUntil(dateValue);
+  if (days === null) return { state: "none", days: null };
   if (days < 0) return { state: "expired", days };
   if (days <= EXPIRY_WARNING_DAYS) return { state: "warning", days };
   return { state: "ok", days };
@@ -790,13 +818,14 @@ const formatExpiryLabel = (state, days) => {
 const formatExpiryDisplay = (dateValue) => {
   if (!dateValue) return "-";
   const { state, days } = getExpiryState(dateValue);
+  const formatted = formatDateOnlyDMY(dateValue);
   if (state === "ok") {
-    return dateValue;
+    return formatted;
   }
   if (state === "warning" || state === "expired") {
-    return `${dateValue} (${formatExpiryLabel(state, days)})`;
+    return `${formatted} (${formatExpiryLabel(state, days)})`;
   }
-  return dateValue;
+  return formatted;
 };
 
 const validatePassport = (value, target) => {
@@ -867,10 +896,14 @@ const renderPreview = (container, files, onRemove) => {
     card.className = "preview-card";
     const image = document.createElement("img");
     image.alt = file.name;
-    image.src = URL.createObjectURL(file);
+    image.src = file.dataUrl || "";
+    if (!file.dataUrl) {
+      image.style.display = "none";
+    }
     const meta = document.createElement("div");
     meta.className = "preview-meta";
-    meta.textContent = `${file.name} (${Math.round(file.size / 1024)} KB)`;
+    const sizeKb = file.size ? Math.round(file.size / 1024) : 0;
+    meta.textContent = `${file.name}${sizeKb ? ` (${sizeKb} KB)` : ""}`;
     const remove = document.createElement("button");
     remove.type = "button";
     remove.className = "preview-remove";
@@ -883,113 +916,45 @@ const renderPreview = (container, files, onRemove) => {
   });
 };
 
-const setUploadCardPreview = (card, preview) => {
-  if (!card) return;
-  const thumb = card.querySelector(".upload-thumb");
-  const filename = card.querySelector(".upload-filename");
-  card.classList.remove("has-preview", "has-file");
-  if (thumb) {
-    thumb.removeAttribute("src");
-  }
-  if (filename) {
-    filename.textContent = "";
-  }
-  if (!preview) return;
-  if (preview.dataUrl && thumb) {
-    thumb.src = preview.dataUrl;
-    card.classList.add("has-preview");
-  } else if (preview.name && filename) {
-    filename.textContent = preview.name;
-    card.classList.add("has-file");
-  }
-};
-
-const cacheUploadFromFile = (key, file) => {
-  if (!file) {
-    uploadCache[key] = { name: "", dataUrl: "" };
-    return;
-  }
-  uploadCache[key] = { name: file.name, dataUrl: "" };
-  if (file.type && file.type.startsWith("image/")) {
+const fileToAttachment = (file) =>
+  new Promise((resolve) => {
+    if (!file) {
+      resolve(null);
+      return;
+    }
     const reader = new FileReader();
-    reader.onload = () => {
-      uploadCache[key] = { name: file.name, dataUrl: reader.result };
-      const config = [...uploadFieldConfigs, paymentSlipConfig].find((item) => item.key === key);
-      if (config) {
-        setUploadCardPreview(config.card, uploadCache[key]);
-      }
-    };
-    reader.readAsDataURL(file);
-  }
-};
-
-const updateUploadPreview = () => {
-  if (!uploadPreview || !uploadInputs.length) {
-    return;
-  }
-  const files = [];
-  const indexMap = [];
-  uploadFieldConfigs.forEach((config) => {
-    const file = config.input?.files?.[0];
-    if (file) {
-      cacheUploadFromFile(config.key, file);
-      files.push(file);
-      indexMap.push(config);
-    }
-    const cached = uploadCache[config.key];
-    if (!file && cached?.name) {
-      setUploadCardPreview(config.card, cached);
-    } else if (file) {
-      const preview = {
+    reader.onload = () =>
+      resolve({
         name: file.name,
-        dataUrl: file.type.startsWith("image/") ? URL.createObjectURL(file) : "",
-      };
-      setUploadCardPreview(config.card, preview);
-    } else {
-      setUploadCardPreview(config.card, null);
-    }
+        type: file.type || "",
+        size: file.size || 0,
+        dataUrl: typeof reader.result === "string" ? reader.result : "",
+      });
+    reader.onerror = () => resolve({ name: file.name, type: file.type || "", size: file.size || 0, dataUrl: "" });
+    reader.readAsDataURL(file);
   });
-  if (receivedFacePhoto) receivedFacePhoto.checked = Boolean(uploadCache.facePhoto.name);
-  if (receivedIdCard) receivedIdCard.checked = Boolean(uploadCache.idCard.name);
-  if (receivedHouseDoc) receivedHouseDoc.checked = Boolean(uploadCache.houseDoc.name);
-  renderPreview(uploadPreview, files, (indexToRemove) => {
-    const config = indexMap[indexToRemove];
-    if (config?.input) {
-      config.input.value = "";
-      uploadCache[config.key] = { name: "", dataUrl: "" };
-    }
-    updateUploadPreview();
+
+const renderGenericAttachments = () => {
+  renderPreview(attachmentsPreview, genericAttachments, (indexToRemove) => {
+    genericAttachments = genericAttachments.filter((_, idx) => idx !== indexToRemove);
+    renderGenericAttachments();
+    saveFormDraft();
   });
+};
+
+const appendGenericFiles = async (fileList) => {
+  const files = Array.from(fileList || []);
+  if (!files.length) return;
+  const parsed = (await Promise.all(files.map((file) => fileToAttachment(file)))).filter(Boolean);
+  genericAttachments.push(...parsed);
+  renderGenericAttachments();
   saveFormDraft();
 };
 
-const updatePaymentSlipPreview = () => {
-  if (!paymentSlipInput || !paymentSlipPreview) {
-    return;
-  }
-  const file = paymentSlipInput.files?.[0];
-  if (file) {
-    cacheUploadFromFile("paymentSlip", file);
-  }
-  if (file) {
-    const preview = {
-      name: file.name,
-      dataUrl: file.type.startsWith("image/") ? URL.createObjectURL(file) : "",
-    };
-    setUploadCardPreview(paymentSlipCard, preview);
-  } else if (uploadCache.paymentSlip?.name) {
-    setUploadCardPreview(paymentSlipCard, uploadCache.paymentSlip);
-  } else {
-    setUploadCardPreview(paymentSlipCard, null);
-  }
-  const files = file ? [file] : [];
-  if (receivedPaymentSlip) receivedPaymentSlip.checked = Boolean(uploadCache.paymentSlip.name);
-  renderPreview(paymentSlipPreview, files, () => {
-    paymentSlipInput.value = "";
-    uploadCache.paymentSlip = { name: "", dataUrl: "" };
-    updatePaymentSlipPreview();
-  });
-  saveFormDraft();
+const handleGenericAttachmentInputChange = async (input) => {
+  if (!input?.files?.length) return;
+  await appendGenericFiles(input.files);
+  input.value = "";
 };
 
 const readJsonStorage = (key, fallback) => {
@@ -1039,11 +1004,140 @@ const loadRecords = () => {
   return withSequentialIds;
 };
 
+const nextLocalFormId = (records) => {
+  const maxId = (records || []).reduce((max, item) => {
+    const value = Number.parseInt(String(item?.formId || ""), 10);
+    return Number.isNaN(value) ? max : Math.max(max, value);
+  }, 0);
+  return String(maxId + 1);
+};
+
+const readDirtyRecordMap = () => {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(DIRTY_RECORD_IDS_KEY) || "{}");
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch (_error) {
+    return {};
+  }
+};
+
+const writeDirtyRecordMap = (map) => {
+  localStorage.setItem(DIRTY_RECORD_IDS_KEY, JSON.stringify(map || {}));
+};
+
+const markRecordDirty = (formId) => {
+  const id = String(formId || "").trim();
+  if (!id) return;
+  const map = readDirtyRecordMap();
+  map[id] = Date.now();
+  writeDirtyRecordMap(map);
+};
+
+const isRecordDirty = (formId) => {
+  const id = String(formId || "").trim();
+  if (!id) return false;
+  const map = readDirtyRecordMap();
+  const markedAt = Number(map[id] || 0);
+  const isFresh = markedAt > 0 && Date.now() - markedAt < DIRTY_RECORD_TTL_MS;
+  if (!isFresh && map[id]) {
+    delete map[id];
+    writeDirtyRecordMap(map);
+  }
+  return isFresh;
+};
+
+const clearRecordDirty = (formId) => {
+  const id = String(formId || "").trim();
+  if (!id) return;
+  const map = readDirtyRecordMap();
+  if (id in map) {
+    delete map[id];
+    writeDirtyRecordMap(map);
+  }
+};
+
+const updateInputDatalist = (input, datalistId, values) => {
+  if (!input) return;
+  let datalist = document.getElementById(datalistId);
+  if (!datalist) {
+    datalist = document.createElement("datalist");
+    datalist.id = datalistId;
+    document.body.appendChild(datalist);
+  }
+  const unique = [...new Set((values || []).map((v) => String(v || "").trim()).filter(Boolean))].slice(0, 200);
+  datalist.innerHTML = unique.map((value) => `<option value="${value.replace(/"/g, "&quot;")}"></option>`).join("");
+  input.setAttribute("list", datalistId);
+};
+
+const refreshNameSuggestions = () => {
+  const records = loadRecords();
+  const workerNames = [];
+  const employerNames = [];
+  records.forEach((record) => {
+    const info = record?.data?.personalInfo || {};
+    if (info.fullName) workerNames.push(info.fullName);
+    if (info.employerName) employerNames.push(info.employerName);
+    const workers = normalizeWorkers(record?.data || {});
+    workers.forEach((worker) => {
+      if (worker.fullName) workerNames.push(worker.fullName);
+    });
+  });
+  updateInputDatalist(workerFullName, "workerNameSuggestions", workerNames);
+  updateInputDatalist(employerName, "employerNameSuggestions", employerNames);
+};
+
 const saveRecords = (records) => {
   localStorage.setItem("workerRecords", JSON.stringify(records));
 };
 
 const canUseServerSync = () => Boolean(API_BASE_URL) || window.location.protocol.startsWith("http");
+
+const toTimestamp = (value) => {
+  const time = Date.parse(String(value || ""));
+  return Number.isNaN(time) ? 0 : time;
+};
+
+const resolveWorkerNameForDisplay = (record) => {
+  const personalInfo = record?.data?.personalInfo || {};
+  if (personalInfo.fullName === "") {
+    return "-";
+  }
+  const workers = normalizeWorkers(record?.data);
+  return personalInfo.fullName || workers[0]?.fullName || "-";
+};
+
+const mergeRecordsPreferLatest = (localRows, serverRows) => {
+  const merged = new Map();
+
+  (localRows || []).forEach((row) => {
+    const id = String(row?.formId || "").trim();
+    if (!id) return;
+    merged.set(id, row);
+  });
+
+  (serverRows || []).forEach((row) => {
+    const id = String(row?.formId || "").trim();
+    if (!id) return;
+
+    const existing = merged.get(id);
+    const existingTs = toTimestamp(existing?.updatedAt);
+    const incomingTs = toTimestamp(row?.updatedAt);
+
+    if (existing && isRecordDirty(id)) {
+      if (incomingTs <= existingTs) {
+        return;
+      }
+      clearRecordDirty(id);
+    }
+
+    if (!existing || incomingTs > existingTs) {
+      merged.set(id, row);
+    }
+  });
+
+  return Array.from(merged.values()).sort((a, b) => toTimestamp(b.updatedAt) - toTimestamp(a.updatedAt));
+};
+
 
 const syncRecordsFromServer = async () => {
   if (!canUseServerSync()) {
@@ -1056,7 +1150,10 @@ const syncRecordsFromServer = async () => {
     }
     const records = await response.json();
     if (Array.isArray(records)) {
-      saveRecords(records);
+      const localRows = loadRecords();
+      const merged = mergeRecordsPreferLatest(localRows, records);
+      saveRecords(merged);
+      refreshNameSuggestions();
       renderRecords();
       renderLatestRecordCard();
     }
@@ -1069,42 +1166,70 @@ const upsertRecordToServer = async (record) => {
   if (!canUseServerSync()) {
     return null;
   }
+  const incomingId = String(record?.formId || "").trim();
   try {
-    const response = await fetch(RECORDS_API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(record),
-    });
-    if (!response.ok) {
-      return null;
+    const send = async (url, method) =>
+      fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(record),
+      });
+
+    let response = await send(
+      incomingId ? `${RECORDS_API_URL}/${encodeURIComponent(incomingId)}` : RECORDS_API_URL,
+      incomingId ? "PUT" : "POST"
+    );
+
+    if (!response.ok && incomingId && [404, 405, 501].includes(response.status)) {
+      // backward compatibility: some deployments still expose upsert via POST only
+      response = await send(RECORDS_API_URL, "POST");
     }
+
+    if (!response.ok) return null;
     const savedRecord = await response.json();
     return savedRecord && typeof savedRecord === "object" ? savedRecord : null;
   } catch (_error) {
-    // keep local save success even if server is unavailable
+    return null;
+  }
+};
+
+const fetchRecordByIdFromServer = async (formId) => {
+  if (!formId || !canUseServerSync()) {
+    return null;
+  }
+  try {
+    const response = await fetch(`${RECORDS_API_URL}/${encodeURIComponent(formId)}`, { method: "GET" });
+    if (!response.ok) {
+      return null;
+    }
+    const record = await response.json();
+    return record && typeof record === "object" ? { ...record, formId: String(record.formId || "") } : null;
+  } catch (_error) {
     return null;
   }
 };
 
 const deleteRecordFromServer = async (formId) => {
   if (!canUseServerSync()) {
-    return;
+    return false;
   }
   try {
-    await fetch(`${RECORDS_API_URL}/${encodeURIComponent(formId)}`, { method: "DELETE" });
+    const response = await fetch(`${RECORDS_API_URL}/${encodeURIComponent(formId)}`, { method: "DELETE" });
+    return response.ok;
   } catch (_error) {
-    // keep local delete success even if server is unavailable
+    return false;
   }
 };
 
 const clearRecordsFromServer = async () => {
   if (!canUseServerSync()) {
-    return;
+    return false;
   }
   try {
-    await fetch(RECORDS_API_URL, { method: "DELETE" });
+    const response = await fetch(RECORDS_API_URL, { method: "DELETE" });
+    return response.ok;
   } catch (_error) {
-    // keep local clear success even if server is unavailable
+    return false;
   }
 };
 
@@ -1140,6 +1265,90 @@ const formatDateTime = (value) => {
   if (Number.isNaN(date.getTime())) return "-";
   return date.toLocaleString(currentLanguage === "th" ? "th-TH" : "en-US");
 };
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const normalizeThaiYear = (year) => {
+  if (!Number.isFinite(year)) return year;
+  // convert Buddhist Era (e.g. 2569) to Gregorian
+  return year >= 2400 ? year - 543 : year;
+};
+
+const parseDateOnlyLocal = (value) => {
+  if (!value) return null;
+  const text = String(value).trim();
+
+  const parseWithParts = (parts) => {
+    if (parts.length !== 3 || parts.some((item) => Number.isNaN(item))) return null;
+    const [a, b, c] = parts;
+    const isYearFirst = a > 31;
+    const isYearLast = c > 31;
+    const yearRaw = isYearFirst ? a : c;
+    const month = b;
+    const day = isYearFirst ? c : a;
+    if (!isYearFirst && !isYearLast) return null;
+    if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+    const year = normalizeThaiYear(yearRaw);
+    return new Date(year, month - 1, day);
+  };
+
+  const dashParts = text.split("-").map((item) => Number.parseInt(item, 10));
+  const dashDate = parseWithParts(dashParts);
+  if (dashDate) return dashDate;
+
+  const slashParts = text.split("/").map((item) => Number.parseInt(item, 10));
+  const slashDate = parseWithParts(slashParts);
+  if (slashDate) return slashDate;
+
+  const date = new Date(text);
+  if (Number.isNaN(date.getTime())) return null;
+  const year = normalizeThaiYear(date.getFullYear());
+  return new Date(year, date.getMonth(), date.getDate());
+};
+
+const formatDateOnlyDMY = (value) => {
+  const date = parseDateOnlyLocal(value);
+  if (!date) return value || "-";
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = currentLanguage === "th" ? date.getFullYear() + 543 : date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
+const getDaysUntil = (value) => {
+  const target = parseDateOnlyLocal(value);
+  if (!target) return null;
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const days = Math.floor((target.getTime() - today.getTime()) / DAY_MS);
+  // ignore clearly invalid year-parsing artifacts
+  if (Math.abs(days) > 36500) return null;
+  return days;
+};
+
+const getDaysBetweenDateValues = (startValue, endValue) => {
+  const start = parseDateOnlyLocal(startValue);
+  const end = parseDateOnlyLocal(endValue);
+  if (!start || !end) return null;
+  const days = Math.floor((end.getTime() - start.getTime()) / DAY_MS);
+  if (days < 0 || Math.abs(days) > 36500) return null;
+  return days;
+};
+
+const getDeadlineToneClass = (days) => {
+  if (days === null) return "deadline-box--none";
+  if (days < 30) return "deadline-box--danger";
+  if (days <= 90) return "deadline-box--warn";
+  return "deadline-box--safe";
+};
+
+const getDeadlineToneText = (days) => {
+  if (days === null) return "-";
+  if (days < 0) return `เกินกำหนด ${Math.abs(days)} วัน`;
+  if (days < 30) return `ต่ำกว่า 30 วัน (${days} วัน)`;
+  if (days <= 90) return `ไม่เกิน 90 วัน (${days} วัน)`;
+  return `มากกว่า 90 วัน (${days} วัน)`;
+};
+
 
 const toDateOnlyKey = (value) => {
   const date = new Date(value);
@@ -1199,6 +1408,7 @@ const renderLatestRecordCard = () => {
   if (!records.length) {
     latestRecordTitle.textContent = "-";
     latestRecordMeta.textContent = "ยังไม่มีข้อมูล";
+    renderHomeFollowupSummaries();
     return;
   }
   const latest = [...records].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))[0];
@@ -1206,6 +1416,70 @@ const renderLatestRecordCard = () => {
   latestRecordMeta.textContent = `${formatDateTime(latest.updatedAt)} • ${
     latest.data?.personalInfo?.fullName || latest.data?.personalInfo?.employerName || latest.displayName || "-"
   }`;
+  renderHomeFollowupSummaries();
+};
+
+const renderFollowupSummaryList = (target, records, typeLabel, dateField) => {
+  if (!target) return;
+  const rows = (records || [])
+    .map((record) => {
+      const info = record?.data?.personalInfo || {};
+      const followup = record?.data?.followup || {};
+      const startDate = followup?.startDate || "";
+      const dateValue = followup?.[dateField] || "";
+      const days = getDaysBetweenDateValues(startDate, dateValue);
+      return {
+        formId: record?.formId || "-",
+        updatedAt: record?.updatedAt,
+        name: info.fullName || info.employerName || record?.displayName || "-",
+        days,
+        startDate,
+        dateValue,
+        typeLabel,
+      };
+    })
+    .filter((item) => item.days !== null)
+    .sort((a, b) => a.days - b.days)
+    .slice(0, 5);
+
+  if (!rows.length) {
+    target.innerHTML = '<p class="status-text">ยังไม่มีข้อมูล</p>';
+    return;
+  }
+
+  target.innerHTML = rows
+    .map((item) => {
+      const toneClass = getDeadlineToneClass(item.days);
+      return `<div class="mini-summary-item ${toneClass}"><p>${item.formId} • ${item.typeLabel}</p><p>${formatDateTime(item.updatedAt)} • ${item.name}</p><p>${formatDateOnlyDMY(item.startDate)} → ${formatDateOnlyDMY(item.dateValue)} • ${getDeadlineToneText(item.days)}</p></div>`;
+    })
+    .join("");
+};
+
+const renderHomeFollowupSummaries = () => {
+  if (!indexReport90Summary && !indexVisaSummary && !indexMouSummary) return;
+  const all = loadRecords();
+  const r90 = all.filter((item) => item?.formType === "report90");
+  const visa = all.filter((item) => item?.formType === "visarun");
+  const mou = all.filter((item) => item?.formType === "mouLaos");
+
+  renderFollowupSummaryList(indexReport90Summary, r90, "รายงานตัว 90 วัน", "nextDate");
+  renderFollowupSummaryList(indexVisaSummary, visa, "Visa run", "endDate");
+  renderFollowupSummaryList(indexMouSummary, mou, "MOU ลาว", "endDate");
+
+  if (indexExpiryAlert) {
+    const nearExpiryCount = all.filter((record) => {
+      const followup = record?.data?.followup || {};
+      const targetDate = followup.nextDate || followup.endDate || "";
+      const days = getDaysUntil(targetDate);
+      return days !== null && days >= 0 && days <= 90;
+    }).length;
+    if (nearExpiryCount > 0) {
+      indexExpiryAlert.textContent = `แจ้งเตือน: มี ${nearExpiryCount} รายการที่ใกล้หมดอายุ`;
+      indexExpiryAlert.classList.remove("is-hidden");
+    } else {
+      indexExpiryAlert.classList.add("is-hidden");
+    }
+  }
 };
 
 const getFormTypeLabel = (value) => {
@@ -1246,6 +1520,7 @@ const getCaseStatusLabel = (value) => {
     registered: translations[currentLanguage].statusRegistered,
     pending: translations[currentLanguage].statusPending,
     appointment: translations[currentLanguage].statusAppointment,
+    receivedDocuments: translations[currentLanguage].statusReceivedDocuments,
   };
   return map[value] || value || "-";
 };
@@ -1255,7 +1530,7 @@ const getCaseStatusDisplay = (caseStatus = {}) => {
   if (status === "appointment") {
     if (caseStatus.appointmentDate) {
       const waitingLabel = currentLanguage === "th" ? "รอวันนัด" : "Awaiting appointment";
-      return `${waitingLabel} (${caseStatus.appointmentDate})`;
+      return `${waitingLabel} (${formatDateOnlyDMY(caseStatus.appointmentDate)})`;
     }
     return getCaseStatusLabel(status);
   }
@@ -1315,6 +1590,24 @@ const updateExpiryStatusForInput = (input, statusElement) => {
   input.classList.toggle("is-expiring", state === "warning");
   const statusType = state === "expired" ? "error" : state === "warning" ? "warn" : "ok";
   setStatus(statusElement, formatExpiryLabel(state, days), statusType);
+};
+
+const bindPersonalExpiryStatuses = () => {
+  const mappings = [
+    [workPermitExpiry, workPermitExpiryStatus],
+    [passExpiryDate, passExpiryDateStatus],
+    [personalVisaExpiryDate, personalVisaExpiryDateStatus],
+  ];
+  mappings.forEach(([input, status]) => {
+    if (!input || !status) return;
+    if (!input.dataset.expiryBound) {
+      const refresh = () => updateExpiryStatusForInput(input, status);
+      input.addEventListener("input", refresh);
+      input.addEventListener("change", refresh);
+      input.dataset.expiryBound = "true";
+    }
+    updateExpiryStatusForInput(input, status);
+  });
 };
 
 const updateWorkerCardTitle = (card, index) => {
@@ -1598,6 +1891,10 @@ const collectFormData = () => {
     .filter((item) => item.checked)
     .map((item) => item.value);
   const workers = getWorkerCards().map(extractWorkerData).filter(hasWorkerValue);
+  const clearedPrimaryWorkerName = (workerFullName?.value || "").trim() === "";
+  if (clearedPrimaryWorkerName && workers.length) {
+    workers[0] = { ...workers[0], fullName: "" };
+  }
   const formData = {
     formType: getSelectedFormType(),
     formTypeOtherDetail: formTypeOtherDetail?.value?.trim() || "",
@@ -1622,12 +1919,16 @@ const collectFormData = () => {
       email: workerEmail?.value?.trim() || "",
       code: workerCode?.value?.trim() || "",
       alienId: workerAlienId?.value?.trim() || "",
+      workPermitNumber: workPermitNumber?.value?.trim() || "",
       workPermitExpiry: workPermitExpiry?.value || "",
       passNumber: passNumber?.value?.trim() || "",
       passIssueDate: passIssueDate?.value || "",
       passExpiryDate: passExpiryDate?.value || "",
-      businessType: businessType?.value?.trim() || "",
+      personalVisaExpiryDate: personalVisaExpiryDate?.value || "",
+      businessType: getBusinessTypeValue(),
       employerName: employerName?.value?.trim() || "",
+      employerEmail: employerEmail?.value?.trim() || "",
+      employerAddress: employerAddress?.value?.trim() || "",
       documentSender: documentSender?.value?.trim() || "",
       documentSentDate: documentSentDate?.value || "",
       documentReceiver: documentReceiver?.value?.trim() || "",
@@ -1641,6 +1942,10 @@ const collectFormData = () => {
       nameList: docNameList?.checked || false,
       passPage: docPassPage?.checked || false,
       visaPage: docVisaPage?.checked || false,
+      passCopy: docPassCopy?.checked || false,
+      visaCopy: docVisaCopy?.checked || false,
+      workPermitCopy: docWorkPermitCopy?.checked || false,
+      documentJobType: documentJobType?.value?.trim() || "",
       healthCard: docHealthCard?.checked || false,
       exitNotice: docExitNotice?.checked || false,
       houseReg: docHouseReg?.checked || false,
@@ -1659,15 +1964,7 @@ const collectFormData = () => {
     requiredRenewalDocs: requiredDocs,
     receivedDocsNote: receivedDocsNote?.value?.trim() || "",
     renewalDocsNote: renewalDocsNote?.value?.trim() || "",
-    facePhoto: facePhotoInput?.files?.[0]?.name || uploadCache.facePhoto.name || "",
-    facePhotoData: uploadCache.facePhoto.dataUrl || "",
-    idCard: idCardInput?.files?.[0]?.name || uploadCache.idCard.name || "",
-    idCardData: uploadCache.idCard.dataUrl || "",
-    houseDoc: houseDocInput?.files?.[0]?.name || uploadCache.houseDoc.name || "",
-    houseDocData: uploadCache.houseDoc.dataUrl || "",
-    attachments: Array.from(uploadInputs).flatMap((input) => Array.from(input.files)).map((file) => file.name),
-    paymentSlip: paymentSlipInput?.files?.[0]?.name || uploadCache.paymentSlip.name || "",
-    paymentSlipData: uploadCache.paymentSlip.dataUrl || "",
+    attachments: genericAttachments.map((item) => ({ ...item })),
   };
   const hasAnyValue = Object.entries(formData).some(([key, value]) => {
     if (key === "formType" || key === "attachments") {
@@ -1690,6 +1987,8 @@ function saveFormDraft() {
 
 function loadFormDraft() {
   if (!workerForm || currentEditId) return;
+  const hasPendingEdit = Boolean(getEditIdFromQuery() || String(localStorage.getItem(EDIT_KEY) || "").trim());
+  if (hasPendingEdit) return;
   const formData = readJsonStorage(FORM_DRAFT_KEY, null);
   if (!formData || typeof formData !== "object") {
     localStorage.removeItem(FORM_DRAFT_KEY);
@@ -1707,41 +2006,18 @@ function clearFormDraft() {
   if (workerList) {
     workerList.innerHTML = "";
   }
-  uploadCache.facePhoto = { name: "", dataUrl: "" };
-  uploadCache.idCard = { name: "", dataUrl: "" };
-  uploadCache.houseDoc = { name: "", dataUrl: "" };
-  uploadCache.paymentSlip = { name: "", dataUrl: "" };
+  genericAttachments = [];
   ensureWorkerCards();
   updateSections();
-  updateUploadPreview();
-  updatePaymentSlipPreview();
+  renderGenericAttachments();
   refreshWorkerStatuses();
   currentFormStep = 1;
   updateFormStepVisibility();
   setStatus(formSaveStatus, translations[currentLanguage].formDraftCleared, "ok");
 }
 
-const applyTheme = (theme, { persist = true } = {}) => {
-  document.body.classList.toggle("theme-dark", theme === "dark");
-  if (persist) {
-    localStorage.setItem(THEME_KEY, theme);
-  }
-};
-
 const initTheme = () => {
-  const storedTheme = localStorage.getItem(THEME_KEY);
-  if (storedTheme) {
-    applyTheme(storedTheme);
-    return;
-  }
-  const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-  applyTheme(mediaQuery.matches ? "dark" : "light", { persist: false });
-  mediaQuery.addEventListener("change", (event) => {
-    if (localStorage.getItem(THEME_KEY)) {
-      return;
-    }
-    applyTheme(event.matches ? "dark" : "light", { persist: false });
-  });
+  document.body.classList.remove("theme-dark");
 };
 
 const renderRecords = () => {
@@ -1793,7 +2069,7 @@ const renderRecords = () => {
     const row = document.createElement("tr");
     const personalInfo = record.data.personalInfo || {};
     const workers = normalizeWorkers(record.data);
-    const workerName = personalInfo.fullName || workers[0]?.fullName || "-";
+    const workerName = resolveWorkerNameForDisplay(record);
     const employerLabel = personalInfo.employerName || record.data.company || record.data.employerId || "-";
     const formIdCell = document.createElement("td");
     formIdCell.textContent = record.formId;
@@ -1817,9 +2093,22 @@ const renderRecords = () => {
     editButton.className = "secondary";
     editButton.textContent = translations[currentLanguage].editButton;
     editButton.addEventListener("click", () => {
-      localStorage.setItem(EDIT_KEY, record.formId);
+      const followupPageMap = {
+        report90: "report90.html",
+        visarun: "visarun.html",
+        mouLaos: "nextform.html",
+        mouLaosRenew: "nextform.html",
+      };
+      const targetPage = followupPageMap[record.formType] || "form.html";
+      if (targetPage === "form.html") {
+        localStorage.setItem(EDIT_KEY, String(record.formId || ""));
+      }
       showLoader();
-      window.location.href = "form.html";
+      if (targetPage === "form.html") {
+        window.location.href = `${targetPage}?editId=${encodeURIComponent(String(record.formId || ""))}`;
+      } else {
+        window.location.href = `${targetPage}?editId=${encodeURIComponent(record.formId || "")}`;
+      }
     });
     const verifyButton = document.createElement("button");
     verifyButton.type = "button";
@@ -1830,13 +2119,17 @@ const renderRecords = () => {
     deleteButton.type = "button";
     deleteButton.className = "danger";
     deleteButton.textContent = translations[currentLanguage].deleteButton;
-    deleteButton.addEventListener("click", () => {
+    deleteButton.addEventListener("click", async () => {
       const shouldDelete = window.confirm(translations[currentLanguage].confirmDeleteRecord);
       if (!shouldDelete) return;
+      const deleted = await deleteRecordFromServer(record.formId);
+      if (!deleted) {
+        setStatus(recordsStatus, "ไม่สามารถลบข้อมูลจากเซิร์ฟเวอร์ได้", "error");
+        return;
+      }
       const records = loadRecords();
       const nextRecords = records.filter((item) => item.formId !== record.formId);
       saveRecords(nextRecords);
-      deleteRecordFromServer(record.formId);
       renderRecords();
       renderLatestRecordCard();
     });
@@ -1861,6 +2154,72 @@ const toCsvValue = (value) => {
   return `"${text.replace(/"/g, '""')}"`;
 };
 
+const exportBackupData = async () => {
+  const localRecords = loadRecords();
+  let serverRecords = [];
+  if (canUseServerSync()) {
+    try {
+      const response = await fetch(RECORDS_API_URL, { method: "GET" });
+      if (response.ok) {
+        const rows = await response.json();
+        if (Array.isArray(rows)) {
+          serverRecords = rows;
+        }
+      }
+    } catch (_error) {
+      // keep local-only backup when server is unavailable
+    }
+  }
+
+  const mergedRecords = mergeRecordsPreferLatest(localRecords, serverRecords);
+  const payload = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    records: mergedRecords,
+    settings: {
+      apiBaseUrl: localStorage.getItem(API_BASE_KEY) || "",
+      language: currentLanguage,
+    },
+  };
+
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const fileName = `worker-records-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = fileName;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+  setStatus(recordsStatus || formSaveStatus, `สำรองข้อมูลสำเร็จ: ${fileName}`, "ok");
+};
+
+const importBackupData = async (file) => {
+  if (!file) return;
+  const text = await file.text();
+  const parsed = JSON.parse(text || "{}");
+  const incoming = Array.isArray(parsed?.records) ? parsed.records : [];
+  if (!incoming.length) {
+    throw new Error("ไฟล์สำรองไม่มีข้อมูล records");
+  }
+
+  const merged = mergeRecordsPreferLatest(loadRecords(), incoming);
+  saveRecords(merged);
+  refreshNameSuggestions();
+  renderRecords();
+  renderLatestRecordCard();
+
+  if (canUseServerSync()) {
+    for (const record of merged) {
+      // best-effort sync back to server
+      await upsertRecordToServer(record);
+    }
+  }
+
+  setStatus(recordsStatus || formSaveStatus, `นำเข้าข้อมูลสำเร็จ ${merged.length} รายการ`, "ok");
+};
+
 const exportRecordsToCsv = () => {
   const rows = latestRenderedRecords.length ? latestRenderedRecords : loadRecords();
   if (!rows.length) {
@@ -1872,24 +2231,64 @@ const exportRecordsToCsv = () => {
     translations[currentLanguage].recordsTableFormType,
     translations[currentLanguage].recordsTableEmployer,
     translations[currentLanguage].recordsTableWorker,
+    translations[currentLanguage].workerNationalityLabel,
+    "Gender",
+    "Personal Visa Expiry",
     translations[currentLanguage].recordsTableRecordedBy,
     translations[currentLanguage].recordsTableUpdated,
     translations[currentLanguage].recordsTableStatus,
+    "Followup Type",
+    "Followup Start Date",
+    "Followup Next Date",
+    "Followup End Date",
+    "ส่งเล่มไป ตม. (ติ๊ก)",
+    "ส่งเล่มคืน (ติ๊ก)",
+    "ส่งเล่มไป ตม. (เล่ม)",
+    "ส่งเล่มคืน (เล่ม)",
+    "ปรับ 90 เกิน",
+    "Visa เกิน",
+    "ผ.60",
+    "ผ.30",
+    "หมายเหตุเอกสาร",
+    "เมลนายจ้าง",
+    "ที่อยู่นายจ้าง",
+    "Payment Status",
   ];
   const lines = [headers.map(toCsvValue).join(",")];
   rows.forEach((record) => {
-    const personalInfo = record.data.personalInfo || {};
-    const workers = normalizeWorkers(record.data);
-    const workerName = personalInfo.fullName || workers[0]?.fullName || "-";
-    const employerLabel = personalInfo.employerName || record.data.company || record.data.employerId || "-";
+    const data = record.data || {};
+    const personalInfo = data.personalInfo || {};
+    const workers = normalizeWorkers(data);
+    const workerName = resolveWorkerNameForDisplay(record);
+    const employerLabel = personalInfo.employerName || data.company || data.employerId || "-";
+    const followup = data.followup || {};
     const cols = [
       record.formId,
       record.formTypeLabel,
       employerLabel,
       workerName,
-      record.data.recordedBy || "-",
+      personalInfo.nationality || "-",
+      personalInfo.gender || "-",
+      personalInfo.personalVisaExpiryDate || "-",
+      data.recordedBy || "-",
       formatDateTime(record.updatedAt),
-      getCaseStatusDisplay(record.data.caseStatus || {}),
+      getCaseStatusDisplay(data.caseStatus || {}),
+      data.followupType || "-",
+      formatDateOnlyDMY(followup.startDate),
+      formatDateOnlyDMY(followup.nextDate),
+      formatDateOnlyDMY(followup.endDate),
+      followup.sentImmigration ? "yes" : "no",
+      followup.returnBook ? "yes" : "no",
+      followup.sentBookCount ?? "-",
+      followup.returnBookCount ?? "-",
+      followup.overdueFine ? "yes" : "no",
+      followup.visaOverdue ? "yes" : "no",
+      followup.p60 ? "yes" : "no",
+      followup.p30 ? "yes" : "no",
+      data.documents?.note || "-",
+      personalInfo.employerEmail || "-",
+      personalInfo.employerAddress || "-",
+      data.paymentStatus || "-",
     ];
     lines.push(cols.map(toCsvValue).join(","));
   });
@@ -1899,7 +2298,7 @@ const exportRecordsToCsv = () => {
   const anchor = document.createElement("a");
   anchor.href = url;
   const stamp = new Date().toISOString().slice(0, 10);
-  anchor.download = `records-${stamp}.csv`;
+  anchor.download = `records-detailed-${stamp}.csv`;
   document.body.appendChild(anchor);
   anchor.click();
   anchor.remove();
@@ -1939,6 +2338,9 @@ const openRecordModal = (record) => {
     if (documents.nameList) documentParts.push(translations[currentLanguage].documentNameList);
     if (documents.passPage) documentParts.push(translations[currentLanguage].documentPassPage);
     if (documents.visaPage) documentParts.push(translations[currentLanguage].documentVisaPage);
+    if (documents.passCopy) documentParts.push("หน้า Pass (สำเนา)");
+    if (documents.visaCopy) documentParts.push("หน้า Visa (สำเนา)");
+    if (documents.workPermitCopy) documentParts.push("ใบอนุญาตทำงาน (สำเนา)");
     if (documents.healthCard) documentParts.push(translations[currentLanguage].documentHealthCard);
     if (documents.exitNotice) documentParts.push(translations[currentLanguage].documentExitNotice);
     if (documents.houseReg) documentParts.push(translations[currentLanguage].documentHouseReg);
@@ -1982,14 +2384,29 @@ const openRecordModal = (record) => {
     if (personalInfo.alienId) {
       addRow("เลขประจำตัวต่างด้าว", personalInfo.alienId);
     }
+    if (personalInfo.workPermitNumber) {
+      addRow("เลขใบอนุญาตการทำงาน", personalInfo.workPermitNumber);
+    }
+    if (personalInfo.workPermitExpiry) {
+      addRow("วันหมดอายุใบทำงาน", formatDateOnlyDMY(personalInfo.workPermitExpiry));
+    }
     if (personalInfo.passNumber) {
       addRow("เลข Pass", personalInfo.passNumber);
+    }
+    if (personalInfo.personalVisaExpiryDate) {
+      addRow("วันหมดอายุ Visa", formatDateOnlyDMY(personalInfo.personalVisaExpiryDate));
     }
     if (personalInfo.businessType) {
       addRow(translations[currentLanguage].businessTypeLabel, personalInfo.businessType);
     }
     if (personalInfo.employerName) {
       addRow(translations[currentLanguage].employerNameLabel, personalInfo.employerName);
+    }
+    if (personalInfo.employerEmail) {
+      addRow("เมลนายจ้าง", personalInfo.employerEmail);
+    }
+    if (personalInfo.employerAddress) {
+      addRow("ที่อยู่นายจ้าง", personalInfo.employerAddress);
     }
     if (personalInfo.documentSender) {
       addRow(translations[currentLanguage].documentSenderLabel, personalInfo.documentSender);
@@ -2001,10 +2418,10 @@ const openRecordModal = (record) => {
       addRow(translations[currentLanguage].documentReceiverLabel, personalInfo.documentReceiver);
     }
     if (personalInfo.documentReceivedDate) {
-      addRow(translations[currentLanguage].documentReceivedDateLabel, personalInfo.documentReceivedDate);
+      addRow(translations[currentLanguage].documentReceivedDateLabel, formatDateOnlyDMY(personalInfo.documentReceivedDate));
     }
     if (personalInfo.documentReturnDate) {
-      addRow(translations[currentLanguage].documentReturnDateLabel, personalInfo.documentReturnDate);
+      addRow(translations[currentLanguage].documentReturnDateLabel, formatDateOnlyDMY(personalInfo.documentReturnDate));
     }
     if (documentParts.length) {
       addRow(translations[currentLanguage].documentsTitle, documentParts.join(", "));
@@ -2016,7 +2433,7 @@ const openRecordModal = (record) => {
       addRow(translations[currentLanguage].statusTitle, getCaseStatusLabel(caseStatus.status));
     }
     if (caseStatus.appointmentDate) {
-      addRow(translations[currentLanguage].statusAppointmentDateLabel, caseStatus.appointmentDate);
+      addRow(translations[currentLanguage].statusAppointmentDateLabel, formatDateOnlyDMY(caseStatus.appointmentDate));
     }
     table.appendChild(body);
     recordModalBody.appendChild(title);
@@ -2096,33 +2513,22 @@ const openRecordModal = (record) => {
       recordModalBody.appendChild(docTitle);
       recordModalBody.appendChild(docList);
     }
-    const attachments = [];
-    if (record.data.facePhoto) {
-      attachments.push({
-        label: translations[currentLanguage].recordFacePhotoLabel,
-        value: record.data.facePhoto,
-        dataUrl: record.data.facePhotoData || "",
-      });
-    }
-    if (record.data.idCard) {
-      attachments.push({
-        label: translations[currentLanguage].recordIdCardLabel,
-        value: record.data.idCard,
-        dataUrl: record.data.idCardData || "",
-      });
-    }
-    if (record.data.houseDoc) {
-      attachments.push({
-        label: translations[currentLanguage].recordHouseDocLabel,
-        value: record.data.houseDoc,
-        dataUrl: record.data.houseDocData || "",
-      });
-    }
-    if (record.data.paymentSlip) {
-      attachments.push({
-        label: translations[currentLanguage].recordPaymentSlipLabel,
-        value: record.data.paymentSlip,
-        dataUrl: record.data.paymentSlipData || "",
+    const attachments = Array.isArray(record.data.attachments)
+      ? record.data.attachments.map((item) => ({
+          label: currentLanguage === "th" ? "ไฟล์แนบ" : "Attachment",
+          value: item?.name || "attachment",
+          dataUrl: item?.dataUrl || "",
+        }))
+      : [];
+    if (!attachments.length) {
+      LEGACY_ATTACHMENT_KEYS.forEach((key) => {
+        if (record.data[key]) {
+          attachments.push({
+            label: currentLanguage === "th" ? "ไฟล์แนบ" : "Attachment",
+            value: record.data[key],
+            dataUrl: record.data[`${key}Data`] || "",
+          });
+        }
       });
     }
     if (!attachments.length && Array.isArray(record.data.attachments)) {
@@ -2255,12 +2661,16 @@ const buildRecordSearchText = (record) => {
     personalInfo.email,
     personalInfo.code,
     personalInfo.alienId,
+    personalInfo.workPermitNumber,
     personalInfo.workPermitExpiry,
     personalInfo.passNumber,
     personalInfo.passIssueDate,
     personalInfo.passExpiryDate,
+    personalInfo.personalVisaExpiryDate,
     personalInfo.businessType,
     personalInfo.employerName,
+    personalInfo.employerEmail,
+    personalInfo.employerAddress,
     personalInfo.documentSender,
     personalInfo.documentSentDate,
     personalInfo.documentReceiver,
@@ -2270,6 +2680,12 @@ const buildRecordSearchText = (record) => {
     caseStatus.appointmentDate,
     caseStatus.appointmentNote,
     documents.note,
+    record.data.followupType,
+    record.data.followup?.startDate,
+    record.data.followup?.nextDate,
+    record.data.followup?.endDate,
+    record.data.followup?.documentReceivedDate,
+    record.data.followup?.documentReturnDate,
     workerText,
   ]
     .filter(Boolean)
@@ -2316,7 +2732,7 @@ const openGeneralSearchResultsModal = (records, query) => {
       const workers = normalizeWorkers(record.data);
       const tr = document.createElement("tr");
       const employer = personalInfo.employerName || record.data.company || record.data.employerId || "-";
-      const workerName = personalInfo.fullName || workers[0]?.fullName || "-";
+      const workerName = resolveWorkerNameForDisplay(record);
       tr.innerHTML = `<td>${record.formId || "-"}</td>
         <td>${record.formTypeLabel || "-"}</td>
         <td>${employer}</td>
@@ -2356,15 +2772,21 @@ const saveRecord = async (status = "draft") => {
     setStatus(formSaveStatus, formatExpiryLabel(cardExpiryState.state, cardExpiryState.days), "warn");
   }
   const records = loadRecords();
-  const formId = currentEditId || "";
+  const submittingEditId = String(currentEditId || getEditIdFromQuery() || localStorage.getItem(EDIT_KEY) || "").trim();
+  if (submittingEditId) {
+    currentEditId = submittingEditId;
+  }
+  const formId = submittingEditId;
+  const primaryNameCleared = formData.personalInfo?.fullName === "";
   const workerNames = (formData.workers || []).map((worker) => worker.fullName).filter(Boolean);
   const workerCountLabel = workerNames.length
     ? ` (${workerNames.length} ${translations[currentLanguage].workerCountSuffix})`
     : "";
+  const displayWorkerName = primaryNameCleared ? "" : formData.personalInfo?.fullName || workerNames[0] || "";
   const displayName =
     formData.personalInfo?.employerName?.trim()
       ? `${formData.personalInfo.employerName}${workerCountLabel}`
-      : formData.personalInfo?.fullName || workerNames[0] || formData.employerId || formId;
+      : displayWorkerName || formData.employerId || formId;
   const recordPayload = {
     ...(formId ? { formId } : {}),
     formType: formData.formType,
@@ -2375,20 +2797,50 @@ const saveRecord = async (status = "draft") => {
     data: formData,
   };
 
-  let finalRecord = null;
   const savedServerRecord = await upsertRecordToServer(recordPayload);
-  if (savedServerRecord) {
-    finalRecord = {
+  if (!savedServerRecord) {
+    const fallbackId = formId || nextLocalFormId(records);
+    const fallbackRecord = {
       ...recordPayload,
-      ...savedServerRecord,
-      formId: String(savedServerRecord.formId || ""),
+      formId: fallbackId,
+      updatedAt: new Date().toISOString(),
     };
-  } else {
-    const fallbackFormId = formId || buildFormId();
-    finalRecord = { ...recordPayload, formId: fallbackFormId };
+    const existingIndex = records.findIndex((record) => String(record.formId || "") === String(fallbackId));
+    if (existingIndex >= 0) {
+      records.splice(existingIndex, 1, fallbackRecord);
+    } else {
+      records.unshift(fallbackRecord);
+    }
+    saveRecords(records);
+    markRecordDirty(fallbackId);
+    refreshNameSuggestions();
+    localStorage.removeItem(FORM_DRAFT_KEY);
+    currentEditId = fallbackId;
+    localStorage.removeItem(EDIT_KEY);
+    renderRecords();
+    renderLatestRecordCard();
+    hideLoader();
+    setStatus(formSaveStatus, `บันทึกแบบออฟไลน์สำเร็จ: ${fallbackId} (เซิร์ฟเวอร์ไม่พร้อมใช้งาน)`, "warn");
+    if (workerForm) {
+      localStorage.setItem(RECORD_SEARCH_KEY, fallbackId);
+      window.location.href = "records.html";
+    }
+    return;
   }
 
-  const existingIndex = records.findIndex((record) => record.formId === finalRecord.formId);
+  const finalRecord = {
+    ...savedServerRecord,
+    ...recordPayload,
+    formId: String(savedServerRecord.formId || formId || ""),
+  };
+
+  if (formId && String(finalRecord.formId || "") !== String(formId)) {
+    // Some legacy POST-upsert deployments may return a new id while user is editing an existing row.
+    // Force local cache to keep the edited record id so records.html always shows updated content on that row.
+    finalRecord.formId = String(formId);
+  }
+
+  const existingIndex = records.findIndex((record) => String(record.formId || "") === String(finalRecord.formId || ""));
   if (existingIndex >= 0) {
     records.splice(existingIndex, 1, finalRecord);
   } else {
@@ -2396,6 +2848,8 @@ const saveRecord = async (status = "draft") => {
   }
 
   saveRecords(records);
+  markRecordDirty(finalRecord.formId);
+  refreshNameSuggestions();
   localStorage.removeItem(FORM_DRAFT_KEY);
   setStatus(formSaveStatus, `${translations[currentLanguage].saveDraftSuccess}: ${finalRecord.formId}`, "ok");
   currentEditId = finalRecord.formId;
@@ -2423,12 +2877,23 @@ if (formTypeInputs?.length) {
   if (workerEmail) workerEmail.value = record.data.personalInfo?.email || "";
   if (workerCode) workerCode.value = record.data.personalInfo?.code || "";
   if (workerAlienId) workerAlienId.value = record.data.personalInfo?.alienId || "";
+  if (workPermitNumber) workPermitNumber.value = record.data.personalInfo?.workPermitNumber || "";
   if (workPermitExpiry) workPermitExpiry.value = record.data.personalInfo?.workPermitExpiry || "";
   if (passNumber) passNumber.value = record.data.personalInfo?.passNumber || "";
   if (passIssueDate) passIssueDate.value = record.data.personalInfo?.passIssueDate || "";
   if (passExpiryDate) passExpiryDate.value = record.data.personalInfo?.passExpiryDate || "";
-  if (businessType) businessType.value = record.data.personalInfo?.businessType || "";
+  if (personalVisaExpiryDate) personalVisaExpiryDate.value = record.data.personalInfo?.personalVisaExpiryDate || "";
+  if (businessType) {
+    const savedBusinessType = record.data.personalInfo?.businessType || "";
+    const hasOption = Array.from(businessType.options || []).some((option) => option.value === savedBusinessType);
+    businessType.value = hasOption ? savedBusinessType : savedBusinessType ? "other" : "";
+    if (businessTypeCustom) {
+      businessTypeCustom.value = hasOption ? "" : savedBusinessType;
+    }
+  }
   if (employerName) employerName.value = record.data.personalInfo?.employerName || "";
+  if (employerEmail) employerEmail.value = record.data.personalInfo?.employerEmail || "";
+  if (employerAddress) employerAddress.value = record.data.personalInfo?.employerAddress || "";
   if (documentSender) documentSender.value = record.data.personalInfo?.documentSender || "";
   if (documentSentDate) documentSentDate.value = record.data.personalInfo?.documentSentDate || "";
   if (documentReceiver) documentReceiver.value = record.data.personalInfo?.documentReceiver || "";
@@ -2440,6 +2905,10 @@ if (formTypeInputs?.length) {
   if (docNameList) docNameList.checked = record.data.documents?.nameList || false;
   if (docPassPage) docPassPage.checked = record.data.documents?.passPage || false;
   if (docVisaPage) docVisaPage.checked = record.data.documents?.visaPage || false;
+  if (docPassCopy) docPassCopy.checked = record.data.documents?.passCopy || false;
+  if (docVisaCopy) docVisaCopy.checked = record.data.documents?.visaCopy || false;
+  if (docWorkPermitCopy) docWorkPermitCopy.checked = record.data.documents?.workPermitCopy || false;
+  if (documentJobType) documentJobType.value = record.data.documents?.documentJobType || "";
   if (docHealthCard) docHealthCard.checked = record.data.documents?.healthCard || false;
   if (docExitNotice) docExitNotice.checked = record.data.documents?.exitNotice || false;
   if (docHouseReg) docHouseReg.checked = record.data.documents?.houseReg || false;
@@ -2500,41 +2969,38 @@ if (formTypeInputs?.length) {
   if (paymentStatus) paymentStatus.value = record.data.paymentStatus || "pending";
   if (paymentDate) paymentDate.value = record.data.paymentDate || "";
   if (paymentNotes) paymentNotes.value = record.data.paymentNotes || "";
-  uploadCache.facePhoto = {
-    name: record.data.facePhoto || "",
-    dataUrl: record.data.facePhotoData || "",
-  };
-  uploadCache.idCard = {
-    name: record.data.idCard || "",
-    dataUrl: record.data.idCardData || "",
-  };
-  uploadCache.houseDoc = {
-    name: record.data.houseDoc || "",
-    dataUrl: record.data.houseDocData || "",
-  };
-  uploadCache.paymentSlip = {
-    name: record.data.paymentSlip || "",
-    dataUrl: record.data.paymentSlipData || "",
-  };
+  const legacyAttachments = LEGACY_ATTACHMENT_KEYS.flatMap((key) => {
+    const name = record.data?.[key] || "";
+    const dataUrl = record.data?.[`${key}Data`] || "";
+    return name ? [{ name, dataUrl, type: "", size: 0 }] : [];
+  });
+  genericAttachments = Array.isArray(record.data.attachments)
+    ? record.data.attachments.map((item) => ({ name: item?.name || "ไฟล์แนบ", dataUrl: item?.dataUrl || "", type: item?.type || "", size: item?.size || 0 }))
+    : legacyAttachments;
   updateSections();
-  updateUploadPreview();
-  updatePaymentSlipPreview();
+  renderGenericAttachments();
+  updateBusinessTypeCustomVisibility();
+  bindPersonalExpiryStatuses();
 };
 
 const updateFormStepVisibility = () => {
   if (!formSteps?.length) return;
+  const isSinglePage = workerForm?.dataset?.singlePage === "true";
   formSteps.forEach((step) => {
     const stepNo = Number(step.dataset.step || 1);
-    step.classList.toggle("is-hidden", stepNo !== currentFormStep);
+    step.classList.toggle("is-hidden", !isSinglePage && stepNo !== currentFormStep);
   });
 };
 
 updateFormStepVisibility();
+bindPersonalExpiryStatuses();
 
 if (nextStepLink) {
-  nextStepLink.addEventListener("click", () => {
+  nextStepLink.addEventListener("click", (event) => {
+    event.preventDefault();
     saveFormDraft();
-    showLoader();
+    currentFormStep = 2;
+    updateFormStepVisibility();
   });
 } else if (nextStepButton) {
   nextStepButton.addEventListener("click", () => {
@@ -2552,6 +3018,9 @@ if (nextStepLink) {
 }
 if (prevStepButton) {
   prevStepButton.addEventListener("click", () => {
+    if (workerForm?.dataset?.singlePage === "true") {
+      return;
+    }
     if (isNextFormPage) {
       saveFormDraft();
       showLoader();
@@ -2576,6 +3045,9 @@ if (caseStatusInputs?.length) {
     input.addEventListener("change", updateAppointmentVisibility);
   });
 }
+if (businessType) {
+  businessType.addEventListener("change", updateBusinessTypeCustomVisibility);
+}
 if (passportCheckInput && passportStatus) {
   passportCheckInput.addEventListener("input", () => validatePassport(passportCheckInput.value, passportStatus));
 }
@@ -2594,16 +3066,22 @@ if (addWorkerButton) {
     }
   });
 }
-uploadInputs.forEach((input) => input.addEventListener("change", updateUploadPreview));
-if (paymentSlipInput) {
-  paymentSlipInput.addEventListener("change", updatePaymentSlipPreview);
+if (attachmentsInput) {
+  attachmentsInput.addEventListener("change", () => handleGenericAttachmentInputChange(attachmentsInput));
+}
+if (attachmentsCameraInput) {
+  attachmentsCameraInput.addEventListener("change", () => handleGenericAttachmentInputChange(attachmentsCameraInput));
+}
+if (openCameraButton && attachmentsCameraInput) {
+  openCameraButton.addEventListener("click", () => attachmentsCameraInput.click());
 }
 updateSections();
 updateFormTypeOtherVisibility();
 updateAppointmentVisibility();
+updateBusinessTypeCustomVisibility();
 ensureWorkerCards();
-updateUploadPreview();
-updatePaymentSlipPreview();
+renderGenericAttachments();
+refreshNameSuggestions();
 loadFormDraft();
 initTheme();
 renderRecords();
@@ -2661,8 +3139,7 @@ const applyTranslations = (lang) => {
     }
   }
   refreshWorkerStatuses();
-  updateUploadPreview();
-  updatePaymentSlipPreview();
+  renderGenericAttachments();
   renderRecords();
 };
 
@@ -2685,12 +3162,6 @@ if (draftButton) {
 if (clearFormDraftButton) {
   clearFormDraftButton.addEventListener("click", clearFormDraft);
 }
-if (themeToggle) {
-  themeToggle.addEventListener("click", () => {
-    const nextTheme = document.body.classList.contains("theme-dark") ? "light" : "dark";
-    applyTheme(nextTheme);
-  });
-}
 if (recordSearch) {
   recordSearch.addEventListener("input", renderRecords);
 }
@@ -2698,13 +3169,17 @@ if (recordFilter) {
   recordFilter.addEventListener("change", renderRecords);
 }
 if (clearRecordsButton) {
-  clearRecordsButton.addEventListener("click", () => {
+  clearRecordsButton.addEventListener("click", async () => {
     const shouldClear = window.confirm(translations[currentLanguage].confirmClearRecords);
     if (!shouldClear) {
       return;
     }
+    const cleared = await clearRecordsFromServer();
+    if (!cleared) {
+      setStatus(recordsStatus, "ไม่สามารถลบข้อมูลจากเซิร์ฟเวอร์ได้", "error");
+      return;
+    }
     saveRecords([]);
-    clearRecordsFromServer();
     renderRecords();
     renderLatestRecordCard();
     setStatus(formSaveStatus, translations[currentLanguage].recordsStatus);
@@ -2712,6 +3187,25 @@ if (clearRecordsButton) {
 }
 if (exportRecordsButton) {
   exportRecordsButton.addEventListener("click", exportRecordsToCsv);
+}
+if (backupAllDataButton) {
+  backupAllDataButton.addEventListener("click", () => {
+    exportBackupData().catch(() => setStatus(recordsStatus || formSaveStatus, "ไม่สามารถสำรองข้อมูลได้", "error"));
+  });
+}
+if (restoreAllDataButton && restoreAllDataInput) {
+  restoreAllDataButton.addEventListener("click", () => restoreAllDataInput.click());
+  restoreAllDataInput.addEventListener("change", async (event) => {
+    const file = event?.target?.files?.[0];
+    if (!file) return;
+    try {
+      await importBackupData(file);
+    } catch (_error) {
+      setStatus(recordsStatus || formSaveStatus, "ไม่สามารถนำเข้าข้อมูลสำรองได้", "error");
+    } finally {
+      restoreAllDataInput.value = "";
+    }
+  });
 }
 if (passportCheckButton) {
   passportCheckButton.addEventListener("click", () => {
@@ -2781,13 +3275,31 @@ if (recordModal) {
   });
 }
 if (workerForm) {
-  const storedEditId = localStorage.getItem(EDIT_KEY);
-  if (storedEditId) {
+  const queryEditId = getEditIdFromQuery();
+  const storedEditId = String(localStorage.getItem(EDIT_KEY) || "").trim();
+  const requestedEditId = queryEditId || storedEditId;
+
+  if (requestedEditId) {
+    currentEditId = requestedEditId;
     const records = loadRecords();
-    const record = records.find((item) => item.formId === storedEditId);
+    const record = records.find((item) => String(item.formId || "") === requestedEditId);
     if (record) {
-      currentEditId = record.formId;
+      currentEditId = String(record.formId || "");
       populateForm(record);
+    } else {
+      fetchRecordByIdFromServer(requestedEditId).then((serverRecord) => {
+        if (!serverRecord) return;
+        currentEditId = String(serverRecord.formId || requestedEditId);
+        const all = loadRecords();
+        const index = all.findIndex((item) => String(item.formId || "") === currentEditId);
+        if (index >= 0) {
+          all[index] = serverRecord;
+        } else {
+          all.unshift(serverRecord);
+        }
+        saveRecords(all);
+        populateForm(serverRecord);
+      });
     }
   }
 }

@@ -25,6 +25,9 @@
         <a class="tab-btn" href="index.html" data-i18n="tabLookup">ค้นหาข้อมูล</a>
         <a class="tab-btn is-active" href="records.html" data-i18n="tabRecords">ข้อมูลบันทึก</a>
         <a class="tab-btn" href="form.html" data-i18n="tabForm">กรอกแบบฟอร์ม</a>
+        <a class="tab-btn" href="report90.html">รายงานตัว 90 วัน</a>
+        <a class="tab-btn" href="visarun.html">Visa run</a>
+        <a class="tab-btn" href="nextform.html">MOU ลาว</a>
       </nav>
 
       <section class="panel">
@@ -49,13 +52,15 @@
               <option value="changeEmployer" data-i18n="formTypeChangeEmployer">เปลี่ยนนายจ้าง</option>
               <option value="residence37_38" data-i18n="formTypeResidence">แจ้งที่พัก 37,38</option>
               <option value="visaStamp" data-i18n="formTypeVisaStamp">ลงตรา Visa</option>
-              <option value="ciReport" data-i18n="formTypeCiReport">รายงานทำเล่ม CI</option>
+              <option value="ciReport" data-i18n="formTypeCiReport">ทำเล่ม CI</option>
               <option value="workPermitRenewal" data-i18n="formTypeWorkPermitRenewal">ต่ออนุญาตทำงานแรงงานต่างด้าว</option>
               <option value="mouLaos" data-i18n="formTypeMouLaos">MOU ลาว</option>
               <option value="mouLaosRenew" data-i18n="formTypeMouLaosRenew">MOU ลาว 2 ปีหลัง</option>
               <option value="noDocsRegister" data-i18n="formTypeNoDocsRegister">ขึ้นทะเบียนคนไม่มีเอกสาร</option>
               <option value="exitNotice" data-i18n="formTypeExit">แจ้งออก</option>
               <option value="other" data-i18n="formTypeOther">อื่น ๆ</option>
+              <option value="report90">รายงานตัว 90 วัน</option>
+              <option value="visarun">Visa run</option>
             </select>
           </div>
         </div>
@@ -63,6 +68,9 @@
           <span class="status-text" id="recordsStatus" data-i18n="recordsStatus">ยังไม่มีข้อมูลที่บันทึก</span>
           <div class="table-actions">
             <button type="button" class="secondary" id="exportRecords">ส่งออก Excel (CSV)</button>
+            <button type="button" class="secondary" id="backupAllData">สำรองข้อมูลทั้งระบบ</button>
+            <button type="button" class="secondary" id="restoreAllData">อัปโหลดข้อมูลสำรอง</button>
+            <input id="restoreAllDataInput" type="file" accept="application/json" hidden />
             <button type="button" class="secondary" id="clearRecords" data-i18n="clearButton">
               ลบข้อมูลทั้งหมด
             </button>

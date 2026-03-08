@@ -194,8 +194,8 @@
                 <label class="checkbox-item"><input type="checkbox" id="docReceipt" /><span>ใบเสร็จ</span></label>
                 <label class="checkbox-item"><input type="checkbox" id="docRequestForm" /><span>ใบคำขอ</span></label>
                 <label class="checkbox-item"><input type="checkbox" id="docNameList" /><span>เนมลิส</span></label>
-                <label class="checkbox-item"><input type="checkbox" id="docPassPage" /><span>หน้า Pass (ตัวจริง)</span></label>
-                <label class="checkbox-item"><input type="checkbox" id="docVisaPage" /><span>หน้า Visa (ตัวจริง)</span></label>
+                <label class="checkbox-item"><input type="checkbox" id="docPassPage" /><span>เล่ม Pass (ตัวจริง)</span></label>
+                <label class="checkbox-item"><input type="checkbox" id="docVisaPage" /><span>เล่ม Visa (ตัวจริง)</span></label>
                 <label class="checkbox-item"><input type="checkbox" id="docPassCopy" /><span>หน้า Pass (สำเนา)</span></label>
                 <label class="checkbox-item"><input type="checkbox" id="docVisaCopy" /><span>หน้า visa (สำเนา)</span></label>
                 <label class="checkbox-item"><input type="checkbox" id="docWorkPermitCopy" /><span>ใบอนุญาติทำงาน (สำเนา)</span></label>
@@ -206,8 +206,6 @@
                 <label class="checkbox-item"><input type="checkbox" id="docCompanyCert" /><span>หนังสือรับรองบริษัท</span></label>
               </div>
               <div class="form-row">
-                <label for="documentJobType">ประเภทงาน</label>
-                <input id="documentJobType" type="text" placeholder="ระบุประเภทงาน" />
                 <label for="documentsNote">หมายเหตุเอกสาร</label>
                 <textarea id="documentsNote" rows="3" placeholder="บันทึกเอกสารที่ขาด หรือเอกสารมีปัญหา"></textarea>
               </div>
@@ -219,6 +217,7 @@
                 <label class="radio-item"><input type="radio" name="caseStatus" value="registered" checked /><span>ลงระบบ</span></label>
                 <label class="radio-item"><input type="radio" name="caseStatus" value="pending" /><span>รออนุมัติ</span></label>
                 <label class="radio-item"><input type="radio" name="caseStatus" value="appointment" /><span>นัดหมาย</span></label>
+                <label class="radio-item"><input type="radio" name="caseStatus" value="receivedDocuments" /><span>รับเอกสารมา</span></label>
               </div>
               <div class="form-row is-hidden" id="appointmentDateRow">
                 <label for="appointmentDate">วันที่นัดหมาย</label>
@@ -234,37 +233,70 @@
                 <input id="documentReceivedDate" type="date" />
               </div>
               <div class="form-row">
-                <label for="documentSentDate">วันที่ส่ง</label>
-                <input id="documentSentDate" type="date" />
+                <label for="documentReceiver">ชื่อผู้รับ</label>
+                <input id="documentReceiver" type="text" placeholder="กรอกชื่อผู้รับเอกสาร" />
               </div>
               <div class="form-row">
-                <label for="recordedBy">ผู้บันทึกข้อมูล</label>
-                <input id="recordedBy" type="text" placeholder="กรอกชื่อผู้บันทึกข้อมูล" />
+                <label for="documentSender">รับมาจากใคร</label>
+                <input id="documentSender" type="text" placeholder="กรอกชื่อผู้ส่งเอกสาร" />
               </div>
             </div>
 
             <div class="grid-3">
               <div class="form-row">
-                <label for="documentSender">ชื่อผู้ส่งเอกสาร</label>
-                <input id="documentSender" type="text" placeholder="กรอกชื่อผู้ส่งเอกสาร" />
-              </div>
-              <div class="form-row">
-                <label for="documentReceiver">ชื่อผู้รับ</label>
-                <input id="documentReceiver" type="text" placeholder="กรอกชื่อผู้รับเอกสาร" />
-              </div>
-              <div class="form-row">
                 <label for="documentReturnDate">วันที่ส่งเอกสารคืน</label>
                 <input id="documentReturnDate" type="date" />
               </div>
+              <div class="form-row">
+                <label for="recordedBy">ชื่อผู้ส่งเอกสารคืน</label>
+                <input id="recordedBy" type="text" placeholder="กรอกชื่อผู้ส่งเอกสารคืน" />
+              </div>
+            </div>
+
+            <div class="form-section" data-section="all">
+              <h3>สแกนเอกสารและแนบไฟล์</h3>
+              <div class="grid-3">
+                <div class="form-row">
+                  <label for="scanDocumentImage">สแกนเอกสารเพื่อเติมข้อมูลอัตโนมัติ</label>
+                  <input id="scanDocumentImage" type="file" accept="image/*" />
+                  <button type="button" class="secondary" id="scanDocumentButton">สแกนเอกสาร</button>
+                  <span class="status-text" id="scanDocumentStatus"></span>
+                </div>
+              </div>
+              <div class="upload-grid">
+                <label class="upload-card" data-upload="facePhoto">
+                  <input id="facePhoto" type="file" accept="image/*,.pdf" />
+                  <span class="upload-title">แนบรูปหน้าคน</span>
+                  <span class="upload-filename"></span>
+                  <img class="upload-thumb" alt="Face photo preview" />
+                </label>
+                <label class="upload-card" data-upload="idCard">
+                  <input id="idCard" type="file" accept="image/*,.pdf" />
+                  <span class="upload-title">แนบบัตรประชาชน/บัตรชมพู</span>
+                  <span class="upload-filename"></span>
+                  <img class="upload-thumb" alt="ID card preview" />
+                </label>
+                <label class="upload-card" data-upload="houseDoc">
+                  <input id="houseDoc" type="file" accept="image/*,.pdf" />
+                  <span class="upload-title">แนบทะเบียนบ้าน</span>
+                  <span class="upload-filename"></span>
+                  <img class="upload-thumb" alt="House doc preview" />
+                </label>
+                <label class="upload-card" data-upload="paymentSlip">
+                  <input id="paymentSlip" type="file" accept="image/*,.pdf" />
+                  <span class="upload-title">แนบสลิปการชำระเงิน</span>
+                  <span class="upload-filename"></span>
+                  <img class="upload-thumb" alt="Payment slip preview" />
+                </label>
+              </div>
+              <div class="upload-preview" id="uploadPreview"></div>
+              <div class="upload-preview" id="paymentSlipPreview"></div>
             </div>
 
             <div class="form-actions">
               <span class="status-text" id="formSaveStatus"></span>
-                            <button type="button" class="secondary" id="clearFormDraft">ล้างข้อมูลแบบฟอร์ม</button>
-              <button type="button" class="secondary" id="draftButton">บันทึกฉบับร่าง</button>
-              <button type="submit" class="primary">บันทึกข้อมูล</button>
-              <button type="button" class="secondary" id="verifyRecord">ตรวจสอบข้อมูล</button>
-            </div>
+                                                        <button type="submit" class="primary">บันทึกข้อมูล</button>
+                          </div>
           </div>
           <datalist id="workerNameSuggestions"></datalist>
   <datalist id="employerNameSuggestions"></datalist>

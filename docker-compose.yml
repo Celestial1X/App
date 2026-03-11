@@ -1,0 +1,19 @@
+services:
+  app:
+    build: .
+    container_name: foreign-worker-app
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - RECORDS_DATA_DIR=/var/data
+      - RECORDS_DATA_FILE=/var/data/records.json
+      - FOLLOWUPS_DATA_FILE=/var/data/followups.json
+      - SERVER_LOG_FILE=/var/data/server.log
+    volumes:
+      - app_data:/var/data
+    restart: unless-stopped
+
+volumes:
+  app_data:
+    driver: local

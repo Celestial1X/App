@@ -276,8 +276,12 @@ const refreshNameSuggestions = () => {
   updateInputDatalist("r90WorkerName", "workerNameSuggestions", workers);
   updateInputDatalist("visaWorkerName", "workerNameSuggestions", workers);
   updateInputDatalist("mouWorkerName", "workerNameSuggestions", workers);
+  updateInputDatalist("receiveWorkerName", "workerNameSuggestions", workers);
+  updateInputDatalist("returnWorkerName", "workerNameSuggestions", workers);
   updateInputDatalist("r90Employer", "employerNameSuggestions", employers);
   updateInputDatalist("visaEmployer", "employerNameSuggestions", employers);
+  updateInputDatalist("receiveEmployerName", "employerNameSuggestions", employers);
+  updateInputDatalist("returnEmployerName", "employerNameSuggestions", employers);
 };
 
 const toTimestamp = (value) => {
@@ -498,6 +502,56 @@ const toMouLaosPayload = (values, formId = "") => ({
       endDate: normalizeDateInputValue(values.endDate) || addYears(values.startDate, 2),
       documentReceivedDate: values.documentReceivedDate,
       documentReturnDate: values.documentReturnDate,
+    },
+  },
+});
+
+const toReceiveDocsPayload = (values, formId = "") => ({
+  formId,
+  formType: "receivedocs",
+  formTypeLabel: "รับเอกสาร",
+  displayName: `รับเอกสาร - ${values.workerName || "-"}`,
+  status: "final",
+  updatedAt: new Date().toISOString(),
+  data: {
+    recordedBy: values.receiverName || "",
+    company: "",
+    startDate: values.receiveDate || "",
+    personalInfo: {
+      fullName: values.workerName,
+      employerName: values.employerName,
+    },
+    caseStatus: { status: "registered", appointmentDate: "", appointmentNote: "" },
+    followupType: "receivedocs",
+    followup: {
+      taskType: values.taskType || "",
+      documentReceivedDate: normalizeDateInputValue(values.receiveDate),
+      receiverName: values.receiverName || "",
+    },
+  },
+});
+
+const toReturnDocsPayload = (values, formId = "") => ({
+  formId,
+  formType: "returndocs",
+  formTypeLabel: "ส่งคืนเอกสาร",
+  displayName: `ส่งคืนเอกสาร - ${values.workerName || "-"}`,
+  status: "final",
+  updatedAt: new Date().toISOString(),
+  data: {
+    recordedBy: values.returnSenderName || "",
+    company: "",
+    startDate: values.returnDate || "",
+    personalInfo: {
+      fullName: values.workerName,
+      employerName: values.employerName,
+    },
+    caseStatus: { status: "registered", appointmentDate: "", appointmentNote: "" },
+    followupType: "returndocs",
+    followup: {
+      taskType: values.taskType || "",
+      documentReturnDate: normalizeDateInputValue(values.returnDate),
+      returnSenderName: values.returnSenderName || "",
     },
   },
 });
@@ -1055,6 +1109,269 @@ const runMouLaosPage = () => {
   });
 };
 
+
+const runReceiveDocsPage = () => {
+  const type = "receivedocs";
+  const form = document.getElementById("receiveDocsForm");
+  const status = document.getElementById("receiveDocsStatus");
+  const list = document.getElementById("receiveDocsList");
+  const modal = setupModal();
+  let rows = [];
+  let editFormId = "";
+  const requestedEditId = getEditIdFromQuery();
+  if (requestedEditId) editFormId = requestedEditId;
+
+  const resetForm = () => {
+    form.reset();
+    editFormId = "";
+  };
+
+  const mapRecord = (record) => {
+    const info = record?.data?.personalInfo || {};
+    const followup = record?.data?.followup || {};
+    return {
+      id: record.formId,
+      workerName: info.fullName || "",
+      employerName: info.employerName || "",
+      taskType: followup.taskType || "",
+      receiveDate: followup.documentReceivedDate || "",
+      receiverName: followup.receiverName || record?.data?.recordedBy || "",
+    };
+  };
+
+  const fillForEdit = (item) => {
+    document.getElementById("receiveWorkerName").value = item.workerName || "";
+    document.getElementById("receiveEmployerName").value = item.employerName || "";
+    document.getElementById("receiveTaskType").value = item.taskType || "";
+    document.getElementById("receiveDate").value = item.receiveDate || "";
+    document.getElementById("receiveBy").value = item.receiverName || "";
+    editFormId = String(item.id || "");
+  };
+
+  const showDetail = (item) => {
+    modal.open("ตรวจสอบข้อมูล รับเอกสาร", [
+      ["ชื่อต่างด้าว", item.workerName || "-"],
+      ["ชื่อนายจ้าง", item.employerName || "-"],
+      ["รายการที่ทำ", item.taskType || "-"],
+      ["วันที่รับเอกสาร", fmtDate(item.receiveDate)],
+      ["ผู้รับเอกสาร", item.receiverName || "-"],
+    ]);
+  };
+
+  const renderRows = () => {
+    list.innerHTML = "";
+    rows.forEach((item) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.taskType || "-"}</td><td>${fmtDate(item.receiveDate)}</td><td>${item.receiverName || "-"}</td>`;
+      const actionCell = document.createElement("td");
+      const actionWrap = document.createElement("div");
+      actionWrap.className = "table-actions";
+      const verifyButton = document.createElement("button");
+      verifyButton.type = "button";
+      verifyButton.className = "secondary";
+      verifyButton.textContent = "ตรวจสอบ";
+      verifyButton.addEventListener("click", () => showDetail(item));
+      const editButton = document.createElement("button");
+      editButton.type = "button";
+      editButton.className = "secondary";
+      editButton.textContent = "แก้ไข";
+      editButton.addEventListener("click", () => fillForEdit(item));
+      const deleteButton = document.createElement("button");
+      deleteButton.type = "button";
+      deleteButton.className = "danger";
+      deleteButton.textContent = "ลบ";
+      deleteButton.addEventListener("click", async () => {
+        if (!window.confirm(`ยืนยันการลบข้อมูลรับเอกสาร ของ ${item.workerName || "-"} ?`)) return;
+        await deleteRecordById(item.id);
+        await refreshRows();
+      });
+      actionWrap.append(verifyButton, editButton, deleteButton);
+      actionCell.appendChild(actionWrap);
+      tr.appendChild(actionCell);
+      list.appendChild(tr);
+    });
+    if (!rows.length) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = '<td colspan="6">ยังไม่มีข้อมูล</td>';
+      list.appendChild(tr);
+    }
+  };
+
+  const refreshRows = async () => {
+    const records = await fetchRecordsByType(type);
+    rows = records.map(mapRecord).sort((a, b) => (b.id || "").localeCompare(a.id || "", "th"));
+    renderRows();
+    if (requestedEditId && !editFormId) {
+      const target = rows.find((item) => String(item.id) === requestedEditId);
+      if (target) fillForEdit(target);
+    }
+  };
+
+  form?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const values = {
+      workerName: document.getElementById("receiveWorkerName").value.trim(),
+      employerName: document.getElementById("receiveEmployerName").value.trim(),
+      taskType: document.getElementById("receiveTaskType").value.trim(),
+      receiveDate: document.getElementById("receiveDate").value,
+      receiverName: document.getElementById("receiveBy").value.trim(),
+    };
+    values.receiveDate = normalizeDateInputValue(values.receiveDate);
+    if (!values.receiveDate) {
+      status.textContent = "กรุณาใส่วันที่รับเอกสารก่อนบันทึก";
+      status.classList.add("error");
+      return;
+    }
+    try {
+      const submittingEditId = editFormId || requestedEditId || "";
+      await saveRecord(toReceiveDocsPayload(values, submittingEditId));
+      const wasEdit = Boolean(submittingEditId);
+      resetForm();
+      await refreshRows();
+      status.textContent = wasEdit ? "แก้ไขข้อมูลเรียบร้อย" : "บันทึกข้อมูลเรียบร้อย";
+    } catch {
+      status.textContent = "ไม่สามารถบันทึกข้อมูลได้ กรุณาตรวจสอบเซิร์ฟเวอร์";
+      status.classList.add("error");
+    }
+  });
+
+  refreshRows().catch(() => {
+    status.textContent = "ไม่สามารถโหลดข้อมูลกลางได้ กรุณาตรวจสอบการเชื่อมต่อเซิร์ฟเวอร์";
+    status.classList.add("error");
+  });
+};
+
+const runReturnDocsPage = () => {
+  const type = "returndocs";
+  const form = document.getElementById("returnDocsForm");
+  const status = document.getElementById("returnDocsStatus");
+  const list = document.getElementById("returnDocsList");
+  const modal = setupModal();
+  let rows = [];
+  let editFormId = "";
+  const requestedEditId = getEditIdFromQuery();
+  if (requestedEditId) editFormId = requestedEditId;
+
+  const resetForm = () => {
+    form.reset();
+    editFormId = "";
+  };
+
+  const mapRecord = (record) => {
+    const info = record?.data?.personalInfo || {};
+    const followup = record?.data?.followup || {};
+    return {
+      id: record.formId,
+      workerName: info.fullName || "",
+      employerName: info.employerName || "",
+      taskType: followup.taskType || "",
+      returnDate: followup.documentReturnDate || "",
+      returnSenderName: followup.returnSenderName || record?.data?.recordedBy || "",
+    };
+  };
+
+  const fillForEdit = (item) => {
+    document.getElementById("returnWorkerName").value = item.workerName || "";
+    document.getElementById("returnEmployerName").value = item.employerName || "";
+    document.getElementById("returnTaskType").value = item.taskType || "";
+    document.getElementById("returnDate").value = item.returnDate || "";
+    document.getElementById("returnBy").value = item.returnSenderName || "";
+    editFormId = String(item.id || "");
+  };
+
+  const showDetail = (item) => {
+    modal.open("ตรวจสอบข้อมูล ส่งคืนเอกสาร", [
+      ["ชื่อต่างด้าว", item.workerName || "-"],
+      ["ชื่อนายจ้าง", item.employerName || "-"],
+      ["รายการที่ทำ", item.taskType || "-"],
+      ["วันที่ส่งคืนเอกสาร", fmtDate(item.returnDate)],
+      ["ผู้ส่งคืนเอกสาร", item.returnSenderName || "-"],
+    ]);
+  };
+
+  const renderRows = () => {
+    list.innerHTML = "";
+    rows.forEach((item) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.taskType || "-"}</td><td>${fmtDate(item.returnDate)}</td><td>${item.returnSenderName || "-"}</td>`;
+      const actionCell = document.createElement("td");
+      const actionWrap = document.createElement("div");
+      actionWrap.className = "table-actions";
+      const verifyButton = document.createElement("button");
+      verifyButton.type = "button";
+      verifyButton.className = "secondary";
+      verifyButton.textContent = "ตรวจสอบ";
+      verifyButton.addEventListener("click", () => showDetail(item));
+      const editButton = document.createElement("button");
+      editButton.type = "button";
+      editButton.className = "secondary";
+      editButton.textContent = "แก้ไข";
+      editButton.addEventListener("click", () => fillForEdit(item));
+      const deleteButton = document.createElement("button");
+      deleteButton.type = "button";
+      deleteButton.className = "danger";
+      deleteButton.textContent = "ลบ";
+      deleteButton.addEventListener("click", async () => {
+        if (!window.confirm(`ยืนยันการลบข้อมูลส่งคืนเอกสาร ของ ${item.workerName || "-"} ?`)) return;
+        await deleteRecordById(item.id);
+        await refreshRows();
+      });
+      actionWrap.append(verifyButton, editButton, deleteButton);
+      actionCell.appendChild(actionWrap);
+      tr.appendChild(actionCell);
+      list.appendChild(tr);
+    });
+    if (!rows.length) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = '<td colspan="6">ยังไม่มีข้อมูล</td>';
+      list.appendChild(tr);
+    }
+  };
+
+  const refreshRows = async () => {
+    const records = await fetchRecordsByType(type);
+    rows = records.map(mapRecord).sort((a, b) => (b.id || "").localeCompare(a.id || "", "th"));
+    renderRows();
+    if (requestedEditId && !editFormId) {
+      const target = rows.find((item) => String(item.id) === requestedEditId);
+      if (target) fillForEdit(target);
+    }
+  };
+
+  form?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const values = {
+      workerName: document.getElementById("returnWorkerName").value.trim(),
+      employerName: document.getElementById("returnEmployerName").value.trim(),
+      taskType: document.getElementById("returnTaskType").value.trim(),
+      returnDate: document.getElementById("returnDate").value,
+      returnSenderName: document.getElementById("returnBy").value.trim(),
+    };
+    values.returnDate = normalizeDateInputValue(values.returnDate);
+    if (!values.returnDate) {
+      status.textContent = "กรุณาใส่วันที่ส่งคืนเอกสารก่อนบันทึก";
+      status.classList.add("error");
+      return;
+    }
+    try {
+      const submittingEditId = editFormId || requestedEditId || "";
+      await saveRecord(toReturnDocsPayload(values, submittingEditId));
+      const wasEdit = Boolean(submittingEditId);
+      resetForm();
+      await refreshRows();
+      status.textContent = wasEdit ? "แก้ไขข้อมูลเรียบร้อย" : "บันทึกข้อมูลเรียบร้อย";
+    } catch {
+      status.textContent = "ไม่สามารถบันทึกข้อมูลได้ กรุณาตรวจสอบเซิร์ฟเวอร์";
+      status.classList.add("error");
+    }
+  });
+
+  refreshRows().catch(() => {
+    status.textContent = "ไม่สามารถโหลดข้อมูลกลางได้ กรุณาตรวจสอบการเชื่อมต่อเซิร์ฟเวอร์";
+    status.classList.add("error");
+  });
+};
+
 if (document.body.dataset.page === "report90") {
   runReport90Page();
 }
@@ -1063,4 +1380,10 @@ if (document.body.dataset.page === "visarun") {
 }
 if (document.body.dataset.page === "moulaos") {
   runMouLaosPage();
+}
+if (document.body.dataset.page === "receivedocs") {
+  runReceiveDocsPage();
+}
+if (document.body.dataset.page === "returndocs") {
+  runReturnDocsPage();
 }

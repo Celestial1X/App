@@ -2098,6 +2098,8 @@ const renderRecords = () => {
         visarun: "visarun.html",
         mouLaos: "nextform.html",
         mouLaosRenew: "nextform.html",
+        receivedocs: "receivedocs.html",
+        returndocs: "returndocs.html",
       };
       const targetPage = followupPageMap[record.formType] || "form.html";
       if (targetPage === "form.html") {

@@ -204,6 +204,60 @@ const getAggregateBookStats = (rows, item, type) => {
 };
 
 
+const toCsvValue = (value) => {
+  const raw = String(value ?? "");
+  const escaped = raw.replace(/"/g, '""');
+  return `"${escaped}"`;
+};
+
+const exportTableToCsv = ({ listElement, filePrefix, statusElement }) => {
+  if (!listElement) return;
+  const table = listElement.closest("table");
+  if (!table) return;
+  const headers = Array.from(table.querySelectorAll("thead th")).map((th) => String(th.textContent || "").trim());
+  const exportableIndexes = headers
+    .map((header, index) => ({ header, index }))
+    .filter(({ header }) => header && header !== "การจัดการ");
+
+  const lines = [exportableIndexes.map(({ header }) => toCsvValue(header)).join(",")];
+  const rows = Array.from(listElement.querySelectorAll("tr"));
+  rows.forEach((tr) => {
+    const cells = Array.from(tr.querySelectorAll("td"));
+    if (!cells.length) return;
+    if (cells.length === 1 && String(cells[0].textContent || "").includes("ยังไม่มีข้อมูล")) return;
+    const values = exportableIndexes.map(({ index }) => {
+      const cell = cells[index];
+      if (!cell) return "";
+      return String(cell.innerText || cell.textContent || "").replace(/\s+/g, " ").trim();
+    });
+    lines.push(values.map((value) => toCsvValue(value)).join(","));
+  });
+
+  if (lines.length <= 1) {
+    if (statusElement) {
+      statusElement.textContent = "ยังไม่มีข้อมูลสำหรับส่งออก";
+      statusElement.classList.add("error");
+    }
+    return;
+  }
+
+  const csv = `﻿${lines.join("\n")}`;
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const anchor = document.createElement("a");
+  anchor.href = URL.createObjectURL(blob);
+  anchor.download = `${filePrefix}-${stamp}.csv`;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  setTimeout(() => URL.revokeObjectURL(anchor.href), 500);
+
+  if (statusElement) {
+    statusElement.textContent = "ส่งออกไฟล์เรียบร้อย";
+    statusElement.classList.remove("error");
+  }
+};
+
 const setupModal = () => {
   const modal = document.getElementById("followupModal");
   const closeButton = document.getElementById("followupModalClose");
@@ -580,6 +634,7 @@ const runReport90Page = () => {
   const nextDate = document.getElementById("r90NextDate");
   const status = document.getElementById("report90Status");
   const list = document.getElementById("report90List");
+  const exportButton = document.getElementById("exportReport90");
   const alert = document.getElementById("report90Alert");
   const modal = setupModal();
   let rows = [];
@@ -713,6 +768,10 @@ const runReport90Page = () => {
   startDate?.addEventListener("change", updateReport90NextDate);
   startDate?.addEventListener("input", updateReport90NextDate);
 
+  exportButton?.addEventListener("click", () => {
+    exportTableToCsv({ listElement: list, filePrefix: "report90-records", statusElement: status });
+  });
+
   form?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const values = {
@@ -765,6 +824,7 @@ const runVisaPage = () => {
   const endDate = document.getElementById("visaEndDate");
   const status = document.getElementById("visaStatus");
   const list = document.getElementById("visaList");
+  const exportButton = document.getElementById("exportVisaRun");
   const alert = document.getElementById("visaAlert");
   const modal = setupModal();
   let rows = [];
@@ -904,6 +964,10 @@ const runVisaPage = () => {
   startDate?.addEventListener("change", updateVisaEndDate);
   startDate?.addEventListener("input", updateVisaEndDate);
 
+  exportButton?.addEventListener("click", () => {
+    exportTableToCsv({ listElement: list, filePrefix: "visarun-records", statusElement: status });
+  });
+
   form?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const values = {
@@ -958,6 +1022,7 @@ const runMouLaosPage = () => {
   const endDate = document.getElementById("mouEndDate");
   const status = document.getElementById("mouStatus");
   const list = document.getElementById("mouList");
+  const exportButton = document.getElementById("exportMouLaos");
   const alert = document.getElementById("mouAlert");
   const modal = setupModal();
   let rows = [];
@@ -1087,6 +1152,10 @@ const runMouLaosPage = () => {
   startDate?.addEventListener("change", updateMouEndDate);
   startDate?.addEventListener("input", updateMouEndDate);
 
+  exportButton?.addEventListener("click", () => {
+    exportTableToCsv({ listElement: list, filePrefix: "moulaos-records", statusElement: status });
+  });
+
   form?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const values = {
@@ -1132,6 +1201,7 @@ const runReceiveDocsPage = () => {
   const form = document.getElementById("receiveDocsForm");
   const status = document.getElementById("receiveDocsStatus");
   const list = document.getElementById("receiveDocsList");
+  const exportButton = document.getElementById("exportReceiveDocs");
   const modal = setupModal();
   let rows = [];
   let editFormId = "";
@@ -1224,6 +1294,10 @@ const runReceiveDocsPage = () => {
     }
   };
 
+  exportButton?.addEventListener("click", () => {
+    exportTableToCsv({ listElement: list, filePrefix: "receivedocs-records", statusElement: status });
+  });
+
   form?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const values = {
@@ -1263,6 +1337,7 @@ const runReturnDocsPage = () => {
   const form = document.getElementById("returnDocsForm");
   const status = document.getElementById("returnDocsStatus");
   const list = document.getElementById("returnDocsList");
+  const exportButton = document.getElementById("exportReturnDocs");
   const modal = setupModal();
   let rows = [];
   let editFormId = "";
@@ -1354,6 +1429,10 @@ const runReturnDocsPage = () => {
       if (target) fillForEdit(target);
     }
   };
+
+  exportButton?.addEventListener("click", () => {
+    exportTableToCsv({ listElement: list, filePrefix: "returndocs-records", statusElement: status });
+  });
 
   form?.addEventListener("submit", async (event) => {
     event.preventDefault();

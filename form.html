@@ -260,9 +260,16 @@
               <div class="form-row">
                 <label for="attachmentsInput">เพิ่มรูป/ไฟล์</label>
                 <div class="form-actions attachments-actions">
-                  <input id="attachmentsInput" type="file" accept="image/*,.pdf" multiple />
+                  <div class="attachments-picker">
+                    <label for="attachmentsInput" class="file-picker-button">
+                      <span class="file-picker-icon">📎</span>
+                      <span>เพิ่มไฟล์เอกสาร</span>
+                    </label>
+                    <input id="attachmentsInput" type="file" accept="image/*,.pdf" multiple />
+                    <span class="file-picker-hint" id="attachmentsFileHint">ยังไม่ได้เลือกไฟล์</span>
+                  </div>
                   <input id="attachmentsCameraInput" type="file" accept="image/*" capture="environment" class="is-hidden" />
-                  <button type="button" class="secondary" id="openCameraButton">เปิดกล้อง</button>
+                  <button type="button" class="secondary camera-button" id="openCameraButton">📷 เปิดกล้อง</button>
                 </div>
               </div>
               <div class="upload-preview" id="attachmentsPreview"></div>

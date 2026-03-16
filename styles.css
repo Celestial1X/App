@@ -681,6 +681,59 @@ textarea {
   grid-template-columns: 1fr;
 }
 
+.attachments-actions {
+  align-items: center;
+  justify-content: flex-start;
+  gap: 14px;
+}
+
+.attachments-picker {
+  min-width: min(520px, 100%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #cbd5e1;
+  background: #f9fbff;
+  border-radius: 14px;
+  padding: 10px 14px;
+}
+
+.attachments-picker #attachmentsInput {
+  display: none;
+}
+
+.file-picker-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-weight: 600;
+  color: #163a63;
+  border: 1px solid #b9c8dd;
+  background: linear-gradient(180deg, #ffffff, #edf2fa);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.file-picker-button:hover {
+  border-color: #92aac8;
+}
+
+.file-picker-icon {
+  font-size: 1.05rem;
+}
+
+.file-picker-hint {
+  color: #2f3f57;
+  font-size: 1.05rem;
+}
+
+.camera-button {
+  border-radius: 14px;
+  min-width: 136px;
+}
+
 button {
   border: none;
   padding: 12px 22px;
@@ -833,8 +886,8 @@ button {
   overflow-x: auto;
   border-radius: 16px;
   border: 1px solid rgba(148, 163, 184, 0.3);
-  background: linear-gradient(180deg, #ffffff, #f9fbff);
-  box-shadow: 0 14px 30px rgba(37, 99, 235, 0.08);
+  background: #f8fafc;
+  box-shadow: 0 10px 22px rgba(30, 64, 175, 0.08);
 }
 
 .records-table {
@@ -877,24 +930,46 @@ button {
   position: sticky;
   top: 0;
   z-index: 1;
-  background: linear-gradient(180deg, #f3f7ff, #e8f0ff);
-  font-weight: 600;
-  color: #253255;
+  background: #dfe6f2;
+  font-weight: 700;
+  color: #0f2d52;
   letter-spacing: 0.2px;
 }
 
 .records-table tbody tr:nth-child(even) {
-  background: rgba(240, 246, 255, 0.68);
+  background: rgba(241, 245, 249, 0.78);
 }
 
 .records-table tbody tr:hover {
-  background: rgba(103, 152, 216, 0.16);
+  background: rgba(219, 234, 254, 0.88);
 }
 
 .records-table .table-actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.records-table .action-btn {
+  min-width: 96px;
+  border-radius: 14px;
+  padding: 11px 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  box-shadow: none;
+}
+
+.records-table .action-btn--edit,
+.records-table .action-btn--verify {
+  background: #e6ebf2;
+}
+
+.records-table .action-btn--delete {
+  background: #f6d7e7;
+  color: #b42318;
 }
 
 .checkbox-grid {

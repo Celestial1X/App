@@ -80,6 +80,7 @@ const attachmentsInput = document.getElementById("attachmentsInput");
 const attachmentsCameraInput = document.getElementById("attachmentsCameraInput");
 const openCameraButton = document.getElementById("openCameraButton");
 const attachmentsPreview = document.getElementById("attachmentsPreview");
+const attachmentsFileHint = document.getElementById("attachmentsFileHint");
 const workerForm = document.getElementById("workerForm");
 const formSaveStatus = document.getElementById("formSaveStatus");
 const workPermitExpiryStatus = document.getElementById("workPermitExpiryStatus");
@@ -968,9 +969,21 @@ const appendGenericFiles = async (fileList) => {
   saveFormDraft();
 };
 
+const updateAttachmentsFileHint = (selectedCount = 0) => {
+  if (!attachmentsFileHint) return;
+  if (!selectedCount) {
+    attachmentsFileHint.textContent = currentLanguage === "th" ? "ยังไม่ได้เลือกไฟล์" : "No file selected";
+    return;
+  }
+  attachmentsFileHint.textContent =
+    currentLanguage === "th" ? `เลือกแล้ว ${selectedCount} ไฟล์` : `${selectedCount} file(s) selected`;
+};
+
 const handleGenericAttachmentInputChange = async (input) => {
   if (!input?.files?.length) return;
+  const selectedCount = input.files.length;
   await appendGenericFiles(input.files);
+  updateAttachmentsFileHint(selectedCount);
   input.value = "";
 };
 
@@ -2107,8 +2120,8 @@ const renderRecords = () => {
     actionsWrapper.className = "table-actions";
     const editButton = document.createElement("button");
     editButton.type = "button";
-    editButton.className = "secondary";
-    editButton.textContent = translations[currentLanguage].editButton;
+    editButton.className = "secondary action-btn action-btn--edit";
+    editButton.innerHTML = `<span aria-hidden="true">✏️</span><span>${translations[currentLanguage].editButton}</span>`;
     editButton.addEventListener("click", () => {
       const followupPageMap = {
         report90: "report90.html",
@@ -2131,13 +2144,13 @@ const renderRecords = () => {
     });
     const verifyButton = document.createElement("button");
     verifyButton.type = "button";
-    verifyButton.className = "secondary";
-    verifyButton.textContent = translations[currentLanguage].verifyButton;
+    verifyButton.className = "secondary action-btn action-btn--verify";
+    verifyButton.innerHTML = `<span aria-hidden="true">🔎</span><span>${translations[currentLanguage].verifyButton}</span>`;
     verifyButton.addEventListener("click", () => openRecordModal(record));
     const deleteButton = document.createElement("button");
     deleteButton.type = "button";
-    deleteButton.className = "danger";
-    deleteButton.textContent = translations[currentLanguage].deleteButton;
+    deleteButton.className = "danger action-btn action-btn--delete";
+    deleteButton.innerHTML = `<span aria-hidden="true">🗑️</span><span>${translations[currentLanguage].deleteButton}</span>`;
     deleteButton.addEventListener("click", async () => {
       const shouldDelete = window.confirm(translations[currentLanguage].confirmDeleteRecord);
       if (!shouldDelete) return;
@@ -3088,6 +3101,7 @@ if (addWorkerButton) {
   });
 }
 if (attachmentsInput) {
+  updateAttachmentsFileHint();
   attachmentsInput.addEventListener("change", () => handleGenericAttachmentInputChange(attachmentsInput));
 }
 if (attachmentsCameraInput) {

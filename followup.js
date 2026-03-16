@@ -1003,8 +1003,8 @@ const runMouLaosPage = () => {
       ["เลขฟอร์ม", item.id || "-"],
       ["ชื่อต่างด้าว", item.workerName || "-"],
       ["เลขประจำตัว", item.alienId || "-"],
-      ["วันเริ่ม MOU", fmtDate(item.startDate)],
-      ["วันครบกำหนด MOU", fmtDate(item.endDate)],
+      ["วันเริ่ม Visa", fmtDate(item.startDate)],
+      ["วันหมด Visa", fmtDate(item.endDate)],
       ["วันรับเอกสาร", fmtDate(item.documentReceivedDate)],
       ["วันคืนเอกสาร", fmtDate(item.documentReturnDate)],
       ["ผู้บันทึกข้อมูล", item.recordedBy || "-"],
@@ -1101,7 +1101,7 @@ const runMouLaosPage = () => {
 
     values.startDate = normalizeDateInputValue(values.startDate);
     if (!values.startDate) {
-      status.textContent = "กรุณาใส่วันเริ่ม MOU ก่อนบันทึก";
+      status.textContent = "กรุณาใส่วันเริ่ม Visa ก่อนบันทึก";
       status.classList.add("error");
       return;
     }

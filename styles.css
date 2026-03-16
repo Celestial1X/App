@@ -28,7 +28,7 @@ body {
 
 body::before {
   content: "";
-  position: fixed;
+  position: absolute;
   inset: 0;
   background:
     radial-gradient(circle at 20% 20%, rgba(255,255,255,0.55) 0 18%, transparent 46%),
@@ -113,16 +113,12 @@ body::before {
 }
 
 .hero,
-.panel,
-.tab-btn,
 .primary {
   position: relative;
   overflow: hidden;
 }
 
 .hero::before,
-.panel::before,
-.tab-btn::before,
 .primary::before {
   content: "";
   position: absolute;
@@ -132,8 +128,20 @@ body::before {
   height: 320%;
   transform: rotate(20deg);
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent);
-  animation: shimmerSweep 5.5s linear infinite;
+  animation: shimmerSweep 8s linear infinite;
   pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce), (max-width: 1024px) {
+  .hero::before,
+  .primary::before,
+  .hero__top::after {
+    animation: none;
+  }
+
+  body::before {
+    display: none;
+  }
 }
 
 @keyframes shimmerSweep {
@@ -825,13 +833,15 @@ button {
   overflow-x: auto;
   border-radius: 16px;
   border: 1px solid rgba(148, 163, 184, 0.3);
+  background: linear-gradient(180deg, #ffffff, #f9fbff);
+  box-shadow: 0 14px 30px rgba(37, 99, 235, 0.08);
 }
 
 .records-table {
   width: 100%;
   border-collapse: collapse;
   min-width: 960px;
-  background: #fff;
+  background: transparent;
 }
 
 .result-grid-table {
@@ -864,12 +874,21 @@ button {
 }
 
 .records-table thead th {
-  background: #eef5fb;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: linear-gradient(180deg, #f3f7ff, #e8f0ff);
   font-weight: 600;
+  color: #253255;
+  letter-spacing: 0.2px;
+}
+
+.records-table tbody tr:nth-child(even) {
+  background: rgba(240, 246, 255, 0.68);
 }
 
 .records-table tbody tr:hover {
-  background: rgba(103, 152, 216, 0.1);
+  background: rgba(103, 152, 216, 0.16);
 }
 
 .records-table .table-actions {

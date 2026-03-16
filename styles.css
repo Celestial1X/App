@@ -64,6 +64,87 @@ body::before {
   flex-wrap: wrap;
 }
 
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #ffffff, #fdf4ff);
+  border: 1px solid #f2c4da;
+  box-shadow: 0 10px 20px rgba(216, 52, 131, 0.14);
+}
+
+.brand-mark__logo {
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  filter: drop-shadow(0 4px 8px rgba(14, 165, 198, 0.22));
+}
+
+.brand-mark__logo svg {
+  width: 100%;
+  height: 100%;
+}
+
+.brand-mark__text strong {
+  display: block;
+  font-size: 1.05rem;
+  line-height: 1.1;
+  color: #7a2551;
+}
+
+.brand-mark__text span {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.82rem;
+  color: #4b5563;
+}
+
+.hero,
+.panel,
+.tab-btn,
+.primary {
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::before,
+.panel::before,
+.tab-btn::before,
+.primary::before {
+  content: "";
+  position: absolute;
+  top: -120%;
+  left: -30%;
+  width: 28%;
+  height: 320%;
+  transform: rotate(20deg);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent);
+  animation: shimmerSweep 5.5s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes shimmerSweep {
+  0% { left: -35%; }
+  100% { left: 135%; }
+}
+
+@keyframes sparklePulse {
+  0%,100% { opacity: 0.35; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.2); }
+}
+
+.hero__top::after {
+  content: "✦ ✧ ✦";
+  margin-left: auto;
+  color: #e84393;
+  font-size: 1.1rem;
+  letter-spacing: 6px;
+  animation: sparklePulse 2s ease-in-out infinite;
+}
+
 .page-loader {
   position: fixed;
   inset: 0;

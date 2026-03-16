@@ -149,6 +149,23 @@ const resolveApiBaseUrl = () => {
 };
 
 const API_BASE_URL = resolveApiBaseUrl();
+
+const BMVISA_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="BmViSa Center"><defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#39c6e6"/><stop offset="100%" stop-color="#0ea5c6"/></linearGradient><linearGradient id="g2" x1="1" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ffcd4f"/><stop offset="100%" stop-color="#f59e0b"/></linearGradient></defs><circle cx="60" cy="60" r="56" fill="none" stroke="url(#g1)" stroke-width="8"/><path d="M20 78c14-2 24 0 36 11" fill="none" stroke="url(#g1)" stroke-linecap="round" stroke-width="10"/><path d="M100 78c-14-2-24 0-36 11" fill="none" stroke="url(#g2)" stroke-linecap="round" stroke-width="10"/><text x="60" y="58" text-anchor="middle" font-size="28" font-family="Sarabun, sans-serif" font-weight="700" fill="#0b3d91">Bm</text><text x="60" y="80" text-anchor="middle" font-size="14" font-family="Sarabun, sans-serif" font-weight="700" fill="#c47a00">ViSa Center</text><circle cx="27" cy="30" r="2.5" fill="#7dd3fc"/><circle cx="35" cy="24" r="1.8" fill="#bae6fd"/><circle cx="92" cy="27" r="2.5" fill="#7dd3fc"/><circle cx="84" cy="22" r="1.8" fill="#bae6fd"/></svg>`;
+
+const initBrandIdentity = () => {
+  const top = document.querySelector('.hero__top');
+  if (!top || top.querySelector('.brand-mark')) return;
+  const brand = document.createElement('div');
+  brand.className = 'brand-mark';
+  const logoWrap = document.createElement('div');
+  logoWrap.className = 'brand-mark__logo';
+  logoWrap.innerHTML = BMVISA_LOGO_SVG;
+  const text = document.createElement('div');
+  text.className = 'brand-mark__text';
+  text.innerHTML = '<strong>BmViSa Center</strong><span>บริการแรงงานต่างด้าวครบวงจร</span>';
+  brand.append(logoWrap, text);
+  top.prepend(brand);
+};
 const RECORDS_API_URL = API_BASE_URL ? `${API_BASE_URL}/api/records` : "/api/records";
 
 const getEditIdFromQuery = () => {
@@ -2858,7 +2875,8 @@ const saveRecord = async (status = "draft") => {
   localStorage.removeItem(EDIT_KEY);
   renderRecords();
   renderLatestRecordCard();
-if (workerForm) {
+
+  if (workerForm) {
     localStorage.setItem(RECORD_SEARCH_KEY, finalRecord.formId);
     window.location.href = "records.html";
   }
@@ -2982,6 +3000,7 @@ if (formTypeInputs?.length) {
   updateSections();
   renderGenericAttachments();
   updateBusinessTypeCustomVisibility();
+  initBrandIdentity();
   bindPersonalExpiryStatuses();
 };
 
@@ -3276,6 +3295,8 @@ if (recordModal) {
     }
   });
 }
+initBrandIdentity();
+
 if (workerForm) {
   const queryEditId = getEditIdFromQuery();
   const storedEditId = String(localStorage.getItem(EDIT_KEY) || "").trim();

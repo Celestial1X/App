@@ -68,9 +68,6 @@ const docHouseReg = document.getElementById("docHouseReg");
 const docEmployerIdCard = document.getElementById("docEmployerIdCard");
 const docCompanyCert = document.getElementById("docCompanyCert");
 const documentsNote = document.getElementById("documentsNote");
-const paymentStatus = document.getElementById("paymentStatus");
-const paymentDate = document.getElementById("paymentDate");
-const paymentNotes = document.getElementById("paymentNotes");
 const employerCheckInput = document.getElementById("employerCheck");
 const employerStatus = document.getElementById("employerStatus");
 const pageLoader = document.getElementById("pageLoader");
@@ -1888,11 +1885,10 @@ const getRecordStatusSummary = (record) => {
     getAggregatedExpiryState(workers, "cardExpiryDate").state === "expired" ||
     getAggregatedExpiryState(workers, "visaExpiryDate").state === "expired" ||
     getAggregatedExpiryState(workers, "expiry").state === "expired";
-  const hasPaymentPending = record.data.paymentStatus === "pending";
   return {
     hasCompleted,
     hasPending: hasPendingSchedule || hasExpiryWarning,
-    hasAlert: hasExpired || hasPaymentPending,
+    hasAlert: hasExpired,
   };
 };
 
@@ -1940,9 +1936,6 @@ const collectFormData = () => {
     startDate: startDate?.value || "",
     employerId: employerId?.value?.trim() || "",
     verification: verification?.value || "",
-    paymentStatus: paymentStatus?.value || "",
-    paymentDate: paymentDate?.value || "",
-    paymentNotes: paymentNotes?.value?.trim() || "",
     recordedBy: recordedBy ? recordedBy.value.trim() : "",
     renewalType: renewalType?.value || "",
     renewalStatus: renewalStatus?.value || "",
@@ -2326,7 +2319,6 @@ const exportRecordsToCsv = () => {
     translations[currentLanguage].recordsTableEmployerEmail,
     "รหัสเมลนายจ้าง",
     "ที่อยู่นายจ้าง",
-    "Payment Status",
   ];
   const lines = [headers.map(toCsvValue).join(",")];
   rows.forEach((record) => {
@@ -2363,7 +2355,6 @@ const exportRecordsToCsv = () => {
       personalInfo.employerEmail || "-",
       personalInfo.employerEmailCode || "-",
       personalInfo.employerAddress || "-",
-      data.paymentStatus || "-",
     ];
     lines.push(cols.map(toCsvValue).join(","));
   });
@@ -2505,11 +2496,6 @@ const openRecordModal = (record) => {
       record.data.personalInfo?.employerName || record.data.company || record.data.employerId || "-"
     );
     addRow(translations[currentLanguage].statusTitle, getCaseStatusDisplay(record.data.caseStatus || {}));
-    addRow(
-      translations[currentLanguage].paymentStatusLabel,
-      record.data.paymentStatus === "paid" ? translations[currentLanguage].paymentPaid : translations[currentLanguage].paymentPending
-    );
-    addRow(translations[currentLanguage].paymentDateLabel, record.data.paymentDate || "-");
     addRow(translations[currentLanguage].recordedByLabel, record.data.recordedBy || "-");
     addRow(translations[currentLanguage].renewalTypeLabel, getRenewalTypeLabel(record.data.renewalType));
     addRow(translations[currentLanguage].renewalStatusLabel, getRenewalStatusLabel(record.data.renewalStatus));
@@ -2812,9 +2798,6 @@ const buildRecordSearchText = (record) => {
     record.data.formTypeOtherDetail,
     record.data.renewalType,
     record.data.renewalStatus,
-    record.data.paymentStatus,
-    record.data.paymentDate,
-    record.data.paymentNotes,
     personalInfo.fullName,
     personalInfo.gender,
     personalInfo.nationality,
@@ -3129,9 +3112,6 @@ if (formTypeInputs?.length) {
   if (receivedDocsNote) receivedDocsNote.value = record.data.receivedDocsNote || "";
   if (renewalDocsNote) renewalDocsNote.value = record.data.renewalDocsNote || "";
   if (verification) verification.value = record.data.verification || "";
-  if (paymentStatus) paymentStatus.value = record.data.paymentStatus || "pending";
-  if (paymentDate) paymentDate.value = record.data.paymentDate || "";
-  if (paymentNotes) paymentNotes.value = record.data.paymentNotes || "";
   const legacyAttachments = LEGACY_ATTACHMENT_KEYS.flatMap((key) => {
     const name = record.data?.[key] || "";
     const dataUrl = record.data?.[`${key}Data`] || "";

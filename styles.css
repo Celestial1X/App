@@ -697,7 +697,7 @@ textarea {
   border: 1px solid #cbd5e1;
   background: #f9fbff;
   border-radius: 14px;
-  padding: 10px 14px;
+  padding: 9px 12px;
 }
 
 .attachments-picker #attachmentsInput {
@@ -708,7 +708,7 @@ textarea {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 14px;
+  padding: 9px 12px;
   border-radius: 10px;
   font-weight: 600;
   color: #163a63;
@@ -919,7 +919,7 @@ button {
 .records-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 1180px;
+  min-width: 1020px;
   background: transparent;
 }
 
@@ -961,9 +961,9 @@ button {
   color: #0f2d52;
   letter-spacing: 0.2px;
   white-space: normal;
-  line-height: 1.5;
-  padding-top: 14px;
-  padding-bottom: 14px;
+  line-height: 1.35;
+  padding-top: 12px;
+  padding-bottom: 12px;
 }
 
 .records-table tbody tr:nth-child(even) {
@@ -978,24 +978,26 @@ button {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding-top: 6px;
+  gap: 8px;
+  justify-content: center;
 }
 
 .records-table .action-btn {
-  min-width: 104px;
+  min-width: 120px;
   border-radius: 14px;
-  padding: 10px 14px;
+  padding: 9px 12px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 7px;
   box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
-  border: 1px solid rgba(148, 163, 184, 0.28);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  white-space: nowrap;
 }
 
 .records-table tbody td:last-child {
-  vertical-align: top;
+  vertical-align: middle;
+  text-align: center;
 }
 
 .records-table .action-btn--edit,
@@ -1173,7 +1175,7 @@ button {
   background: #fef2f2;
   color: #b91c1c;
   border-radius: 12px;
-  padding: 10px 14px;
+  padding: 9px 12px;
   font-weight: 600;
 }
 

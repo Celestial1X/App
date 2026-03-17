@@ -915,7 +915,8 @@ const renderPreview = (container, files, onRemove) => {
     const image = document.createElement("img");
     image.alt = file.name;
     image.src = file.dataUrl || "";
-    if (!file.dataUrl) {
+    const isImage = Boolean(file.dataUrl && String(file.dataUrl).startsWith("data:image"));
+    if (!isImage) {
       image.style.display = "none";
     }
     const meta = document.createElement("div");
@@ -2372,6 +2373,19 @@ const exportRecordsToCsv = () => {
   URL.revokeObjectURL(url);
 };
 
+
+const createAttachmentLink = (item) => {
+  if (!item?.dataUrl) return null;
+  const anchor = document.createElement("a");
+  anchor.href = item.dataUrl;
+  anchor.target = "_blank";
+  anchor.rel = "noopener noreferrer";
+  anchor.download = item.value || "attachment";
+  anchor.className = "attachment-open-link";
+  anchor.textContent = currentLanguage === "th" ? "เปิดไฟล์" : "Open file";
+  return anchor;
+};
+
 const openRecordModal = (record) => {
   recordModalTitle.textContent = translations[currentLanguage].recordModalTitle;
   recordModalBody.innerHTML = "";
@@ -2625,6 +2639,11 @@ const openRecordModal = (record) => {
           const value = document.createElement("span");
           value.textContent = item.value;
           listItem.appendChild(value);
+          const openLink = createAttachmentLink(item);
+          if (openLink) {
+            listItem.appendChild(document.createTextNode(" "));
+            listItem.appendChild(openLink);
+          }
         }
         attachmentList.appendChild(listItem);
       });

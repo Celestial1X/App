@@ -1280,3 +1280,14 @@ button:hover,
   justify-content: flex-end;
   gap: 8px;
 }
+
+
+.attachment-open-link {
+  color: #0f4c81;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.attachment-open-link:hover {
+  color: #0b3a63;
+}

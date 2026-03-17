@@ -22,13 +22,13 @@
 
     <main class="container">
       <nav class="page-tabs">
+        <a class="tab-btn" href="receivedocs.html">รับเอกสาร</a>
         <a class="tab-btn" href="index.html" data-i18n="tabLookup">ค้นหาข้อมูล</a>
         <a class="tab-btn is-active" href="records.html" data-i18n="tabRecords">ข้อมูลบันทึก</a>
         <a class="tab-btn" href="form.html" data-i18n="tabForm">กรอกแบบฟอร์ม</a>
         <a class="tab-btn" href="report90.html">รายงานตัว 90 วัน</a>
         <a class="tab-btn" href="visarun.html">Visa run</a>
         <a class="tab-btn" href="nextform.html">MOU ลาว</a>
-        <a class="tab-btn" href="receivedocs.html">รับเอกสาร</a>
         <a class="tab-btn" href="returndocs.html">ส่งคืนเอกสาร</a>
       </nav>
 
@@ -98,6 +98,7 @@
           <table class="records-table">
             <thead>
               <tr>
+                <th><input type="checkbox" id="recordsSelectAll" aria-label="เลือกทั้งหมด" /></th>
                 <th data-i18n="recordsTableFormId">เลขที่แบบฟอร์ม</th>
                 <th data-i18n="recordsTableFormType">ประเภทงาน</th>
                 <th data-i18n="recordsTableEmployer">นายจ้าง</th>

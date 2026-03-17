@@ -1169,15 +1169,12 @@ const runMouLaosPage = () => {
     };
 
     values.startDate = normalizeDateInputValue(values.startDate);
-    if (!values.startDate) {
-      status.textContent = "กรุณาใส่วันเริ่ม Visa ก่อนบันทึก";
-      status.classList.add("error");
-      return;
-    }
+    values.endDate = normalizeDateInputValue(values.endDate);
 
     try {
       const submittingEditId = editFormId || requestedEditId || "";
       startDate.value = values.startDate;
+      endDate.value = values.endDate;
       await saveRecord(toMouLaosPayload(values, submittingEditId));
       const wasEdit = Boolean(submittingEditId);
       resetForm();

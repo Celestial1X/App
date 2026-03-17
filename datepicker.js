@@ -3,16 +3,40 @@
   const WEEKDAYS_SHORT = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
 
   const pad = (n) => String(n).padStart(2, "0");
+  const normalizeThaiYear = (year) => (year >= 2400 ? year - 543 : year);
   const toDateValue = (date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+  const toDisplayValue = (date) => `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear() + 543}`;
+  const buildSafeDate = (year, month, day) => {
+    const y = normalizeThaiYear(year);
+    const dt = new Date(y, month - 1, day);
+    if (dt.getFullYear() !== y || dt.getMonth() !== month - 1 || dt.getDate() !== day) return null;
+    return dt;
+  };
   const parseDateValue = (value) => {
     const text = String(value || "").trim();
     if (!text) return null;
-    const parts = text.split("-").map((x) => Number.parseInt(x, 10));
-    if (parts.length !== 3 || parts.some(Number.isNaN)) return null;
-    const [y, m, d] = parts;
-    const dt = new Date(y, m - 1, d);
-    if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
-    return dt;
+
+    const slash = text.split("/").map((x) => Number.parseInt(x, 10));
+    if (slash.length === 3 && !slash.some(Number.isNaN)) {
+      const [d, m, y] = slash;
+      const slashDate = buildSafeDate(y, m, d);
+      if (slashDate) return slashDate;
+    }
+
+    const dash = text.split("-").map((x) => Number.parseInt(x, 10));
+    if (dash.length === 3 && !dash.some(Number.isNaN)) {
+      const [a, b, c] = dash;
+      if (a > 31) {
+        const ymdDate = buildSafeDate(a, b, c);
+        if (ymdDate) return ymdDate;
+      }
+      const dmyDate = buildSafeDate(c, b, a);
+      if (dmyDate) return dmyDate;
+    }
+
+    const fallback = new Date(text);
+    if (Number.isNaN(fallback.getTime())) return null;
+    return new Date(fallback.getFullYear(), fallback.getMonth(), fallback.getDate());
   };
 
   const state = {
@@ -125,7 +149,7 @@
         state.activeInput.value = "";
       } else {
         const today = new Date();
-        state.activeInput.value = toDateValue(new Date(today.getFullYear(), today.getMonth(), today.getDate()));
+        state.activeInput.value = toDisplayValue(new Date(today.getFullYear(), today.getMonth(), today.getDate()));
       }
       state.activeInput.dispatchEvent(new Event("input", { bubbles: true }));
       state.activeInput.dispatchEvent(new Event("change", { bubbles: true }));
@@ -135,23 +159,39 @@
 
     const day = event.target.closest(".date-picker__day");
     if (day && state.activeInput) {
-      state.activeInput.value = day.dataset.value || "";
+      const selectedDate = parseDateValue(day.dataset.value || "");
+      state.activeInput.value = selectedDate ? toDisplayValue(selectedDate) : "";
       state.activeInput.dispatchEvent(new Event("input", { bubbles: true }));
       state.activeInput.dispatchEvent(new Event("change", { bubbles: true }));
       closePicker();
     }
   });
 
+  const enhanceInput = (input) => {
+    if (!input || input.getAttribute("data-enhanced-date") === "1") return;
+    if (input.type === "date") {
+      input.type = "text";
+    }
+    input.setAttribute("data-enhanced-date", "1");
+    input.setAttribute("placeholder", "ว/ด/ป");
+    input.setAttribute("inputmode", "numeric");
+    input.autocomplete = "off";
+
+    input.addEventListener("focus", () => openPicker(input));
+    input.addEventListener("blur", () => {
+      const parsed = parseDateValue(input.value);
+      if (!parsed) return;
+      input.value = toDisplayValue(parsed);
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+  };
+
+  document.querySelectorAll('input[type="date"]').forEach((input) => enhanceInput(input));
+
   document.addEventListener("click", (event) => {
     const input = event.target.closest('input[type="date"], input[data-enhanced-date="1"]');
     if (input) {
-      event.preventDefault();
-      if (input.type === "date") {
-        input.type = "text";
-        input.readOnly = true;
-        input.setAttribute("data-enhanced-date", "1");
-        input.setAttribute("placeholder", "yyyy-mm-dd");
-      }
+      enhanceInput(input);
       openPicker(input);
       return;
     }

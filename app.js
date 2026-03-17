@@ -45,6 +45,7 @@ const businessType = document.getElementById("businessType");
 const businessTypeCustom = document.getElementById("businessTypeCustom");
 const employerName = document.getElementById("employerName");
 const employerEmail = document.getElementById("employerEmail");
+const employerEmailCode = document.getElementById("employerEmailCode");
 const employerAddress = document.getElementById("employerAddress");
 const documentSender = document.getElementById("documentSender");
 const documentSentDate = document.getElementById("documentSentDate");
@@ -1961,6 +1962,7 @@ const collectFormData = () => {
       businessType: getBusinessTypeValue(),
       employerName: employerName?.value?.trim() || "",
       employerEmail: employerEmail?.value?.trim() || "",
+      employerEmailCode: employerEmailCode?.value?.trim() || "",
       employerAddress: employerAddress?.value?.trim() || "",
       documentSender: documentSender?.value?.trim() || "",
       documentSentDate: documentSentDate?.value || "",
@@ -2325,6 +2327,7 @@ const exportRecordsToCsv = () => {
     "ผ.30",
     "หมายเหตุเอกสาร",
     translations[currentLanguage].recordsTableEmployerEmail,
+    "รหัสเมลนายจ้าง",
     "ที่อยู่นายจ้าง",
     "Payment Status",
   ];
@@ -2361,6 +2364,7 @@ const exportRecordsToCsv = () => {
       followup.p30 ? "yes" : "no",
       data.documents?.note || "-",
       personalInfo.employerEmail || "-",
+      personalInfo.employerEmailCode || "-",
       personalInfo.employerAddress || "-",
       data.paymentStatus || "-",
     ];
@@ -2555,6 +2559,9 @@ const openRecordModal = (record) => {
     }
     if (personalInfo.employerEmail) {
       addRow("เมลนายจ้าง", personalInfo.employerEmail);
+    }
+    if (personalInfo.employerEmailCode) {
+      addRow("รหัสเมลนายจ้าง", personalInfo.employerEmailCode);
     }
     if (personalInfo.employerAddress) {
       addRow("ที่อยู่นายจ้าง", personalInfo.employerAddress);
@@ -2826,6 +2833,7 @@ const buildRecordSearchText = (record) => {
     personalInfo.businessType,
     personalInfo.employerName,
     personalInfo.employerEmail,
+    personalInfo.employerEmailCode,
     personalInfo.employerAddress,
     personalInfo.documentSender,
     personalInfo.documentSentDate,
@@ -3052,6 +3060,7 @@ if (formTypeInputs?.length) {
   }
   if (employerName) employerName.value = record.data.personalInfo?.employerName || "";
   if (employerEmail) employerEmail.value = record.data.personalInfo?.employerEmail || "";
+  if (employerEmailCode) employerEmailCode.value = record.data.personalInfo?.employerEmailCode || "";
   if (employerAddress) employerAddress.value = record.data.personalInfo?.employerAddress || "";
   if (documentSender) documentSender.value = record.data.personalInfo?.documentSender || "";
   if (documentSentDate) documentSentDate.value = record.data.personalInfo?.documentSentDate || "";

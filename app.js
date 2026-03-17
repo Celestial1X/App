@@ -467,6 +467,7 @@ const translations = {
     recordsTableFormId: "เลขที่แบบฟอร์ม",
     recordsTableFormType: "ประเภทงาน",
     recordsTableEmployer: "นายจ้าง",
+    recordsTableEmployerEmail: "เมลนายจ้าง",
     recordsTableWorker: "ชื่อต่างด้าว",
     recordsTableRecordedBy: "ผู้บันทึกข้อมูล",
     recordsTableUpdated: "อัปเดตล่าสุด",
@@ -739,6 +740,7 @@ const translations = {
     recordsTableFormId: "Form ID",
     recordsTableFormType: "Work category",
     recordsTableEmployer: "Employer",
+    recordsTableEmployerEmail: "Employer email",
     recordsTableWorker: "Worker name",
     recordsTableRecordedBy: "Recorded by",
     recordsTableUpdated: "Last updated",
@@ -2071,6 +2073,7 @@ const renderRecords = () => {
       record.data.employerId,
       personalInfo.fullName,
       personalInfo.employerName,
+      personalInfo.employerEmail,
       personalInfo.documentSender,
       personalInfo.documentReceiver,
       personalInfo.documentReturnDate,
@@ -2108,6 +2111,8 @@ const renderRecords = () => {
     formTypeCell.textContent = record.formTypeLabel;
     const employerCell = document.createElement("td");
     employerCell.textContent = employerLabel;
+    const employerEmailCell = document.createElement("td");
+    employerEmailCell.textContent = personalInfo.employerEmail || "-";
     const workerCell = document.createElement("td");
     workerCell.textContent = workerName;
     const recordedByCell = document.createElement("td");
@@ -2175,6 +2180,7 @@ const renderRecords = () => {
     row.appendChild(formIdCell);
     row.appendChild(formTypeCell);
     row.appendChild(employerCell);
+    row.appendChild(employerEmailCell);
     row.appendChild(workerCell);
     row.appendChild(recordedByCell);
     row.appendChild(updatedCell);
@@ -2318,7 +2324,7 @@ const exportRecordsToCsv = () => {
     "ผ.60",
     "ผ.30",
     "หมายเหตุเอกสาร",
-    "เมลนายจ้าง",
+    translations[currentLanguage].recordsTableEmployerEmail,
     "ที่อยู่นายจ้าง",
     "Payment Status",
   ];
@@ -2808,6 +2814,7 @@ const openGeneralSearchResultsModal = (records, query) => {
       <th>${translations[currentLanguage].recordsTableFormId}</th>
       <th>${translations[currentLanguage].recordsTableFormType}</th>
       <th>${translations[currentLanguage].recordsTableEmployer}</th>
+      <th>${translations[currentLanguage].recordsTableEmployerEmail}</th>
       <th>${translations[currentLanguage].recordsTableWorker}</th>
       <th>${translations[currentLanguage].recordsTableStatus}</th>
       <th>${translations[currentLanguage].recordsTableActions}</th>
@@ -2822,6 +2829,7 @@ const openGeneralSearchResultsModal = (records, query) => {
       tr.innerHTML = `<td>${record.formId || "-"}</td>
         <td>${record.formTypeLabel || "-"}</td>
         <td>${employer}</td>
+        <td>${personalInfo.employerEmail || "-"}</td>
         <td>${workerName}</td>
         <td>${getCaseStatusDisplay(record.data.caseStatus || {})}</td>`;
       const actionTd = document.createElement("td");

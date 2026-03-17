@@ -537,6 +537,11 @@ const toVisaRunPayload = (values, formId = "") => ({
       endDate: normalizeDateInputValue(values.endDate) || computeFollowupDateFromStart(values.startDate),
       documentReceivedDate: values.documentReceivedDate,
       documentReturnDate: values.documentReturnDate,
+      visaOverdue: values.visaOverdue,
+      sentImmigration: values.sentImmigration,
+      returnBook: values.returnBook,
+      p60: values.p60,
+      p30: values.p30,
     },
   },
 });
@@ -820,6 +825,7 @@ const runVisaPage = () => {
   const status = document.getElementById("visaStatus");
   const list = document.getElementById("visaList");
   const exportButton = document.getElementById("exportVisaRun");
+  const alert = document.getElementById("visaAlert");
   const modal = setupModal();
   let rows = [];
   let editFormId = "";
@@ -848,6 +854,11 @@ const runVisaPage = () => {
       endDate: endDateValue,
       documentReceivedDate: followup.documentReceivedDate || "",
       documentReturnDate: followup.documentReturnDate || "",
+      visaOverdue: !!followup.visaOverdue,
+      sentImmigration: !!followup.sentImmigration,
+      returnBook: !!followup.returnBook,
+      p60: !!followup.p60,
+      p30: !!followup.p30,
     };
   };
 
@@ -860,6 +871,11 @@ const runVisaPage = () => {
     endDate.value = item.endDate || "";
     document.getElementById("visaDocReceiveDate").value = item.documentReceivedDate || "";
     document.getElementById("visaDocReturnDate").value = item.documentReturnDate || "";
+    document.getElementById("visaOverdue").checked = !!item.visaOverdue;
+    document.getElementById("visaSentImm").checked = !!item.sentImmigration;
+    document.getElementById("visaReturnBook").checked = !!item.returnBook;
+    document.getElementById("visaP60").checked = !!item.p60;
+    document.getElementById("visaP30").checked = !!item.p30;
     editFormId = String(item.id || "");
     status.textContent = "กำลังแก้ไขข้อมูลรายการเดิม";
   };
@@ -874,17 +890,35 @@ const runVisaPage = () => {
       ["วันหมด Visa", fmtDate(item.endDate)],
       ["วันรับเอกสาร", fmtDate(item.documentReceivedDate)],
       ["วันคืนเอกสาร", fmtDate(item.documentReturnDate)],
-      ["จำนวนวัน Visa", `${diffDaysBetween(item.startDate, item.endDate) ?? "-"} วัน`],
+      ["Visa เกิน", fmtCheck(item.visaOverdue)],
+      ["ส่งเล่มไป ตม.", fmtCheck(item.sentImmigration)],
+      ["เล่มที่บันทึกล่าสุด", getBookTypes(item, "visarun").join(", ") || "-"],
+      ["ประเภทเล่มที่เคยบันทึก", getAggregateBookStats(rows, item, "visarun").allTypesText],
+      ["ส่งเล่มคืน", fmtCheck(item.returnBook)],
+      ["ผ.60", fmtCheck(item.p60)],
+      ["ผ.30", fmtCheck(item.p30)],
     ]);
   };
 
   const renderRows = () => {
     list.innerHTML = "";
+    const alerts = rows.filter((item) => {
+      const days = diffDaysBetween(item.startDate, item.endDate);
+      return days !== null && days >= 0 && days <= 90;
+    });
+    if (alerts.length) {
+      alert.textContent = `แจ้งเตือน: มี ${alerts.length} รายการที่ใกล้จะหมดอายุ 90 วัน`;
+      alert.classList.remove("is-hidden");
+    } else {
+      alert.classList.add("is-hidden");
+    }
+
     rows.forEach((item) => {
       const cycleDays = diffDaysBetween(item.startDate, item.endDate);
-      const dayCountText = cycleDays === null ? "-" : `${cycleDays} วัน`;
+      const cycleText = cycleDays === null ? "-" : `${fmtDate(item.endDate)} (${cycleDays} วัน)`;
+      const cycleTone = getDeadlineToneByRemainingDays(cycleDays);
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${fmtDate(item.startDate)}</td><td>${fmtDate(item.endDate)}</td><td>${dayCountText}</td>`;
+      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${getAggregateBookStats(rows, item, "visarun").latestText}</td><td>${fmtDate(item.endDate)}</td><td><span class="deadline-box ${cycleTone}">${cycleText}</span></td>`;
       const actionCell = document.createElement("td");
       const actionWrap = document.createElement("div");
       actionWrap.className = "table-actions";
@@ -945,6 +979,11 @@ const runVisaPage = () => {
       endDate: endDate.value,
       documentReceivedDate: document.getElementById("visaDocReceiveDate").value,
       documentReturnDate: document.getElementById("visaDocReturnDate").value,
+      visaOverdue: document.getElementById("visaOverdue").checked,
+      sentImmigration: document.getElementById("visaSentImm").checked,
+      returnBook: document.getElementById("visaReturnBook").checked,
+      p60: document.getElementById("visaP60").checked,
+      p30: document.getElementById("visaP30").checked,
     };
 
     values.startDate = normalizeDateInputValue(values.startDate);
@@ -961,7 +1000,9 @@ const runVisaPage = () => {
       const wasEdit = Boolean(submittingEditId);
       resetForm();
       await refreshRows();
-      status.textContent = wasEdit ? "แก้ไขข้อมูลเรียบร้อย" : "บันทึกข้อมูลเรียบร้อย";
+      const latest = rows.find((row) => row.workerName === values.workerName && row.employerName === values.employerName);
+      const stats = latest ? getAggregateBookStats(rows, latest, "visarun") : { latestText: "-" };
+      status.textContent = `${wasEdit ? "แก้ไขข้อมูลเรียบร้อย" : "บันทึกข้อมูลเรียบร้อย"} • ล่าสุด: ${stats.latestText}`;
     } catch {
       status.textContent = "ไม่สามารถบันทึกข้อมูลได้ กรุณาตรวจสอบเซิร์ฟเวอร์";
       status.classList.add("error");

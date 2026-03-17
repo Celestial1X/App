@@ -242,6 +242,8 @@ h1 {
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
   position: relative;
   z-index: 5;
+  overflow: visible;
+  isolation: isolate;
 }
 
 
@@ -1238,4 +1240,43 @@ button:hover,
 
 .mini-summary-item p + p {
   margin-top: 2px;
+}
+
+
+.confirm-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 1600;
+  background: rgba(15, 23, 42, 0.42);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.confirm-dialog__card {
+  width: min(420px, 100%);
+  background: #fff;
+  border: 1px solid #f3d3e4;
+  border-radius: 16px;
+  box-shadow: 0 20px 44px rgba(15, 23, 42, 0.22);
+  padding: 18px;
+}
+
+.confirm-dialog__title {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #7a2551;
+}
+
+.confirm-dialog__message {
+  margin: 0;
+  color: #334155;
+}
+
+.confirm-dialog__actions {
+  margin-top: 14px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
 }

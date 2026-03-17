@@ -2152,7 +2152,9 @@ const renderRecords = () => {
     deleteButton.className = "danger action-btn action-btn--delete";
     deleteButton.innerHTML = `<span aria-hidden="true">🗑️</span><span>${translations[currentLanguage].deleteButton}</span>`;
     deleteButton.addEventListener("click", async () => {
-      const shouldDelete = window.confirm(translations[currentLanguage].confirmDeleteRecord);
+      const shouldDelete = await showConfirmDialog({
+        message: translations[currentLanguage].confirmDeleteRecord,
+      });
       if (!shouldDelete) return;
       const deleted = await deleteRecordFromServer(record.formId);
       if (!deleted) {
@@ -2251,6 +2253,39 @@ const importBackupData = async (file) => {
 
   setStatus(recordsStatus || formSaveStatus, `นำเข้าข้อมูลสำเร็จ ${merged.length} รายการ`, "ok");
 };
+
+const showConfirmDialog = ({
+  title = "ยืนยันการลบข้อมูล",
+  message = translations[currentLanguage]?.confirmDeleteRecord || "ต้องการลบรายการนี้หรือไม่?",
+  confirmText = "ลบข้อมูล",
+  cancelText = "ยกเลิก",
+} = {}) =>
+  new Promise((resolve) => {
+    const overlay = document.createElement("div");
+    overlay.className = "confirm-dialog";
+    overlay.innerHTML = `
+      <div class="confirm-dialog__card" role="dialog" aria-modal="true" aria-label="${title}">
+        <p class="confirm-dialog__title">${title}</p>
+        <p class="confirm-dialog__message">${message}</p>
+        <div class="confirm-dialog__actions">
+          <button type="button" class="secondary" data-confirm-action="cancel">${cancelText}</button>
+          <button type="button" class="danger" data-confirm-action="ok">${confirmText}</button>
+        </div>
+      </div>
+    `;
+
+    const close = (result) => {
+      overlay.remove();
+      resolve(result);
+    };
+
+    overlay.addEventListener("click", (event) => {
+      if (event.target === overlay) close(false);
+    });
+    overlay.querySelector('[data-confirm-action="cancel"]')?.addEventListener("click", () => close(false));
+    overlay.querySelector('[data-confirm-action="ok"]')?.addEventListener("click", () => close(true));
+    document.body.appendChild(overlay);
+  });
 
 const exportRecordsToCsv = () => {
   const rows = latestRenderedRecords.length ? latestRenderedRecords : loadRecords();

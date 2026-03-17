@@ -300,6 +300,34 @@ const setupModal = () => {
   return { open };
 };
 
+const showConfirmDialog = ({ title = "ยืนยันการลบข้อมูล", message = "ต้องการลบรายการนี้หรือไม่?" } = {}) =>
+  new Promise((resolve) => {
+    const overlay = document.createElement("div");
+    overlay.className = "confirm-dialog";
+    overlay.innerHTML = `
+      <div class="confirm-dialog__card" role="dialog" aria-modal="true" aria-label="${title}">
+        <p class="confirm-dialog__title">${title}</p>
+        <p class="confirm-dialog__message">${message}</p>
+        <div class="confirm-dialog__actions">
+          <button type="button" class="secondary" data-confirm-action="cancel">ยกเลิก</button>
+          <button type="button" class="danger" data-confirm-action="ok">ลบข้อมูล</button>
+        </div>
+      </div>
+    `;
+
+    const close = (result) => {
+      overlay.remove();
+      resolve(result);
+    };
+
+    overlay.addEventListener("click", (event) => {
+      if (event.target === overlay) close(false);
+    });
+    overlay.querySelector('[data-confirm-action="cancel"]')?.addEventListener("click", () => close(false));
+    overlay.querySelector('[data-confirm-action="ok"]')?.addEventListener("click", () => close(true));
+    document.body.appendChild(overlay);
+  });
+
 const readLocalRecords = () => {
   try {
     const parsed = JSON.parse(localStorage.getItem("workerRecords") || "[]");
@@ -1126,7 +1154,10 @@ const runMouLaosPage = () => {
       deleteButton.className = "danger";
       deleteButton.textContent = "ลบ";
       deleteButton.addEventListener("click", async () => {
-        if (!window.confirm(`ยืนยันการลบข้อมูล MOU ลาว ของ ${item.workerName || "-"} ?`)) return;
+        const shouldDelete = await showConfirmDialog({
+          message: `ยืนยันการลบข้อมูล MOU ลาว ของ ${item.workerName || "-"} ?`,
+        });
+        if (!shouldDelete) return;
         await deleteRecordById(item.id);
         await refreshRows();
       });
@@ -1265,7 +1296,10 @@ const runReceiveDocsPage = () => {
       deleteButton.className = "danger";
       deleteButton.textContent = "ลบ";
       deleteButton.addEventListener("click", async () => {
-        if (!window.confirm(`ยืนยันการลบข้อมูลรับเอกสาร ของ ${item.workerName || "-"} ?`)) return;
+        const shouldDelete = await showConfirmDialog({
+          message: `ยืนยันการลบข้อมูลรับเอกสาร ของ ${item.workerName || "-"} ?`,
+        });
+        if (!shouldDelete) return;
         await deleteRecordById(item.id);
         await refreshRows();
       });
@@ -1401,7 +1435,10 @@ const runReturnDocsPage = () => {
       deleteButton.className = "danger";
       deleteButton.textContent = "ลบ";
       deleteButton.addEventListener("click", async () => {
-        if (!window.confirm(`ยืนยันการลบข้อมูลส่งคืนเอกสาร ของ ${item.workerName || "-"} ?`)) return;
+        const shouldDelete = await showConfirmDialog({
+          message: `ยืนยันการลบข้อมูลส่งคืนเอกสาร ของ ${item.workerName || "-"} ?`,
+        });
+        if (!shouldDelete) return;
         await deleteRecordById(item.id);
         await refreshRows();
       });

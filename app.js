@@ -177,10 +177,14 @@ let latestRenderedRecords = [];
 const uploadCache = {};
 let genericAttachments = [];
 
-const getSelectedFormType = () => {
-  const selected = Array.from(formTypeInputs || []).find((input) => input.checked);
-  return selected ? selected.value : "";
+const getSelectedFormTypes = () => {
+  const selected = Array.from(formTypeInputs || [])
+    .filter((input) => input.checked)
+    .map((input) => input.value);
+  return selected.length ? selected : ["changeEmployer"];
 };
+
+const getSelectedFormType = () => getSelectedFormTypes()[0] || "changeEmployer";
 
 const getSelectedCaseStatus = () => {
   const selected = Array.from(caseStatusInputs || []).find((input) => input.checked);
@@ -191,17 +195,17 @@ const updateSections = () => {
   if (!sections.length) {
     return;
   }
-  const selected = getSelectedFormType();
+  const selected = getSelectedFormTypes();
   sections.forEach((section) => {
     const sectionKey = section.dataset.section;
-    const shouldShow = !sectionKey || sectionKey === "all" || sectionKey === selected;
+    const shouldShow = !sectionKey || sectionKey === "all" || selected.includes(sectionKey);
     section.style.display = shouldShow ? "block" : "none";
   });
 };
 
 const updateFormTypeOtherVisibility = () => {
   if (!formTypeOtherRow) return;
-  const isOther = getSelectedFormType() === "other";
+  const isOther = getSelectedFormTypes().includes("other");
   formTypeOtherRow.classList.toggle("is-hidden", !isOther);
   if (!isOther && formTypeOtherDetail) {
     formTypeOtherDetail.value = "";
@@ -1530,11 +1534,17 @@ const getFormTypeLabel = (value) => {
 };
 
 const buildFormTypeLabel = (formData) => {
-  const baseLabel = getFormTypeLabel(formData.formType);
-  if (formData.formType === "other" && formData.formTypeOtherDetail) {
-    return `${baseLabel}: ${formData.formTypeOtherDetail}`;
-  }
-  return baseLabel;
+  const selectedTypes = Array.isArray(formData.formTypes) && formData.formTypes.length
+    ? formData.formTypes
+    : [formData.formType || "changeEmployer"];
+  const labels = selectedTypes.map((type) => {
+    const baseLabel = getFormTypeLabel(type);
+    if (type === "other" && formData.formTypeOtherDetail) {
+      return `${baseLabel}: ${formData.formTypeOtherDetail}`;
+    }
+    return baseLabel;
+  });
+  return labels.join(", ");
 };
 
 const getCaseTypeLabel = (value) => {
@@ -1927,6 +1937,7 @@ const collectFormData = () => {
   }
   const formData = {
     formType: getSelectedFormType(),
+    formTypes: getSelectedFormTypes(),
     formTypeOtherDetail: formTypeOtherDetail?.value?.trim() || "",
     workers,
     company: company?.value?.trim() || "",
@@ -2056,7 +2067,10 @@ const renderRecords = () => {
   const query = recordSearch.value.trim().toLowerCase();
   const filter = recordFilter.value;
   const filtered = records.filter((record) => {
-    const matchesFilter = filter === "all" || record.formType === filter;
+    const selectedTypes = Array.isArray(record.data?.formTypes) && record.data.formTypes.length
+      ? record.data.formTypes
+      : [record.formType];
+    const matchesFilter = filter === "all" || selectedTypes.includes(filter);
     if (!query) return matchesFilter;
     const workers = normalizeWorkers(record.data);
     const personalInfo = record.data.personalInfo || {};
@@ -3010,8 +3024,11 @@ const saveRecord = async (status = "draft") => {
 const populateForm = (record) => {
   if (!record) return;
 if (formTypeInputs?.length) {
+    const selectedTypes = Array.isArray(record.data?.formTypes) && record.data.formTypes.length
+      ? record.data.formTypes
+      : [record.formType];
     formTypeInputs.forEach((input) => {
-      input.checked = input.value === record.formType;
+      input.checked = selectedTypes.includes(input.value);
     });
   }
   if (formTypeOtherDetail) formTypeOtherDetail.value = record.data.formTypeOtherDetail || "";

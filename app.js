@@ -2113,8 +2113,6 @@ const renderRecords = () => {
     formTypeCell.textContent = record.formTypeLabel;
     const employerCell = document.createElement("td");
     employerCell.textContent = employerLabel;
-    const employerEmailCell = document.createElement("td");
-    employerEmailCell.textContent = personalInfo.employerEmail || "-";
     const workerCell = document.createElement("td");
     workerCell.textContent = workerName;
     const recordedByCell = document.createElement("td");
@@ -2182,7 +2180,6 @@ const renderRecords = () => {
     row.appendChild(formIdCell);
     row.appendChild(formTypeCell);
     row.appendChild(employerCell);
-    row.appendChild(employerEmailCell);
     row.appendChild(workerCell);
     row.appendChild(recordedByCell);
     row.appendChild(updatedCell);
@@ -2886,7 +2883,6 @@ const openGeneralSearchResultsModal = (records, query) => {
       <th>${translations[currentLanguage].recordsTableFormId}</th>
       <th>${translations[currentLanguage].recordsTableFormType}</th>
       <th>${translations[currentLanguage].recordsTableEmployer}</th>
-      <th>${translations[currentLanguage].recordsTableEmployerEmail}</th>
       <th>${translations[currentLanguage].recordsTableWorker}</th>
       <th>${translations[currentLanguage].recordsTableStatus}</th>
       <th>${translations[currentLanguage].recordsTableActions}</th>
@@ -2901,7 +2897,6 @@ const openGeneralSearchResultsModal = (records, query) => {
       tr.innerHTML = `<td>${record.formId || "-"}</td>
         <td>${record.formTypeLabel || "-"}</td>
         <td>${employer}</td>
-        <td>${personalInfo.employerEmail || "-"}</td>
         <td>${workerName}</td>
         <td>${getCaseStatusDisplay(record.data.caseStatus || {})}</td>`;
       const actionTd = document.createElement("td");

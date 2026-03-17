@@ -175,6 +175,7 @@ const getEditIdFromQuery = () => {
 
 let currentEditId = null;
 let latestRenderedRecords = [];
+let selectedRecordExportIds = new Set();
 const uploadCache = {};
 let genericAttachments = [];
 
@@ -2065,6 +2066,8 @@ const renderRecords = () => {
     return;
   }
   const records = loadRecords();
+  const availableIds = new Set(records.map((record) => String(record.formId || "")).filter(Boolean));
+  selectedRecordExportIds = new Set([...selectedRecordExportIds].filter((id) => availableIds.has(id)));
   const query = recordSearch.value.trim().toLowerCase();
   const filter = recordFilter.value;
   const filtered = records.filter((record) => {
@@ -2121,6 +2124,20 @@ const renderRecords = () => {
     selectInput.setAttribute("data-record-export-select", "1");
     selectInput.value = String(record.formId || "");
     selectInput.setAttribute("aria-label", "เลือกรายการ");
+    selectInput.checked = selectedRecordExportIds.has(String(record.formId || ""));
+    selectInput.addEventListener("change", () => {
+      const id = String(record.formId || "");
+      if (!id) return;
+      if (selectInput.checked) {
+        selectedRecordExportIds.add(id);
+      } else {
+        selectedRecordExportIds.delete(id);
+      }
+      if (recordsSelectAll) {
+        const visibleInputs = Array.from(recordsList.querySelectorAll('input[data-record-export-select]'));
+        recordsSelectAll.checked = Boolean(visibleInputs.length) && visibleInputs.every((input) => input.checked);
+      }
+    });
     selectCell.appendChild(selectInput);
     const formIdCell = document.createElement("td");
     formIdCell.textContent = record.formId;
@@ -2205,10 +2222,18 @@ const renderRecords = () => {
   });
 
   if (recordsSelectAll) {
-    recordsSelectAll.checked = false;
+    const visibleInputs = Array.from(recordsList.querySelectorAll('input[data-record-export-select]'));
+    recordsSelectAll.checked = Boolean(visibleInputs.length) && visibleInputs.every((input) => input.checked);
     recordsSelectAll.onchange = () => {
       recordsList.querySelectorAll('input[data-record-export-select]').forEach((input) => {
         input.checked = recordsSelectAll.checked;
+        const id = String(input.value || "").trim();
+        if (!id) return;
+        if (recordsSelectAll.checked) {
+          selectedRecordExportIds.add(id);
+        } else {
+          selectedRecordExportIds.delete(id);
+        }
       });
     };
   }
@@ -2320,18 +2345,11 @@ const showConfirmDialog = ({
 
 const exportRecordsToCsv = () => {
   const rendered = latestRenderedRecords.length ? latestRenderedRecords : loadRecords();
-  const selectedInputs = Array.from(document.querySelectorAll('input[data-record-export-select]'));
-  const selectedIds = new Set(
-    selectedInputs
-      .filter((input) => input.checked)
-      .map((input) => String(input.value || "").trim())
-      .filter(Boolean)
-  );
-  if (selectedInputs.length && !selectedIds.size) {
+  if (!selectedRecordExportIds.size) {
     setStatus(recordsStatus, "กรุณาเลือกรายการที่ต้องการส่งออก", "warn");
     return;
   }
-  const rows = selectedIds.size ? rendered.filter((record) => selectedIds.has(String(record.formId || ""))) : rendered;
+  const rows = rendered.filter((record) => selectedRecordExportIds.has(String(record.formId || "")));
   if (!rows.length) {
     setStatus(recordsStatus, translations[currentLanguage].recordsStatus, "warn");
     return;

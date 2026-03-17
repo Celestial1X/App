@@ -1068,6 +1068,52 @@ button {
   text-align: center;
 }
 
+body[data-page="report90"] .panel h2,
+body[data-page="visarun"] .panel h2,
+body[data-page="moulaos"] .panel h2,
+body[data-page="receivedocs"] .panel h2,
+body[data-page="returndocs"] .panel h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #eef4ff, #f8faff);
+  border: 1px solid #d7e3fb;
+  color: #123a66;
+}
+
+body[data-page="report90"] .panel h2::before,
+body[data-page="visarun"] .panel h2::before,
+body[data-page="moulaos"] .panel h2::before,
+body[data-page="receivedocs"] .panel h2::before,
+body[data-page="returndocs"] .panel h2::before {
+  content: "🗓️";
+  font-size: 1.1rem;
+}
+
+body[data-page="report90"] input[type="date"],
+body[data-page="visarun"] input[type="date"],
+body[data-page="moulaos"] input[type="date"],
+body[data-page="receivedocs"] input[type="date"],
+body[data-page="returndocs"] input[type="date"] {
+  background: linear-gradient(180deg, #ffffff, #f5f9ff);
+  border: 1px solid #c7d7f2;
+  border-radius: 11px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+body[data-page="report90"] input[type="date"]:focus,
+body[data-page="visarun"] input[type="date"]:focus,
+body[data-page="moulaos"] input[type="date"]:focus,
+body[data-page="receivedocs"] input[type="date"]:focus,
+body[data-page="returndocs"] input[type="date"]:focus {
+  outline: none;
+  border-color: #7da5ea;
+  box-shadow: 0 0 0 3px rgba(125, 165, 234, 0.2);
+}
+
 .checkbox-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

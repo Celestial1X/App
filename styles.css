@@ -1062,6 +1062,12 @@ button {
   color: #b42318;
 }
 
+.records-table th:first-child,
+.records-table td:first-child {
+  width: 44px;
+  text-align: center;
+}
+
 .checkbox-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

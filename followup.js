@@ -222,7 +222,20 @@ const exportTableToCsv = ({ listElement, filePrefix, statusElement }) => {
 
   const dataRows = [];
   const rows = Array.from(listElement.querySelectorAll("tr"));
-  rows.forEach((tr) => {
+  const selectableRows = rows.filter((tr) => tr.querySelector("input[data-export-select]"));
+  const rowsToExport = selectableRows.length
+    ? selectableRows.filter((tr) => tr.querySelector("input[data-export-select]")?.checked)
+    : rows;
+
+  if (selectableRows.length && !rowsToExport.length) {
+    if (statusElement) {
+      statusElement.textContent = "กรุณาเลือกรายการที่ต้องการส่งออก";
+      statusElement.classList.add("error");
+    }
+    return;
+  }
+
+  rowsToExport.forEach((tr) => {
     const cells = Array.from(tr.querySelectorAll("td"));
     if (!cells.length) return;
     if (cells.length === 1 && String(cells[0].textContent || "").includes("ยังไม่มีข้อมูล")) return;
@@ -770,7 +783,7 @@ const runReport90Page = () => {
       const cycleText = cycleDays === null ? "-" : `${fmtDate(item.nextDate)} (${cycleDays} วัน)`;
       const cycleTone = getDeadlineToneByRemainingDays(cycleDays);
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${getAggregateBookStats(rows, item, "report90").latestText}</td><td>${fmtDate(item.nextDate)}</td><td><span class="deadline-box ${cycleTone}">${cycleText}</span></td>`;
+      tr.innerHTML = `<td><input type="checkbox" data-export-select aria-label="เลือกรายการ" /></td><td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${getAggregateBookStats(rows, item, "report90").latestText}</td><td>${fmtDate(item.nextDate)}</td><td><span class="deadline-box ${cycleTone}">${cycleText}</span></td>`;
       const actionCell = document.createElement("td");
       const actionWrap = document.createElement("div");
       actionWrap.className = "table-actions";
@@ -796,8 +809,18 @@ const runReport90Page = () => {
 
     if (!filteredRows.length) {
       const tr = document.createElement("tr");
-      tr.innerHTML = '<td colspan="7">ยังไม่มีข้อมูล</td>';
+      tr.innerHTML = '<td colspan="8">ยังไม่มีข้อมูล</td>';
       list.appendChild(tr);
+    }
+
+    const checkAll = list.closest("table")?.querySelector("thead [data-export-check-all]");
+    if (checkAll) {
+      checkAll.checked = false;
+      checkAll.onchange = () => {
+        list.querySelectorAll("input[data-export-select]").forEach((cb) => {
+          cb.checked = checkAll.checked;
+        });
+      };
     }
   };
 
@@ -977,7 +1000,7 @@ const runVisaPage = () => {
       const cycleText = cycleDays === null ? "-" : `${fmtDate(item.endDate)} (${cycleDays} วัน)`;
       const cycleTone = getDeadlineToneByRemainingDays(cycleDays);
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${getAggregateBookStats(rows, item, "visarun").latestText}</td><td>${fmtDate(item.endDate)}</td><td><span class="deadline-box ${cycleTone}">${cycleText}</span></td>`;
+      tr.innerHTML = `<td><input type="checkbox" data-export-select aria-label="เลือกรายการ" /></td><td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${getAggregateBookStats(rows, item, "visarun").latestText}</td><td>${fmtDate(item.endDate)}</td><td><span class="deadline-box ${cycleTone}">${cycleText}</span></td>`;
       const actionCell = document.createElement("td");
       const actionWrap = document.createElement("div");
       actionWrap.className = "table-actions";
@@ -1003,8 +1026,18 @@ const runVisaPage = () => {
 
     if (!filteredRows.length) {
       const tr = document.createElement("tr");
-      tr.innerHTML = '<td colspan="7">ยังไม่มีข้อมูล</td>';
+      tr.innerHTML = '<td colspan="8">ยังไม่มีข้อมูล</td>';
       list.appendChild(tr);
+    }
+
+    const checkAll = list.closest("table")?.querySelector("thead [data-export-check-all]");
+    if (checkAll) {
+      checkAll.checked = false;
+      checkAll.onchange = () => {
+        list.querySelectorAll("input[data-export-select]").forEach((cb) => {
+          cb.checked = checkAll.checked;
+        });
+      };
     }
   };
 
@@ -1174,7 +1207,7 @@ const runMouLaosPage = () => {
 
     filteredRows.forEach((item) => {
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.alienId || "-"}</td><td>${fmtDate(item.startDate)}</td><td>${fmtDate(item.endDate)}</td><td>${fmtDate(item.documentReceivedDate)}</td><td>${fmtDate(item.documentReturnDate)}</td><td>${item.recordedBy || "-"}</td><td><span class="deadline-box">${formatRemainingYMD(item.endDate)}</span></td>`;
+      tr.innerHTML = `<td><input type="checkbox" data-export-select aria-label="เลือกรายการ" /></td><td>${item.workerName || "-"}</td><td>${item.alienId || "-"}</td><td>${fmtDate(item.startDate)}</td><td>${fmtDate(item.endDate)}</td><td>${fmtDate(item.documentReceivedDate)}</td><td>${fmtDate(item.documentReturnDate)}</td><td>${item.recordedBy || "-"}</td><td><span class="deadline-box">${formatRemainingYMD(item.endDate)}</span></td>`;
       const actionCell = document.createElement("td");
       const actionWrap = document.createElement("div");
       actionWrap.className = "table-actions";
@@ -1212,8 +1245,18 @@ const runMouLaosPage = () => {
 
     if (!filteredRows.length) {
       const tr = document.createElement("tr");
-      tr.innerHTML = '<td colspan="9">ยังไม่มีข้อมูล</td>';
+      tr.innerHTML = '<td colspan="10">ยังไม่มีข้อมูล</td>';
       list.appendChild(tr);
+    }
+
+    const checkAll = list.closest("table")?.querySelector("thead [data-export-check-all]");
+    if (checkAll) {
+      checkAll.checked = false;
+      checkAll.onchange = () => {
+        list.querySelectorAll("input[data-export-select]").forEach((cb) => {
+          cb.checked = checkAll.checked;
+        });
+      };
     }
   };
 
@@ -1324,7 +1367,7 @@ const runReceiveDocsPage = () => {
 
     filteredRows.forEach((item) => {
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.taskType || "-"}</td><td>${fmtDate(item.receiveDate)}</td><td>${item.receiverName || "-"}</td>`;
+      tr.innerHTML = `<td><input type="checkbox" data-export-select aria-label="เลือกรายการ" /></td><td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.taskType || "-"}</td><td>${fmtDate(item.receiveDate)}</td><td>${item.receiverName || "-"}</td>`;
       const actionCell = document.createElement("td");
       const actionWrap = document.createElement("div");
       actionWrap.className = "table-actions";
@@ -1357,8 +1400,18 @@ const runReceiveDocsPage = () => {
     });
     if (!filteredRows.length) {
       const tr = document.createElement("tr");
-      tr.innerHTML = '<td colspan="6">ยังไม่มีข้อมูล</td>';
+      tr.innerHTML = '<td colspan="7">ยังไม่มีข้อมูล</td>';
       list.appendChild(tr);
+    }
+
+    const checkAll = list.closest("table")?.querySelector("thead [data-export-check-all]");
+    if (checkAll) {
+      checkAll.checked = false;
+      checkAll.onchange = () => {
+        list.querySelectorAll("input[data-export-select]").forEach((cb) => {
+          cb.checked = checkAll.checked;
+        });
+      };
     }
   };
 
@@ -1464,7 +1517,7 @@ const runReturnDocsPage = () => {
     list.innerHTML = "";
     rows.forEach((item) => {
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.taskType || "-"}</td><td>${fmtDate(item.returnDate)}</td><td>${item.returnSenderName || "-"}</td>`;
+      tr.innerHTML = `<td><input type="checkbox" data-export-select aria-label="เลือกรายการ" /></td><td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.taskType || "-"}</td><td>${fmtDate(item.returnDate)}</td><td>${item.returnSenderName || "-"}</td>`;
       const actionCell = document.createElement("td");
       const actionWrap = document.createElement("div");
       actionWrap.className = "table-actions";
@@ -1497,8 +1550,18 @@ const runReturnDocsPage = () => {
     });
     if (!rows.length) {
       const tr = document.createElement("tr");
-      tr.innerHTML = '<td colspan="6">ยังไม่มีข้อมูล</td>';
+      tr.innerHTML = '<td colspan="7">ยังไม่มีข้อมูล</td>';
       list.appendChild(tr);
+    }
+
+    const checkAll = list.closest("table")?.querySelector("thead [data-export-check-all]");
+    if (checkAll) {
+      checkAll.checked = false;
+      checkAll.onchange = () => {
+        list.querySelectorAll("input[data-export-select]").forEach((cb) => {
+          cb.checked = checkAll.checked;
+        });
+      };
     }
   };
 

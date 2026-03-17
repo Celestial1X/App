@@ -919,7 +919,7 @@ button {
 .records-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 960px;
+  min-width: 1180px;
   background: transparent;
 }
 
@@ -960,6 +960,10 @@ button {
   font-weight: 700;
   color: #0f2d52;
   letter-spacing: 0.2px;
+  white-space: normal;
+  line-height: 1.5;
+  padding-top: 14px;
+  padding-bottom: 14px;
 }
 
 .records-table tbody tr:nth-child(even) {
@@ -975,17 +979,23 @@ button {
   flex-direction: column;
   align-items: center;
   gap: 10px;
+  padding-top: 6px;
 }
 
 .records-table .action-btn {
-  min-width: 96px;
+  min-width: 104px;
   border-radius: 14px;
-  padding: 11px 14px;
+  padding: 10px 14px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 7px;
-  box-shadow: none;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(148, 163, 184, 0.28);
+}
+
+.records-table tbody td:last-child {
+  vertical-align: top;
 }
 
 .records-table .action-btn--edit,

@@ -2386,9 +2386,8 @@ const createAttachmentLink = (item) => {
   anchor.href = item.dataUrl;
   anchor.target = "_blank";
   anchor.rel = "noopener noreferrer";
-  anchor.download = item.value || "attachment";
   anchor.className = "attachment-open-link";
-  anchor.textContent = currentLanguage === "th" ? "เปิดไฟล์" : "Open file";
+  anchor.textContent = currentLanguage === "th" ? "ดูไฟล์" : "View file";
   return anchor;
 };
 

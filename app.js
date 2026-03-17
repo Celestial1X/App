@@ -2383,12 +2383,77 @@ const exportRecordsToCsv = () => {
 const createAttachmentLink = (item) => {
   if (!item?.dataUrl) return null;
   const anchor = document.createElement("a");
-  anchor.href = item.dataUrl;
-  anchor.target = "_blank";
-  anchor.rel = "noopener noreferrer";
+  anchor.href = "#";
   anchor.className = "attachment-open-link";
   anchor.textContent = currentLanguage === "th" ? "ดูไฟล์" : "View file";
+  anchor.addEventListener("click", (event) => {
+    event.preventDefault();
+    openAttachmentViewer(item);
+  });
   return anchor;
+};
+
+const getAttachmentViewerModal = () => {
+  let modal = document.getElementById("attachmentViewerModal");
+  if (modal) return modal;
+  modal = document.createElement("div");
+  modal.id = "attachmentViewerModal";
+  modal.className = "modal attachment-viewer-modal";
+  modal.setAttribute("aria-hidden", "true");
+  modal.innerHTML = `
+    <div class="modal-content attachment-viewer-content">
+      <div class="modal-header">
+        <h4 id="attachmentViewerTitle">ไฟล์แนบ</h4>
+        <button type="button" class="modal-close" id="attachmentViewerClose" aria-label="ปิด">✕</button>
+      </div>
+      <div id="attachmentViewerBody" class="modal-body attachment-viewer-body"></div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) {
+      closeAttachmentViewer();
+    }
+  });
+  modal.querySelector("#attachmentViewerClose")?.addEventListener("click", closeAttachmentViewer);
+  return modal;
+};
+
+const closeAttachmentViewer = () => {
+  const modal = document.getElementById("attachmentViewerModal");
+  if (!modal) return;
+  modal.classList.remove("is-open");
+  modal.setAttribute("aria-hidden", "true");
+  const body = modal.querySelector("#attachmentViewerBody");
+  if (body) body.innerHTML = "";
+};
+
+const openAttachmentViewer = (attachment) => {
+  if (!attachment?.dataUrl) return;
+  const modal = getAttachmentViewerModal();
+  const title = modal.querySelector("#attachmentViewerTitle");
+  const body = modal.querySelector("#attachmentViewerBody");
+  if (!body || !title) return;
+  title.textContent = attachment.value || attachment.name || (currentLanguage === "th" ? "ไฟล์แนบ" : "Attachment");
+  body.innerHTML = "";
+
+  const isImage = attachment.dataUrl.startsWith("data:image");
+  if (isImage) {
+    const image = document.createElement("img");
+    image.src = attachment.dataUrl;
+    image.alt = title.textContent;
+    image.className = "attachment-viewer-image";
+    body.appendChild(image);
+  } else {
+    const frame = document.createElement("iframe");
+    frame.src = attachment.dataUrl;
+    frame.className = "attachment-viewer-frame";
+    frame.title = title.textContent;
+    body.appendChild(frame);
+  }
+
+  modal.classList.add("is-open");
+  modal.setAttribute("aria-hidden", "false");
 };
 
 const openRecordModal = (record) => {

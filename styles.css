@@ -814,6 +814,21 @@ button {
   margin-top: 12px;
 }
 
+.records-toolbar .table-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.records-toolbar .table-actions input[type="search"] {
+  min-width: 220px;
+  padding: 9px 12px;
+  border: 1px solid #cfd8ea;
+  border-radius: 10px;
+  background: #fff;
+}
+
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

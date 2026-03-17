@@ -214,12 +214,13 @@ const exportTableToCsv = ({ listElement, filePrefix, statusElement }) => {
   if (!listElement) return;
   const table = listElement.closest("table");
   if (!table) return;
+  const title = table.closest(".panel")?.querySelector(".records-toolbar h3")?.textContent?.trim() || "รายงานข้อมูล";
   const headers = Array.from(table.querySelectorAll("thead th")).map((th) => String(th.textContent || "").trim());
   const exportableIndexes = headers
     .map((header, index) => ({ header, index }))
     .filter(({ header }) => header && header !== "การจัดการ");
 
-  const lines = [exportableIndexes.map(({ header }) => toCsvValue(header)).join(",")];
+  const dataRows = [];
   const rows = Array.from(listElement.querySelectorAll("tr"));
   rows.forEach((tr) => {
     const cells = Array.from(tr.querySelectorAll("td"));
@@ -230,10 +231,10 @@ const exportTableToCsv = ({ listElement, filePrefix, statusElement }) => {
       if (!cell) return "";
       return String(cell.innerText || cell.textContent || "").replace(/\s+/g, " ").trim();
     });
-    lines.push(values.map((value) => toCsvValue(value)).join(","));
+    dataRows.push(values);
   });
 
-  if (lines.length <= 1) {
+  if (!dataRows.length) {
     if (statusElement) {
       statusElement.textContent = "ยังไม่มีข้อมูลสำหรับส่งออก";
       statusElement.classList.add("error");
@@ -241,19 +242,34 @@ const exportTableToCsv = ({ listElement, filePrefix, statusElement }) => {
     return;
   }
 
-  const csv = `﻿${lines.join("\n")}`;
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const reportDate = new Date().toLocaleString("th-TH");
+  const tableHead = `<tr>${exportableIndexes.map(({ header }) => `<th>${header}</th>`).join("")}</tr>`;
+  const tableBody = dataRows
+    .map((cols) => `<tr>${cols.map((col) => `<td>${col || "-"}</td>`).join("")}</tr>`)
+    .join("");
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
+    body{font-family:Tahoma,Arial,sans-serif;padding:18px;color:#1f2a44}
+    h2{margin:0 0 6px;color:#0f2d52} p{margin:0 0 14px;color:#475569}
+    table{border-collapse:collapse;width:100%;font-size:13px}
+    th,td{border:1px solid #cbd5e1;padding:8px 10px;text-align:left;vertical-align:top}
+    th{background:#dfe6f2;color:#0f2d52;font-weight:700}
+    tr:nth-child(even) td{background:#f8fafc}
+  </style></head><body>
+    <h2>${title}</h2><p>วันที่ออกรายงาน: ${reportDate}</p>
+    <table><thead>${tableHead}</thead><tbody>${tableBody}</tbody></table>
+  </body></html>`;
+  const blob = new Blob([`\uFEFF${html}`], { type: "application/vnd.ms-excel;charset=utf-8;" });
   const stamp = new Date().toISOString().replace(/[:.]/g, "-");
   const anchor = document.createElement("a");
   anchor.href = URL.createObjectURL(blob);
-  anchor.download = `${filePrefix}-${stamp}.csv`;
+  anchor.download = `${filePrefix}-${stamp}.xls`;
   document.body.appendChild(anchor);
   anchor.click();
   anchor.remove();
   setTimeout(() => URL.revokeObjectURL(anchor.href), 500);
 
   if (statusElement) {
-    statusElement.textContent = "ส่งออกไฟล์เรียบร้อย";
+    statusElement.textContent = "ส่งออกไฟล์ Excel เรียบร้อย";
     statusElement.classList.remove("error");
   }
 };
@@ -663,6 +679,7 @@ const runReport90Page = () => {
   const status = document.getElementById("report90Status");
   const list = document.getElementById("report90List");
   const exportButton = document.getElementById("exportReport90");
+  const searchInput = document.getElementById("report90Search");
   const alert = document.getElementById("report90Alert");
   const modal = setupModal();
   let rows = [];
@@ -745,7 +762,10 @@ const runReport90Page = () => {
       alert.classList.add("is-hidden");
     }
 
-    rows.forEach((item) => {
+    const keyword = String(searchInput?.value || "").trim().toLowerCase();
+    const filteredRows = keyword ? rows.filter((item) => String(item.workerName || "").toLowerCase().includes(keyword)) : rows;
+
+    filteredRows.forEach((item) => {
       const cycleDays = diffDaysBetween(item.startDate, item.nextDate);
       const cycleText = cycleDays === null ? "-" : `${fmtDate(item.nextDate)} (${cycleDays} วัน)`;
       const cycleTone = getDeadlineToneByRemainingDays(cycleDays);
@@ -773,6 +793,12 @@ const runReport90Page = () => {
       tr.appendChild(actionCell);
       list.appendChild(tr);
     });
+
+    if (!filteredRows.length) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = '<td colspan="7">ยังไม่มีข้อมูล</td>';
+      list.appendChild(tr);
+    }
   };
 
   const refreshRows = async () => {
@@ -799,6 +825,7 @@ const runReport90Page = () => {
   exportButton?.addEventListener("click", () => {
     exportTableToCsv({ listElement: list, filePrefix: "report90-records", statusElement: status });
   });
+  searchInput?.addEventListener("input", renderRows);
 
   form?.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -853,6 +880,7 @@ const runVisaPage = () => {
   const status = document.getElementById("visaStatus");
   const list = document.getElementById("visaList");
   const exportButton = document.getElementById("exportVisaRun");
+  const searchInput = document.getElementById("visaRunSearch");
   const alert = document.getElementById("visaAlert");
   const modal = setupModal();
   let rows = [];
@@ -941,7 +969,10 @@ const runVisaPage = () => {
       alert.classList.add("is-hidden");
     }
 
-    rows.forEach((item) => {
+    const keyword = String(searchInput?.value || "").trim().toLowerCase();
+    const filteredRows = keyword ? rows.filter((item) => String(item.workerName || "").toLowerCase().includes(keyword)) : rows;
+
+    filteredRows.forEach((item) => {
       const cycleDays = diffDaysBetween(item.startDate, item.endDate);
       const cycleText = cycleDays === null ? "-" : `${fmtDate(item.endDate)} (${cycleDays} วัน)`;
       const cycleTone = getDeadlineToneByRemainingDays(cycleDays);
@@ -969,6 +1000,12 @@ const runVisaPage = () => {
       tr.appendChild(actionCell);
       list.appendChild(tr);
     });
+
+    if (!filteredRows.length) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = '<td colspan="7">ยังไม่มีข้อมูล</td>';
+      list.appendChild(tr);
+    }
   };
 
   const refreshRows = async () => {
@@ -995,6 +1032,7 @@ const runVisaPage = () => {
   exportButton?.addEventListener("click", () => {
     exportTableToCsv({ listElement: list, filePrefix: "visarun-records", statusElement: status });
   });
+  searchInput?.addEventListener("input", renderRows);
 
   form?.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -1051,6 +1089,7 @@ const runMouLaosPage = () => {
   const status = document.getElementById("mouStatus");
   const list = document.getElementById("mouList");
   const exportButton = document.getElementById("exportMouLaos");
+  const searchInput = document.getElementById("mouSearch");
   const alert = document.getElementById("mouAlert");
   const modal = setupModal();
   let rows = [];
@@ -1130,7 +1169,10 @@ const runMouLaosPage = () => {
       }
     }
 
-    rows.forEach((item) => {
+    const keyword = String(searchInput?.value || "").trim().toLowerCase();
+    const filteredRows = keyword ? rows.filter((item) => String(item.workerName || "").toLowerCase().includes(keyword)) : rows;
+
+    filteredRows.forEach((item) => {
       const tr = document.createElement("tr");
       tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.alienId || "-"}</td><td>${fmtDate(item.startDate)}</td><td>${fmtDate(item.endDate)}</td><td>${fmtDate(item.documentReceivedDate)}</td><td>${fmtDate(item.documentReturnDate)}</td><td>${item.recordedBy || "-"}</td><td><span class="deadline-box">${formatRemainingYMD(item.endDate)}</span></td>`;
       const actionCell = document.createElement("td");
@@ -1168,7 +1210,7 @@ const runMouLaosPage = () => {
       list.appendChild(tr);
     });
 
-    if (!rows.length) {
+    if (!filteredRows.length) {
       const tr = document.createElement("tr");
       tr.innerHTML = '<td colspan="9">ยังไม่มีข้อมูล</td>';
       list.appendChild(tr);
@@ -1186,6 +1228,7 @@ const runMouLaosPage = () => {
   exportButton?.addEventListener("click", () => {
     exportTableToCsv({ listElement: list, filePrefix: "moulaos-records", statusElement: status });
   });
+  searchInput?.addEventListener("input", renderRows);
 
   form?.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -1230,6 +1273,7 @@ const runReceiveDocsPage = () => {
   const status = document.getElementById("receiveDocsStatus");
   const list = document.getElementById("receiveDocsList");
   const exportButton = document.getElementById("exportReceiveDocs");
+  const searchInput = document.getElementById("receiveDocsSearch");
   const modal = setupModal();
   let rows = [];
   let editFormId = "";
@@ -1275,7 +1319,10 @@ const runReceiveDocsPage = () => {
 
   const renderRows = () => {
     list.innerHTML = "";
-    rows.forEach((item) => {
+    const keyword = String(searchInput?.value || "").trim().toLowerCase();
+    const filteredRows = keyword ? rows.filter((item) => String(item.workerName || "").toLowerCase().includes(keyword)) : rows;
+
+    filteredRows.forEach((item) => {
       const tr = document.createElement("tr");
       tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.taskType || "-"}</td><td>${fmtDate(item.receiveDate)}</td><td>${item.receiverName || "-"}</td>`;
       const actionCell = document.createElement("td");
@@ -1308,7 +1355,7 @@ const runReceiveDocsPage = () => {
       tr.appendChild(actionCell);
       list.appendChild(tr);
     });
-    if (!rows.length) {
+    if (!filteredRows.length) {
       const tr = document.createElement("tr");
       tr.innerHTML = '<td colspan="6">ยังไม่มีข้อมูล</td>';
       list.appendChild(tr);
@@ -1328,6 +1375,7 @@ const runReceiveDocsPage = () => {
   exportButton?.addEventListener("click", () => {
     exportTableToCsv({ listElement: list, filePrefix: "receivedocs-records", statusElement: status });
   });
+  searchInput?.addEventListener("input", renderRows);
 
   form?.addEventListener("submit", async (event) => {
     event.preventDefault();

@@ -3,9 +3,16 @@
   const WEEKDAYS_SHORT = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
 
   const pad = (n) => String(n).padStart(2, "0");
+  const clamp = (n, min, max) => Math.min(Math.max(n, min), max);
   const normalizeThaiYear = (year) => (year >= 2400 ? year - 543 : year);
   const toDateValue = (date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
   const toDisplayValue = (date) => `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear() + 543}`;
+  const toTypingDisplayValue = (value) => {
+    const digits = String(value || "").replace(/\D/g, "").slice(0, 8);
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+    return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+  };
   const buildSafeDate = (year, month, day) => {
     const y = normalizeThaiYear(year);
     const dt = new Date(y, month - 1, day);
@@ -15,6 +22,15 @@
   const parseDateValue = (value) => {
     const text = String(value || "").trim();
     if (!text) return null;
+    const digits = text.replace(/\D/g, "");
+
+    if (digits.length === 8) {
+      const d = Number.parseInt(digits.slice(0, 2), 10);
+      const m = Number.parseInt(digits.slice(2, 4), 10);
+      const y = Number.parseInt(digits.slice(4, 8), 10);
+      const compactDate = buildSafeDate(y, m, d);
+      if (compactDate) return compactDate;
+    }
 
     const slash = text.split("/").map((x) => Number.parseInt(x, 10));
     if (slash.length === 3 && !slash.some(Number.isNaN)) {
@@ -54,6 +70,7 @@
         <button type="button" class="date-picker__title" data-title></button>
         <button type="button" class="date-picker__nav" data-nav="next" aria-label="เดือนถัดไป">→</button>
       </div>
+      <p class="date-picker__hint">พิมพ์ได้ เช่น 18/03/2569</p>
       <div class="date-picker__weekdays" data-weekdays></div>
       <div class="date-picker__grid" data-grid></div>
       <div class="date-picker__footer">
@@ -76,10 +93,22 @@
 
   const positionPopover = (input) => {
     const rect = input.getBoundingClientRect();
-    const top = rect.bottom + window.scrollY + 8;
-    const left = Math.min(rect.left + window.scrollX, window.scrollX + window.innerWidth - 300);
+    const margin = 8;
+    const pickerWidth = wrap.offsetWidth || 320;
+    const pickerHeight = wrap.offsetHeight || 380;
+    const minLeft = window.scrollX + margin;
+    const maxLeft = window.scrollX + window.innerWidth - pickerWidth - margin;
+    const preferredLeft = rect.left + window.scrollX;
+    const left = maxLeft >= minLeft ? clamp(preferredLeft, minLeft, maxLeft) : minLeft;
+
+    const belowTop = rect.bottom + window.scrollY + margin;
+    const aboveTop = rect.top + window.scrollY - pickerHeight - margin;
+    const fitsBelow = belowTop + pickerHeight <= window.scrollY + window.innerHeight - margin;
+    const minTop = window.scrollY + margin;
+    const top = fitsBelow ? belowTop : Math.max(minTop, aboveTop);
+
     wrap.style.top = `${top}px`;
-    wrap.style.left = `${Math.max(window.scrollX + 8, left)}px`;
+    wrap.style.left = `${left}px`;
   };
 
   const closePicker = () => {
@@ -130,8 +159,8 @@
     state.selected = selected;
     state.cursor = selected || new Date();
     render();
-    positionPopover(input);
     wrap.classList.remove("is-hidden");
+    positionPopover(input);
   };
 
   wrap.addEventListener("click", (event) => {
@@ -178,11 +207,42 @@
     input.autocomplete = "off";
 
     input.addEventListener("focus", () => openPicker(input));
+    input.addEventListener("input", () => {
+      const next = toTypingDisplayValue(input.value);
+      if (next !== input.value) {
+        input.value = next;
+      }
+      input.classList.remove("is-invalid-date");
+    });
     input.addEventListener("blur", () => {
+      if (!input.value.trim()) {
+        input.classList.remove("is-invalid-date");
+        return;
+      }
       const parsed = parseDateValue(input.value);
-      if (!parsed) return;
+      if (!parsed) {
+        input.classList.add("is-invalid-date");
+        return;
+      }
       input.value = toDisplayValue(parsed);
+      input.classList.remove("is-invalid-date");
       input.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        closePicker();
+      }
+      if (event.key === "Enter") {
+        const parsed = parseDateValue(input.value);
+        if (!parsed) {
+          input.classList.add("is-invalid-date");
+          return;
+        }
+        input.value = toDisplayValue(parsed);
+        input.classList.remove("is-invalid-date");
+        input.dispatchEvent(new Event("change", { bubbles: true }));
+        closePicker();
+      }
     });
   };
 

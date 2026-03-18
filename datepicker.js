@@ -60,6 +60,7 @@
     cursor: new Date(),
     selected: null,
   };
+  let lastPointerDownTarget = null;
 
   const wrap = document.createElement("div");
   wrap.className = "date-picker-popover is-hidden";
@@ -91,22 +92,25 @@
     weekdaysEl.appendChild(el);
   });
 
-  const positionPopover = (input) => {
+  const syncPopoverLayout = (input) => {
     const rect = input.getBoundingClientRect();
     const margin = 8;
-    const pickerWidth = wrap.offsetWidth || 320;
+    const maxWidth = Math.min(420, window.innerWidth - (margin * 2));
+    const minWidth = Math.min(320, maxWidth);
+    const pickerWidth = clamp(rect.width, minWidth, maxWidth);
     const pickerHeight = wrap.offsetHeight || 380;
-    const minLeft = window.scrollX + margin;
-    const maxLeft = window.scrollX + window.innerWidth - pickerWidth - margin;
-    const preferredLeft = rect.left + window.scrollX;
+    const minLeft = margin;
+    const maxLeft = window.innerWidth - pickerWidth - margin;
+    const preferredLeft = rect.left + (rect.width / 2) - (pickerWidth / 2);
     const left = maxLeft >= minLeft ? clamp(preferredLeft, minLeft, maxLeft) : minLeft;
 
-    const belowTop = rect.bottom + window.scrollY + margin;
-    const aboveTop = rect.top + window.scrollY - pickerHeight - margin;
-    const fitsBelow = belowTop + pickerHeight <= window.scrollY + window.innerHeight - margin;
-    const minTop = window.scrollY + margin;
+    const belowTop = rect.bottom + margin;
+    const aboveTop = rect.top - pickerHeight - margin;
+    const fitsBelow = belowTop + pickerHeight <= window.innerHeight - margin;
+    const minTop = margin;
     const top = fitsBelow ? belowTop : Math.max(minTop, aboveTop);
 
+    wrap.style.width = `${pickerWidth}px`;
     wrap.style.top = `${top}px`;
     wrap.style.left = `${left}px`;
   };
@@ -160,7 +164,7 @@
     state.cursor = selected || new Date();
     render();
     wrap.classList.remove("is-hidden");
-    positionPopover(input);
+    syncPopoverLayout(input);
   };
 
   wrap.addEventListener("click", (event) => {
@@ -215,6 +219,7 @@
       input.classList.remove("is-invalid-date");
     });
     input.addEventListener("blur", () => {
+      if (lastPointerDownTarget && wrap.contains(lastPointerDownTarget)) return;
       if (!input.value.trim()) {
         input.classList.remove("is-invalid-date");
         return;
@@ -248,6 +253,10 @@
 
   document.querySelectorAll('input[type="date"]').forEach((input) => enhanceInput(input));
 
+  document.addEventListener("pointerdown", (event) => {
+    lastPointerDownTarget = event.target;
+  });
+
   document.addEventListener("click", (event) => {
     const input = event.target.closest('input[type="date"], input[data-enhanced-date="1"]');
     if (input) {
@@ -258,17 +267,18 @@
     if (!event.target.closest(".date-picker-popover")) {
       closePicker();
     }
+    lastPointerDownTarget = null;
   });
 
   window.addEventListener("scroll", () => {
     if (state.activeInput && !wrap.classList.contains("is-hidden")) {
-      positionPopover(state.activeInput);
+      syncPopoverLayout(state.activeInput);
     }
   }, { passive: true });
 
   window.addEventListener("resize", () => {
     if (state.activeInput && !wrap.classList.contains("is-hidden")) {
-      positionPopover(state.activeInput);
+      syncPopoverLayout(state.activeInput);
     }
   });
 })();

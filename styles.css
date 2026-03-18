@@ -1480,7 +1480,7 @@ button:hover,
 }
 
 .date-picker-popover {
-  position: absolute;
+  position: fixed;
   z-index: 2200;
 }
 
@@ -1489,7 +1489,8 @@ button:hover,
 }
 
 .date-picker {
-  width: min(340px, calc(100vw - 16px));
+  width: 100%;
+  max-width: 100%;
   border-radius: 18px;
   border: 1px solid #d7e2f6;
   background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);

@@ -76,10 +76,9 @@ const toDateOnly = (value) => {
 };
 
 const formatDateInputValue = (date) => {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
   const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  return `${d}/${m}/${date.getFullYear() + 543}`;
 };
 
 const addDays = (value, days) => {
@@ -543,7 +542,7 @@ const toReport90Payload = (values, formId = "") => ({
   data: {
     recordedBy: values.recordedBy || "",
     company: "",
-    startDate: values.startDate || "",
+    startDate: normalizeDateInputValue(values.startDate),
     personalInfo: {
       fullName: values.workerName,
       gender: values.gender,
@@ -556,10 +555,10 @@ const toReport90Payload = (values, formId = "") => ({
     },
     followupType: "report90",
     followup: {
-      startDate: values.startDate,
+      startDate: normalizeDateInputValue(values.startDate),
       nextDate: normalizeDateInputValue(values.nextDate) || computeFollowupDateFromStart(values.startDate),
-      documentReceivedDate: values.documentReceivedDate,
-      documentReturnDate: values.documentReturnDate,
+      documentReceivedDate: normalizeDateInputValue(values.documentReceivedDate),
+      documentReturnDate: normalizeDateInputValue(values.documentReturnDate),
       overdueFine: values.overdueFine,
       sentImmigration: values.sentImmigration,
       returnBook: values.returnBook,
@@ -577,7 +576,7 @@ const toVisaRunPayload = (values, formId = "") => ({
   data: {
     recordedBy: values.recordedBy || "",
     company: "",
-    startDate: values.startDate || "",
+    startDate: normalizeDateInputValue(values.startDate),
     personalInfo: {
       fullName: values.workerName,
       gender: values.gender,
@@ -590,10 +589,10 @@ const toVisaRunPayload = (values, formId = "") => ({
     },
     followupType: "visarun",
     followup: {
-      startDate: values.startDate,
+      startDate: normalizeDateInputValue(values.startDate),
       endDate: normalizeDateInputValue(values.endDate) || computeFollowupDateFromStart(values.startDate),
-      documentReceivedDate: values.documentReceivedDate,
-      documentReturnDate: values.documentReturnDate,
+      documentReceivedDate: normalizeDateInputValue(values.documentReceivedDate),
+      documentReturnDate: normalizeDateInputValue(values.documentReturnDate),
       visaOverdue: values.visaOverdue,
       sentImmigration: values.sentImmigration,
       returnBook: values.returnBook,
@@ -614,7 +613,7 @@ const toMouLaosPayload = (values, formId = "") => ({
   data: {
     recordedBy: values.recordedBy || "",
     company: "",
-    startDate: values.startDate || "",
+    startDate: normalizeDateInputValue(values.startDate),
     personalInfo: {
       fullName: values.workerName,
       alienId: values.alienId,
@@ -626,10 +625,10 @@ const toMouLaosPayload = (values, formId = "") => ({
     },
     followupType: "moulaos",
     followup: {
-      startDate: values.startDate,
+      startDate: normalizeDateInputValue(values.startDate),
       endDate: normalizeDateInputValue(values.endDate) || addYears(values.startDate, 2),
-      documentReceivedDate: values.documentReceivedDate,
-      documentReturnDate: values.documentReturnDate,
+      documentReceivedDate: normalizeDateInputValue(values.documentReceivedDate),
+      documentReturnDate: normalizeDateInputValue(values.documentReturnDate),
     },
   },
 });
@@ -644,7 +643,7 @@ const toReceiveDocsPayload = (values, formId = "") => ({
   data: {
     recordedBy: values.receiverName || "",
     company: "",
-    startDate: values.receiveDate || "",
+    startDate: normalizeDateInputValue(values.receiveDate),
     personalInfo: {
       fullName: values.workerName,
       employerName: values.employerName,
@@ -669,7 +668,7 @@ const toReturnDocsPayload = (values, formId = "") => ({
   data: {
     recordedBy: values.returnSenderName || "",
     company: "",
-    startDate: values.returnDate || "",
+    startDate: normalizeDateInputValue(values.returnDate),
     personalInfo: {
       fullName: values.workerName,
       employerName: values.employerName,
@@ -733,10 +732,10 @@ const runReport90Page = () => {
     document.getElementById("r90Gender").value = item.gender || "";
     document.getElementById("r90Employer").value = item.employerName || "";
     document.getElementById("r90RecordedBy").value = item.recordedBy || "";
-    startDate.value = item.startDate || "";
-    nextDate.value = item.nextDate || "";
-    document.getElementById("r90DocReceiveDate").value = item.documentReceivedDate || "";
-    document.getElementById("r90DocReturnDate").value = item.documentReturnDate || "";
+    startDate.value = normalizeDateInputValue(item.startDate);
+    nextDate.value = normalizeDateInputValue(item.nextDate);
+    document.getElementById("r90DocReceiveDate").value = normalizeDateInputValue(item.documentReceivedDate);
+    document.getElementById("r90DocReturnDate").value = normalizeDateInputValue(item.documentReturnDate);
     document.getElementById("r90Overdue").checked = !!item.overdueFine;
     document.getElementById("r90SentImm").checked = !!item.sentImmigration;
     document.getElementById("r90ReturnBook").checked = !!item.returnBook;
@@ -875,7 +874,8 @@ const runReport90Page = () => {
 
     try {
       const submittingEditId = editFormId || requestedEditId || "";
-      startDate.value = values.startDate;
+      startDate.value = normalizeDateInputValue(values.startDate);
+      nextDate.value = normalizeDateInputValue(values.nextDate);
       await saveRecord(toReport90Payload(values, submittingEditId));
       const wasEdit = Boolean(submittingEditId);
       resetForm();
@@ -946,10 +946,10 @@ const runVisaPage = () => {
     document.getElementById("visaGender").value = item.gender || "";
     document.getElementById("visaEmployer").value = item.employerName || "";
     document.getElementById("visaRecordedBy").value = item.recordedBy || "";
-    startDate.value = item.startDate || "";
-    endDate.value = item.endDate || "";
-    document.getElementById("visaDocReceiveDate").value = item.documentReceivedDate || "";
-    document.getElementById("visaDocReturnDate").value = item.documentReturnDate || "";
+    startDate.value = normalizeDateInputValue(item.startDate);
+    endDate.value = normalizeDateInputValue(item.endDate);
+    document.getElementById("visaDocReceiveDate").value = normalizeDateInputValue(item.documentReceivedDate);
+    document.getElementById("visaDocReturnDate").value = normalizeDateInputValue(item.documentReturnDate);
     document.getElementById("visaOverdue").checked = !!item.visaOverdue;
     document.getElementById("visaSentImm").checked = !!item.sentImmigration;
     document.getElementById("visaReturnBook").checked = !!item.returnBook;
@@ -1094,7 +1094,8 @@ const runVisaPage = () => {
 
     try {
       const submittingEditId = editFormId || requestedEditId || "";
-      startDate.value = values.startDate;
+      startDate.value = normalizeDateInputValue(values.startDate);
+      endDate.value = normalizeDateInputValue(values.endDate);
       await saveRecord(toVisaRunPayload(values, submittingEditId));
       const wasEdit = Boolean(submittingEditId);
       resetForm();
@@ -1156,10 +1157,10 @@ const runMouLaosPage = () => {
     document.getElementById("mouWorkerName").value = item.workerName || "";
     document.getElementById("mouAlienId").value = item.alienId || "";
     document.getElementById("mouRecordedBy").value = item.recordedBy || "";
-    startDate.value = item.startDate || "";
-    endDate.value = item.endDate || "";
-    document.getElementById("mouDocReceiveDate").value = item.documentReceivedDate || "";
-    document.getElementById("mouDocReturnDate").value = item.documentReturnDate || "";
+    startDate.value = normalizeDateInputValue(item.startDate);
+    endDate.value = normalizeDateInputValue(item.endDate);
+    document.getElementById("mouDocReceiveDate").value = normalizeDateInputValue(item.documentReceivedDate);
+    document.getElementById("mouDocReturnDate").value = normalizeDateInputValue(item.documentReturnDate);
     editFormId = item.id;
   };
 
@@ -1290,8 +1291,8 @@ const runMouLaosPage = () => {
 
     try {
       const submittingEditId = editFormId || requestedEditId || "";
-      startDate.value = values.startDate;
-      endDate.value = values.endDate;
+      startDate.value = normalizeDateInputValue(values.startDate);
+      endDate.value = normalizeDateInputValue(values.endDate);
       await saveRecord(toMouLaosPayload(values, submittingEditId));
       const wasEdit = Boolean(submittingEditId);
       resetForm();
@@ -1345,7 +1346,7 @@ const runReceiveDocsPage = () => {
     document.getElementById("receiveWorkerName").value = item.workerName || "";
     document.getElementById("receiveEmployerName").value = item.employerName || "";
     document.getElementById("receiveTaskType").value = item.taskType || "";
-    document.getElementById("receiveDate").value = item.receiveDate || "";
+    document.getElementById("receiveDate").value = normalizeDateInputValue(item.receiveDate);
     document.getElementById("receiveBy").value = item.receiverName || "";
     editFormId = String(item.id || "");
   };
@@ -1498,7 +1499,7 @@ const runReturnDocsPage = () => {
     document.getElementById("returnWorkerName").value = item.workerName || "";
     document.getElementById("returnEmployerName").value = item.employerName || "";
     document.getElementById("returnTaskType").value = item.taskType || "";
-    document.getElementById("returnDate").value = item.returnDate || "";
+    document.getElementById("returnDate").value = normalizeDateInputValue(item.returnDate);
     document.getElementById("returnBy").value = item.returnSenderName || "";
     editFormId = String(item.id || "");
   };

@@ -1351,6 +1351,13 @@ const formatDateOnlyDMY = (value) => {
   return `${day}/${month}/${year}`;
 };
 
+const normalizeDisplayDateValue = (value) => {
+  if (!value) return "";
+  const date = parseDateOnlyLocal(value);
+  if (!date) return String(value || "").trim();
+  return formatDateOnlyDMY(date);
+};
+
 const getDaysUntil = (value) => {
   const target = parseDateOnlyLocal(value);
   if (!target) return null;
@@ -1946,7 +1953,7 @@ const collectFormData = () => {
     caseType: caseType?.value || "",
     position: position?.value?.trim() || "",
     workSite: workSite?.value?.trim() || "",
-    startDate: startDate?.value || "",
+    startDate: normalizeDisplayDateValue(startDate?.value),
     employerId: employerId?.value?.trim() || "",
     verification: verification?.value || "",
     recordedBy: recordedBy ? recordedBy.value.trim() : "",
@@ -1960,21 +1967,21 @@ const collectFormData = () => {
       code: workerCode?.value?.trim() || "",
       alienId: workerAlienId?.value?.trim() || "",
       workPermitNumber: workPermitNumber?.value?.trim() || "",
-      workPermitExpiry: workPermitExpiry?.value || "",
+      workPermitExpiry: normalizeDisplayDateValue(workPermitExpiry?.value),
       passNumber: passNumber?.value?.trim() || "",
-      passIssueDate: passIssueDate?.value || "",
-      passExpiryDate: passExpiryDate?.value || "",
-      personalVisaExpiryDate: personalVisaExpiryDate?.value || "",
+      passIssueDate: normalizeDisplayDateValue(passIssueDate?.value),
+      passExpiryDate: normalizeDisplayDateValue(passExpiryDate?.value),
+      personalVisaExpiryDate: normalizeDisplayDateValue(personalVisaExpiryDate?.value),
       businessType: getBusinessTypeValue(),
       employerName: employerName?.value?.trim() || "",
       employerEmail: employerEmail?.value?.trim() || "",
       employerEmailCode: employerEmailCode?.value?.trim() || "",
       employerAddress: employerAddress?.value?.trim() || "",
       documentSender: documentSender?.value?.trim() || "",
-      documentSentDate: documentSentDate?.value || "",
+      documentSentDate: normalizeDisplayDateValue(documentSentDate?.value),
       documentReceiver: documentReceiver?.value?.trim() || "",
-      documentReceivedDate: documentReceivedDate?.value || "",
-      documentReturnDate: documentReturnDate?.value || "",
+      documentReceivedDate: normalizeDisplayDateValue(documentReceivedDate?.value),
+      documentReturnDate: normalizeDisplayDateValue(documentReturnDate?.value),
     },
     documents: {
       workPermit: docWorkPermit?.checked || false,
@@ -1996,7 +2003,7 @@ const collectFormData = () => {
     },
     caseStatus: {
       status: getSelectedCaseStatus(),
-      appointmentDate: appointmentDate?.value || "",
+      appointmentDate: normalizeDisplayDateValue(appointmentDate?.value),
       appointmentNote: appointmentNote?.value?.trim() || "",
     },
     receivedDocs,
@@ -3088,11 +3095,11 @@ if (formTypeInputs?.length) {
   if (workerCode) workerCode.value = record.data.personalInfo?.code || "";
   if (workerAlienId) workerAlienId.value = record.data.personalInfo?.alienId || "";
   if (workPermitNumber) workPermitNumber.value = record.data.personalInfo?.workPermitNumber || "";
-  if (workPermitExpiry) workPermitExpiry.value = record.data.personalInfo?.workPermitExpiry || "";
+  if (workPermitExpiry) workPermitExpiry.value = normalizeDisplayDateValue(record.data.personalInfo?.workPermitExpiry);
   if (passNumber) passNumber.value = record.data.personalInfo?.passNumber || "";
-  if (passIssueDate) passIssueDate.value = record.data.personalInfo?.passIssueDate || "";
-  if (passExpiryDate) passExpiryDate.value = record.data.personalInfo?.passExpiryDate || "";
-  if (personalVisaExpiryDate) personalVisaExpiryDate.value = record.data.personalInfo?.personalVisaExpiryDate || "";
+  if (passIssueDate) passIssueDate.value = normalizeDisplayDateValue(record.data.personalInfo?.passIssueDate);
+  if (passExpiryDate) passExpiryDate.value = normalizeDisplayDateValue(record.data.personalInfo?.passExpiryDate);
+  if (personalVisaExpiryDate) personalVisaExpiryDate.value = normalizeDisplayDateValue(record.data.personalInfo?.personalVisaExpiryDate);
   if (businessType) {
     const savedBusinessType = record.data.personalInfo?.businessType || "";
     const hasOption = Array.from(businessType.options || []).some((option) => option.value === savedBusinessType);
@@ -3106,10 +3113,10 @@ if (formTypeInputs?.length) {
   if (employerEmailCode) employerEmailCode.value = record.data.personalInfo?.employerEmailCode || "";
   if (employerAddress) employerAddress.value = record.data.personalInfo?.employerAddress || "";
   if (documentSender) documentSender.value = record.data.personalInfo?.documentSender || "";
-  if (documentSentDate) documentSentDate.value = record.data.personalInfo?.documentSentDate || "";
+  if (documentSentDate) documentSentDate.value = normalizeDisplayDateValue(record.data.personalInfo?.documentSentDate);
   if (documentReceiver) documentReceiver.value = record.data.personalInfo?.documentReceiver || "";
-  if (documentReceivedDate) documentReceivedDate.value = record.data.personalInfo?.documentReceivedDate || "";
-  if (documentReturnDate) documentReturnDate.value = record.data.personalInfo?.documentReturnDate || "";
+  if (documentReceivedDate) documentReceivedDate.value = normalizeDisplayDateValue(record.data.personalInfo?.documentReceivedDate);
+  if (documentReturnDate) documentReturnDate.value = normalizeDisplayDateValue(record.data.personalInfo?.documentReturnDate);
   if (docWorkPermit) docWorkPermit.checked = record.data.documents?.workPermit || false;
   if (docReceipt) docReceipt.checked = record.data.documents?.receipt || false;
   if (docRequestForm) docRequestForm.checked = record.data.documents?.requestForm || false;
@@ -3131,7 +3138,7 @@ if (formTypeInputs?.length) {
       input.checked = input.value === record.data.caseStatus?.status;
     });
   }
-  if (appointmentDate) appointmentDate.value = record.data.caseStatus?.appointmentDate || "";
+  if (appointmentDate) appointmentDate.value = normalizeDisplayDateValue(record.data.caseStatus?.appointmentDate);
   if (appointmentNote) appointmentNote.value = record.data.caseStatus?.appointmentNote || "";
   updateFormTypeOtherVisibility();
   updateAppointmentVisibility();
@@ -3151,7 +3158,7 @@ if (formTypeInputs?.length) {
   if (caseType) caseType.value = record.data.caseType || "changeEmployer";
   if (position) position.value = record.data.position || "";
   if (workSite) workSite.value = record.data.workSite || "";
-  if (startDate) startDate.value = record.data.startDate || "";
+  if (startDate) startDate.value = normalizeDisplayDateValue(record.data.startDate);
   if (employerId) employerId.value = record.data.employerId || "";
   if (renewalType) renewalType.value = record.data.renewalType || "passport";
   if (renewalStatus) renewalStatus.value = record.data.renewalStatus || "none";

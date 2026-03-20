@@ -45,6 +45,7 @@ const businessType = document.getElementById("businessType");
 const businessTypeCustom = document.getElementById("businessTypeCustom");
 const employerName = document.getElementById("employerName");
 const employerEmail = document.getElementById("employerEmail");
+const employerEmailCode = document.getElementById("employerEmailCode");
 const employerAddress = document.getElementById("employerAddress");
 const documentSender = document.getElementById("documentSender");
 const documentSentDate = document.getElementById("documentSentDate");
@@ -67,9 +68,6 @@ const docHouseReg = document.getElementById("docHouseReg");
 const docEmployerIdCard = document.getElementById("docEmployerIdCard");
 const docCompanyCert = document.getElementById("docCompanyCert");
 const documentsNote = document.getElementById("documentsNote");
-const paymentStatus = document.getElementById("paymentStatus");
-const paymentDate = document.getElementById("paymentDate");
-const paymentNotes = document.getElementById("paymentNotes");
 const employerCheckInput = document.getElementById("employerCheck");
 const employerStatus = document.getElementById("employerStatus");
 const pageLoader = document.getElementById("pageLoader");
@@ -80,6 +78,7 @@ const attachmentsInput = document.getElementById("attachmentsInput");
 const attachmentsCameraInput = document.getElementById("attachmentsCameraInput");
 const openCameraButton = document.getElementById("openCameraButton");
 const attachmentsPreview = document.getElementById("attachmentsPreview");
+const attachmentsFileHint = document.getElementById("attachmentsFileHint");
 const workerForm = document.getElementById("workerForm");
 const formSaveStatus = document.getElementById("formSaveStatus");
 const workPermitExpiryStatus = document.getElementById("workPermitExpiryStatus");
@@ -88,6 +87,7 @@ const personalVisaExpiryDateStatus = document.getElementById("personalVisaExpiry
 const LEGACY_ATTACHMENT_KEYS = ["facePhoto", "idCard", "houseDoc", "paymentSlip"];
 const recordSearch = document.getElementById("recordSearch");
 const recordFilter = document.getElementById("recordFilter");
+const recordsSelectAll = document.getElementById("recordsSelectAll");
 const recordsStatus = document.getElementById("recordsStatus");
 const recordsList = document.getElementById("recordsList");
 const exportRecordsButton = document.getElementById("exportRecords");
@@ -175,13 +175,18 @@ const getEditIdFromQuery = () => {
 
 let currentEditId = null;
 let latestRenderedRecords = [];
+let selectedRecordExportIds = new Set();
 const uploadCache = {};
 let genericAttachments = [];
 
-const getSelectedFormType = () => {
-  const selected = Array.from(formTypeInputs || []).find((input) => input.checked);
-  return selected ? selected.value : "";
+const getSelectedFormTypes = () => {
+  const selected = Array.from(formTypeInputs || [])
+    .filter((input) => input.checked)
+    .map((input) => input.value);
+  return selected.length ? selected : ["changeEmployer"];
 };
+
+const getSelectedFormType = () => getSelectedFormTypes()[0] || "changeEmployer";
 
 const getSelectedCaseStatus = () => {
   const selected = Array.from(caseStatusInputs || []).find((input) => input.checked);
@@ -192,17 +197,17 @@ const updateSections = () => {
   if (!sections.length) {
     return;
   }
-  const selected = getSelectedFormType();
+  const selected = getSelectedFormTypes();
   sections.forEach((section) => {
     const sectionKey = section.dataset.section;
-    const shouldShow = !sectionKey || sectionKey === "all" || sectionKey === selected;
+    const shouldShow = !sectionKey || sectionKey === "all" || selected.includes(sectionKey);
     section.style.display = shouldShow ? "block" : "none";
   });
 };
 
 const updateFormTypeOtherVisibility = () => {
   if (!formTypeOtherRow) return;
-  const isOther = getSelectedFormType() === "other";
+  const isOther = getSelectedFormTypes().includes("other");
   formTypeOtherRow.classList.toggle("is-hidden", !isOther);
   if (!isOther && formTypeOtherDetail) {
     formTypeOtherDetail.value = "";
@@ -466,6 +471,7 @@ const translations = {
     recordsTableFormId: "เลขที่แบบฟอร์ม",
     recordsTableFormType: "ประเภทงาน",
     recordsTableEmployer: "นายจ้าง",
+    recordsTableEmployerEmail: "เมลนายจ้าง",
     recordsTableWorker: "ชื่อต่างด้าว",
     recordsTableRecordedBy: "ผู้บันทึกข้อมูล",
     recordsTableUpdated: "อัปเดตล่าสุด",
@@ -738,6 +744,7 @@ const translations = {
     recordsTableFormId: "Form ID",
     recordsTableFormType: "Work category",
     recordsTableEmployer: "Employer",
+    recordsTableEmployerEmail: "Employer email",
     recordsTableWorker: "Worker name",
     recordsTableRecordedBy: "Recorded by",
     recordsTableUpdated: "Last updated",
@@ -914,7 +921,8 @@ const renderPreview = (container, files, onRemove) => {
     const image = document.createElement("img");
     image.alt = file.name;
     image.src = file.dataUrl || "";
-    if (!file.dataUrl) {
+    const isImage = Boolean(file.dataUrl && String(file.dataUrl).startsWith("data:image"));
+    if (!isImage) {
       image.style.display = "none";
     }
     const meta = document.createElement("div");
@@ -968,9 +976,21 @@ const appendGenericFiles = async (fileList) => {
   saveFormDraft();
 };
 
+const updateAttachmentsFileHint = (selectedCount = 0) => {
+  if (!attachmentsFileHint) return;
+  if (!selectedCount) {
+    attachmentsFileHint.textContent = currentLanguage === "th" ? "ยังไม่ได้เลือกไฟล์" : "No file selected";
+    return;
+  }
+  attachmentsFileHint.textContent =
+    currentLanguage === "th" ? `เลือกแล้ว ${selectedCount} ไฟล์` : `${selectedCount} file(s) selected`;
+};
+
 const handleGenericAttachmentInputChange = async (input) => {
   if (!input?.files?.length) return;
+  const selectedCount = input.files.length;
   await appendGenericFiles(input.files);
+  updateAttachmentsFileHint(selectedCount);
   input.value = "";
 };
 
@@ -1331,6 +1351,13 @@ const formatDateOnlyDMY = (value) => {
   return `${day}/${month}/${year}`;
 };
 
+const normalizeDisplayDateValue = (value) => {
+  if (!value) return "";
+  const date = parseDateOnlyLocal(value);
+  if (!date) return String(value || "").trim();
+  return formatDateOnlyDMY(date);
+};
+
 const getDaysUntil = (value) => {
   const target = parseDateOnlyLocal(value);
   if (!target) return null;
@@ -1516,11 +1543,17 @@ const getFormTypeLabel = (value) => {
 };
 
 const buildFormTypeLabel = (formData) => {
-  const baseLabel = getFormTypeLabel(formData.formType);
-  if (formData.formType === "other" && formData.formTypeOtherDetail) {
-    return `${baseLabel}: ${formData.formTypeOtherDetail}`;
-  }
-  return baseLabel;
+  const selectedTypes = Array.isArray(formData.formTypes) && formData.formTypes.length
+    ? formData.formTypes
+    : [formData.formType || "changeEmployer"];
+  const labels = selectedTypes.map((type) => {
+    const baseLabel = getFormTypeLabel(type);
+    if (type === "other" && formData.formTypeOtherDetail) {
+      return `${baseLabel}: ${formData.formTypeOtherDetail}`;
+    }
+    return baseLabel;
+  });
+  return labels.join(", ");
 };
 
 const getCaseTypeLabel = (value) => {
@@ -1871,11 +1904,10 @@ const getRecordStatusSummary = (record) => {
     getAggregatedExpiryState(workers, "cardExpiryDate").state === "expired" ||
     getAggregatedExpiryState(workers, "visaExpiryDate").state === "expired" ||
     getAggregatedExpiryState(workers, "expiry").state === "expired";
-  const hasPaymentPending = record.data.paymentStatus === "pending";
   return {
     hasCompleted,
     hasPending: hasPendingSchedule || hasExpiryWarning,
-    hasAlert: hasExpired || hasPaymentPending,
+    hasAlert: hasExpired,
   };
 };
 
@@ -1914,18 +1946,16 @@ const collectFormData = () => {
   }
   const formData = {
     formType: getSelectedFormType(),
+    formTypes: getSelectedFormTypes(),
     formTypeOtherDetail: formTypeOtherDetail?.value?.trim() || "",
     workers,
     company: company?.value?.trim() || "",
     caseType: caseType?.value || "",
     position: position?.value?.trim() || "",
     workSite: workSite?.value?.trim() || "",
-    startDate: startDate?.value || "",
+    startDate: normalizeDisplayDateValue(startDate?.value),
     employerId: employerId?.value?.trim() || "",
     verification: verification?.value || "",
-    paymentStatus: paymentStatus?.value || "",
-    paymentDate: paymentDate?.value || "",
-    paymentNotes: paymentNotes?.value?.trim() || "",
     recordedBy: recordedBy ? recordedBy.value.trim() : "",
     renewalType: renewalType?.value || "",
     renewalStatus: renewalStatus?.value || "",
@@ -1937,20 +1967,21 @@ const collectFormData = () => {
       code: workerCode?.value?.trim() || "",
       alienId: workerAlienId?.value?.trim() || "",
       workPermitNumber: workPermitNumber?.value?.trim() || "",
-      workPermitExpiry: workPermitExpiry?.value || "",
+      workPermitExpiry: normalizeDisplayDateValue(workPermitExpiry?.value),
       passNumber: passNumber?.value?.trim() || "",
-      passIssueDate: passIssueDate?.value || "",
-      passExpiryDate: passExpiryDate?.value || "",
-      personalVisaExpiryDate: personalVisaExpiryDate?.value || "",
+      passIssueDate: normalizeDisplayDateValue(passIssueDate?.value),
+      passExpiryDate: normalizeDisplayDateValue(passExpiryDate?.value),
+      personalVisaExpiryDate: normalizeDisplayDateValue(personalVisaExpiryDate?.value),
       businessType: getBusinessTypeValue(),
       employerName: employerName?.value?.trim() || "",
       employerEmail: employerEmail?.value?.trim() || "",
+      employerEmailCode: employerEmailCode?.value?.trim() || "",
       employerAddress: employerAddress?.value?.trim() || "",
       documentSender: documentSender?.value?.trim() || "",
-      documentSentDate: documentSentDate?.value || "",
+      documentSentDate: normalizeDisplayDateValue(documentSentDate?.value),
       documentReceiver: documentReceiver?.value?.trim() || "",
-      documentReceivedDate: documentReceivedDate?.value || "",
-      documentReturnDate: documentReturnDate?.value || "",
+      documentReceivedDate: normalizeDisplayDateValue(documentReceivedDate?.value),
+      documentReturnDate: normalizeDisplayDateValue(documentReturnDate?.value),
     },
     documents: {
       workPermit: docWorkPermit?.checked || false,
@@ -1972,7 +2003,7 @@ const collectFormData = () => {
     },
     caseStatus: {
       status: getSelectedCaseStatus(),
-      appointmentDate: appointmentDate?.value || "",
+      appointmentDate: normalizeDisplayDateValue(appointmentDate?.value),
       appointmentNote: appointmentNote?.value?.trim() || "",
     },
     receivedDocs,
@@ -2042,10 +2073,15 @@ const renderRecords = () => {
     return;
   }
   const records = loadRecords();
+  const availableIds = new Set(records.map((record) => String(record.formId || "")).filter(Boolean));
+  selectedRecordExportIds = new Set([...selectedRecordExportIds].filter((id) => availableIds.has(id)));
   const query = recordSearch.value.trim().toLowerCase();
   const filter = recordFilter.value;
   const filtered = records.filter((record) => {
-    const matchesFilter = filter === "all" || record.formType === filter;
+    const selectedTypes = Array.isArray(record.data?.formTypes) && record.data.formTypes.length
+      ? record.data.formTypes
+      : [record.formType];
+    const matchesFilter = filter === "all" || selectedTypes.includes(filter);
     if (!query) return matchesFilter;
     const workers = normalizeWorkers(record.data);
     const personalInfo = record.data.personalInfo || {};
@@ -2057,6 +2093,7 @@ const renderRecords = () => {
       record.data.employerId,
       personalInfo.fullName,
       personalInfo.employerName,
+      personalInfo.employerEmail,
       personalInfo.documentSender,
       personalInfo.documentReceiver,
       personalInfo.documentReturnDate,
@@ -2088,6 +2125,27 @@ const renderRecords = () => {
     const workers = normalizeWorkers(record.data);
     const workerName = resolveWorkerNameForDisplay(record);
     const employerLabel = personalInfo.employerName || record.data.company || record.data.employerId || "-";
+    const selectCell = document.createElement("td");
+    const selectInput = document.createElement("input");
+    selectInput.type = "checkbox";
+    selectInput.setAttribute("data-record-export-select", "1");
+    selectInput.value = String(record.formId || "");
+    selectInput.setAttribute("aria-label", "เลือกรายการ");
+    selectInput.checked = selectedRecordExportIds.has(String(record.formId || ""));
+    selectInput.addEventListener("change", () => {
+      const id = String(record.formId || "");
+      if (!id) return;
+      if (selectInput.checked) {
+        selectedRecordExportIds.add(id);
+      } else {
+        selectedRecordExportIds.delete(id);
+      }
+      if (recordsSelectAll) {
+        const visibleInputs = Array.from(recordsList.querySelectorAll('input[data-record-export-select]'));
+        recordsSelectAll.checked = Boolean(visibleInputs.length) && visibleInputs.every((input) => input.checked);
+      }
+    });
+    selectCell.appendChild(selectInput);
     const formIdCell = document.createElement("td");
     formIdCell.textContent = record.formId;
     const formTypeCell = document.createElement("td");
@@ -2107,8 +2165,8 @@ const renderRecords = () => {
     actionsWrapper.className = "table-actions";
     const editButton = document.createElement("button");
     editButton.type = "button";
-    editButton.className = "secondary";
-    editButton.textContent = translations[currentLanguage].editButton;
+    editButton.className = "secondary action-btn action-btn--edit";
+    editButton.innerHTML = `<span aria-hidden="true">✏️</span><span>${translations[currentLanguage].editButton}</span>`;
     editButton.addEventListener("click", () => {
       const followupPageMap = {
         report90: "report90.html",
@@ -2131,15 +2189,17 @@ const renderRecords = () => {
     });
     const verifyButton = document.createElement("button");
     verifyButton.type = "button";
-    verifyButton.className = "secondary";
-    verifyButton.textContent = translations[currentLanguage].verifyButton;
+    verifyButton.className = "secondary action-btn action-btn--verify";
+    verifyButton.innerHTML = `<span aria-hidden="true">🔎</span><span>${translations[currentLanguage].verifyButton}</span>`;
     verifyButton.addEventListener("click", () => openRecordModal(record));
     const deleteButton = document.createElement("button");
     deleteButton.type = "button";
-    deleteButton.className = "danger";
-    deleteButton.textContent = translations[currentLanguage].deleteButton;
+    deleteButton.className = "danger action-btn action-btn--delete";
+    deleteButton.innerHTML = `<span aria-hidden="true">🗑️</span><span>${translations[currentLanguage].deleteButton}</span>`;
     deleteButton.addEventListener("click", async () => {
-      const shouldDelete = window.confirm(translations[currentLanguage].confirmDeleteRecord);
+      const shouldDelete = await showConfirmDialog({
+        message: translations[currentLanguage].confirmDeleteRecord,
+      });
       if (!shouldDelete) return;
       const deleted = await deleteRecordFromServer(record.formId);
       if (!deleted) {
@@ -2156,6 +2216,7 @@ const renderRecords = () => {
     actionsWrapper.appendChild(verifyButton);
     actionsWrapper.appendChild(deleteButton);
     actionsCell.appendChild(actionsWrapper);
+    row.appendChild(selectCell);
     row.appendChild(formIdCell);
     row.appendChild(formTypeCell);
     row.appendChild(employerCell);
@@ -2166,6 +2227,23 @@ const renderRecords = () => {
     row.appendChild(actionsCell);
     recordsList.appendChild(row);
   });
+
+  if (recordsSelectAll) {
+    const visibleInputs = Array.from(recordsList.querySelectorAll('input[data-record-export-select]'));
+    recordsSelectAll.checked = Boolean(visibleInputs.length) && visibleInputs.every((input) => input.checked);
+    recordsSelectAll.onchange = () => {
+      recordsList.querySelectorAll('input[data-record-export-select]').forEach((input) => {
+        input.checked = recordsSelectAll.checked;
+        const id = String(input.value || "").trim();
+        if (!id) return;
+        if (recordsSelectAll.checked) {
+          selectedRecordExportIds.add(id);
+        } else {
+          selectedRecordExportIds.delete(id);
+        }
+      });
+    };
+  }
 };
 
 const toCsvValue = (value) => {
@@ -2239,8 +2317,46 @@ const importBackupData = async (file) => {
   setStatus(recordsStatus || formSaveStatus, `นำเข้าข้อมูลสำเร็จ ${merged.length} รายการ`, "ok");
 };
 
+const showConfirmDialog = ({
+  title = "ยืนยันการลบข้อมูล",
+  message = translations[currentLanguage]?.confirmDeleteRecord || "ต้องการลบรายการนี้หรือไม่?",
+  confirmText = "ลบข้อมูล",
+  cancelText = "ยกเลิก",
+} = {}) =>
+  new Promise((resolve) => {
+    const overlay = document.createElement("div");
+    overlay.className = "confirm-dialog";
+    overlay.innerHTML = `
+      <div class="confirm-dialog__card" role="dialog" aria-modal="true" aria-label="${title}">
+        <p class="confirm-dialog__title">${title}</p>
+        <p class="confirm-dialog__message">${message}</p>
+        <div class="confirm-dialog__actions">
+          <button type="button" class="secondary" data-confirm-action="cancel">${cancelText}</button>
+          <button type="button" class="danger" data-confirm-action="ok">${confirmText}</button>
+        </div>
+      </div>
+    `;
+
+    const close = (result) => {
+      overlay.remove();
+      resolve(result);
+    };
+
+    overlay.addEventListener("click", (event) => {
+      if (event.target === overlay) close(false);
+    });
+    overlay.querySelector('[data-confirm-action="cancel"]')?.addEventListener("click", () => close(false));
+    overlay.querySelector('[data-confirm-action="ok"]')?.addEventListener("click", () => close(true));
+    document.body.appendChild(overlay);
+  });
+
 const exportRecordsToCsv = () => {
-  const rows = latestRenderedRecords.length ? latestRenderedRecords : loadRecords();
+  const rendered = latestRenderedRecords.length ? latestRenderedRecords : loadRecords();
+  if (!selectedRecordExportIds.size) {
+    setStatus(recordsStatus, "กรุณาเลือกรายการที่ต้องการส่งออก", "warn");
+    return;
+  }
+  const rows = rendered.filter((record) => selectedRecordExportIds.has(String(record.formId || "")));
   if (!rows.length) {
     setStatus(recordsStatus, translations[currentLanguage].recordsStatus, "warn");
     return;
@@ -2269,9 +2385,9 @@ const exportRecordsToCsv = () => {
     "ผ.60",
     "ผ.30",
     "หมายเหตุเอกสาร",
-    "เมลนายจ้าง",
+    translations[currentLanguage].recordsTableEmployerEmail,
+    "รหัสเมลนายจ้าง",
     "ที่อยู่นายจ้าง",
-    "Payment Status",
   ];
   const lines = [headers.map(toCsvValue).join(",")];
   rows.forEach((record) => {
@@ -2306,8 +2422,8 @@ const exportRecordsToCsv = () => {
       followup.p30 ? "yes" : "no",
       data.documents?.note || "-",
       personalInfo.employerEmail || "-",
+      personalInfo.employerEmailCode || "-",
       personalInfo.employerAddress || "-",
-      data.paymentStatus || "-",
     ];
     lines.push(cols.map(toCsvValue).join(","));
   });
@@ -2322,6 +2438,83 @@ const exportRecordsToCsv = () => {
   anchor.click();
   anchor.remove();
   URL.revokeObjectURL(url);
+};
+
+
+const createAttachmentLink = (item) => {
+  if (!item?.dataUrl) return null;
+  const anchor = document.createElement("a");
+  anchor.href = "#";
+  anchor.className = "attachment-open-link";
+  anchor.textContent = currentLanguage === "th" ? "ดูไฟล์" : "View file";
+  anchor.addEventListener("click", (event) => {
+    event.preventDefault();
+    openAttachmentViewer(item);
+  });
+  return anchor;
+};
+
+const getAttachmentViewerModal = () => {
+  let modal = document.getElementById("attachmentViewerModal");
+  if (modal) return modal;
+  modal = document.createElement("div");
+  modal.id = "attachmentViewerModal";
+  modal.className = "modal attachment-viewer-modal";
+  modal.setAttribute("aria-hidden", "true");
+  modal.innerHTML = `
+    <div class="modal-content attachment-viewer-content">
+      <div class="modal-header">
+        <h4 id="attachmentViewerTitle">ไฟล์แนบ</h4>
+        <button type="button" class="modal-close" id="attachmentViewerClose" aria-label="ปิด">✕</button>
+      </div>
+      <div id="attachmentViewerBody" class="modal-body attachment-viewer-body"></div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) {
+      closeAttachmentViewer();
+    }
+  });
+  modal.querySelector("#attachmentViewerClose")?.addEventListener("click", closeAttachmentViewer);
+  return modal;
+};
+
+const closeAttachmentViewer = () => {
+  const modal = document.getElementById("attachmentViewerModal");
+  if (!modal) return;
+  modal.classList.remove("is-open");
+  modal.setAttribute("aria-hidden", "true");
+  const body = modal.querySelector("#attachmentViewerBody");
+  if (body) body.innerHTML = "";
+};
+
+const openAttachmentViewer = (attachment) => {
+  if (!attachment?.dataUrl) return;
+  const modal = getAttachmentViewerModal();
+  const title = modal.querySelector("#attachmentViewerTitle");
+  const body = modal.querySelector("#attachmentViewerBody");
+  if (!body || !title) return;
+  title.textContent = attachment.value || attachment.name || (currentLanguage === "th" ? "ไฟล์แนบ" : "Attachment");
+  body.innerHTML = "";
+
+  const isImage = attachment.dataUrl.startsWith("data:image");
+  if (isImage) {
+    const image = document.createElement("img");
+    image.src = attachment.dataUrl;
+    image.alt = title.textContent;
+    image.className = "attachment-viewer-image";
+    body.appendChild(image);
+  } else {
+    const frame = document.createElement("iframe");
+    frame.src = attachment.dataUrl;
+    frame.className = "attachment-viewer-frame";
+    frame.title = title.textContent;
+    body.appendChild(frame);
+  }
+
+  modal.classList.add("is-open");
+  modal.setAttribute("aria-hidden", "false");
 };
 
 const openRecordModal = (record) => {
@@ -2372,11 +2565,6 @@ const openRecordModal = (record) => {
       record.data.personalInfo?.employerName || record.data.company || record.data.employerId || "-"
     );
     addRow(translations[currentLanguage].statusTitle, getCaseStatusDisplay(record.data.caseStatus || {}));
-    addRow(
-      translations[currentLanguage].paymentStatusLabel,
-      record.data.paymentStatus === "paid" ? translations[currentLanguage].paymentPaid : translations[currentLanguage].paymentPending
-    );
-    addRow(translations[currentLanguage].paymentDateLabel, record.data.paymentDate || "-");
     addRow(translations[currentLanguage].recordedByLabel, record.data.recordedBy || "-");
     addRow(translations[currentLanguage].renewalTypeLabel, getRenewalTypeLabel(record.data.renewalType));
     addRow(translations[currentLanguage].renewalStatusLabel, getRenewalStatusLabel(record.data.renewalStatus));
@@ -2423,6 +2611,9 @@ const openRecordModal = (record) => {
     }
     if (personalInfo.employerEmail) {
       addRow("เมลนายจ้าง", personalInfo.employerEmail);
+    }
+    if (personalInfo.employerEmailCode) {
+      addRow("รหัสเมลนายจ้าง", personalInfo.employerEmailCode);
     }
     if (personalInfo.employerAddress) {
       addRow("ที่อยู่นายจ้าง", personalInfo.employerAddress);
@@ -2577,6 +2768,11 @@ const openRecordModal = (record) => {
           const value = document.createElement("span");
           value.textContent = item.value;
           listItem.appendChild(value);
+          const openLink = createAttachmentLink(item);
+          if (openLink) {
+            listItem.appendChild(document.createTextNode(" "));
+            listItem.appendChild(openLink);
+          }
         }
         attachmentList.appendChild(listItem);
       });
@@ -2671,9 +2867,6 @@ const buildRecordSearchText = (record) => {
     record.data.formTypeOtherDetail,
     record.data.renewalType,
     record.data.renewalStatus,
-    record.data.paymentStatus,
-    record.data.paymentDate,
-    record.data.paymentNotes,
     personalInfo.fullName,
     personalInfo.gender,
     personalInfo.nationality,
@@ -2689,6 +2882,7 @@ const buildRecordSearchText = (record) => {
     personalInfo.businessType,
     personalInfo.employerName,
     personalInfo.employerEmail,
+    personalInfo.employerEmailCode,
     personalInfo.employerAddress,
     personalInfo.documentSender,
     personalInfo.documentSentDate,
@@ -2885,8 +3079,11 @@ const saveRecord = async (status = "draft") => {
 const populateForm = (record) => {
   if (!record) return;
 if (formTypeInputs?.length) {
+    const selectedTypes = Array.isArray(record.data?.formTypes) && record.data.formTypes.length
+      ? record.data.formTypes
+      : [record.formType];
     formTypeInputs.forEach((input) => {
-      input.checked = input.value === record.formType;
+      input.checked = selectedTypes.includes(input.value);
     });
   }
   if (formTypeOtherDetail) formTypeOtherDetail.value = record.data.formTypeOtherDetail || "";
@@ -2898,11 +3095,11 @@ if (formTypeInputs?.length) {
   if (workerCode) workerCode.value = record.data.personalInfo?.code || "";
   if (workerAlienId) workerAlienId.value = record.data.personalInfo?.alienId || "";
   if (workPermitNumber) workPermitNumber.value = record.data.personalInfo?.workPermitNumber || "";
-  if (workPermitExpiry) workPermitExpiry.value = record.data.personalInfo?.workPermitExpiry || "";
+  if (workPermitExpiry) workPermitExpiry.value = normalizeDisplayDateValue(record.data.personalInfo?.workPermitExpiry);
   if (passNumber) passNumber.value = record.data.personalInfo?.passNumber || "";
-  if (passIssueDate) passIssueDate.value = record.data.personalInfo?.passIssueDate || "";
-  if (passExpiryDate) passExpiryDate.value = record.data.personalInfo?.passExpiryDate || "";
-  if (personalVisaExpiryDate) personalVisaExpiryDate.value = record.data.personalInfo?.personalVisaExpiryDate || "";
+  if (passIssueDate) passIssueDate.value = normalizeDisplayDateValue(record.data.personalInfo?.passIssueDate);
+  if (passExpiryDate) passExpiryDate.value = normalizeDisplayDateValue(record.data.personalInfo?.passExpiryDate);
+  if (personalVisaExpiryDate) personalVisaExpiryDate.value = normalizeDisplayDateValue(record.data.personalInfo?.personalVisaExpiryDate);
   if (businessType) {
     const savedBusinessType = record.data.personalInfo?.businessType || "";
     const hasOption = Array.from(businessType.options || []).some((option) => option.value === savedBusinessType);
@@ -2913,12 +3110,13 @@ if (formTypeInputs?.length) {
   }
   if (employerName) employerName.value = record.data.personalInfo?.employerName || "";
   if (employerEmail) employerEmail.value = record.data.personalInfo?.employerEmail || "";
+  if (employerEmailCode) employerEmailCode.value = record.data.personalInfo?.employerEmailCode || "";
   if (employerAddress) employerAddress.value = record.data.personalInfo?.employerAddress || "";
   if (documentSender) documentSender.value = record.data.personalInfo?.documentSender || "";
-  if (documentSentDate) documentSentDate.value = record.data.personalInfo?.documentSentDate || "";
+  if (documentSentDate) documentSentDate.value = normalizeDisplayDateValue(record.data.personalInfo?.documentSentDate);
   if (documentReceiver) documentReceiver.value = record.data.personalInfo?.documentReceiver || "";
-  if (documentReceivedDate) documentReceivedDate.value = record.data.personalInfo?.documentReceivedDate || "";
-  if (documentReturnDate) documentReturnDate.value = record.data.personalInfo?.documentReturnDate || "";
+  if (documentReceivedDate) documentReceivedDate.value = normalizeDisplayDateValue(record.data.personalInfo?.documentReceivedDate);
+  if (documentReturnDate) documentReturnDate.value = normalizeDisplayDateValue(record.data.personalInfo?.documentReturnDate);
   if (docWorkPermit) docWorkPermit.checked = record.data.documents?.workPermit || false;
   if (docReceipt) docReceipt.checked = record.data.documents?.receipt || false;
   if (docRequestForm) docRequestForm.checked = record.data.documents?.requestForm || false;
@@ -2940,7 +3138,7 @@ if (formTypeInputs?.length) {
       input.checked = input.value === record.data.caseStatus?.status;
     });
   }
-  if (appointmentDate) appointmentDate.value = record.data.caseStatus?.appointmentDate || "";
+  if (appointmentDate) appointmentDate.value = normalizeDisplayDateValue(record.data.caseStatus?.appointmentDate);
   if (appointmentNote) appointmentNote.value = record.data.caseStatus?.appointmentNote || "";
   updateFormTypeOtherVisibility();
   updateAppointmentVisibility();
@@ -2960,7 +3158,7 @@ if (formTypeInputs?.length) {
   if (caseType) caseType.value = record.data.caseType || "changeEmployer";
   if (position) position.value = record.data.position || "";
   if (workSite) workSite.value = record.data.workSite || "";
-  if (startDate) startDate.value = record.data.startDate || "";
+  if (startDate) startDate.value = normalizeDisplayDateValue(record.data.startDate);
   if (employerId) employerId.value = record.data.employerId || "";
   if (renewalType) renewalType.value = record.data.renewalType || "passport";
   if (renewalStatus) renewalStatus.value = record.data.renewalStatus || "none";
@@ -2986,9 +3184,6 @@ if (formTypeInputs?.length) {
   if (receivedDocsNote) receivedDocsNote.value = record.data.receivedDocsNote || "";
   if (renewalDocsNote) renewalDocsNote.value = record.data.renewalDocsNote || "";
   if (verification) verification.value = record.data.verification || "";
-  if (paymentStatus) paymentStatus.value = record.data.paymentStatus || "pending";
-  if (paymentDate) paymentDate.value = record.data.paymentDate || "";
-  if (paymentNotes) paymentNotes.value = record.data.paymentNotes || "";
   const legacyAttachments = LEGACY_ATTACHMENT_KEYS.flatMap((key) => {
     const name = record.data?.[key] || "";
     const dataUrl = record.data?.[`${key}Data`] || "";
@@ -3088,6 +3283,7 @@ if (addWorkerButton) {
   });
 }
 if (attachmentsInput) {
+  updateAttachmentsFileHint();
   attachmentsInput.addEventListener("change", () => handleGenericAttachmentInputChange(attachmentsInput));
 }
 if (attachmentsCameraInput) {

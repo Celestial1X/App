@@ -255,33 +255,25 @@ const exportTableToCsv = ({ listElement, filePrefix, statusElement }) => {
   }
 
   const reportDate = new Date().toLocaleString("th-TH");
-  const tableHead = `<tr>${exportableIndexes.map(({ header }) => `<th>${header}</th>`).join("")}</tr>`;
-  const tableBody = dataRows
-    .map((cols) => `<tr>${cols.map((col) => `<td>${col || "-"}</td>`).join("")}</tr>`)
-    .join("");
-  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
-    body{font-family:Tahoma,Arial,sans-serif;padding:18px;color:#1f2a44}
-    h2{margin:0 0 6px;color:#0f2d52} p{margin:0 0 14px;color:#475569}
-    table{border-collapse:collapse;width:100%;font-size:13px}
-    th,td{border:1px solid #cbd5e1;padding:8px 10px;text-align:left;vertical-align:top}
-    th{background:#dfe6f2;color:#0f2d52;font-weight:700}
-    tr:nth-child(even) td{background:#f8fafc}
-  </style></head><body>
-    <h2>${title}</h2><p>วันที่ออกรายงาน: ${reportDate}</p>
-    <table><thead>${tableHead}</thead><tbody>${tableBody}</tbody></table>
-  </body></html>`;
-  const blob = new Blob([`\uFEFF${html}`], { type: "application/vnd.ms-excel;charset=utf-8;" });
+  const csvLines = [
+    toCsvValue(title),
+    toCsvValue(`วันที่ออกรายงาน: ${reportDate}`),
+    [],
+    exportableIndexes.map(({ header }) => toCsvValue(header)).join(","),
+    ...dataRows.map((cols) => cols.map((col) => toCsvValue(col || "-")).join(",")),
+  ];
+  const blob = new Blob([`\uFEFF${csvLines.join("\n")}`], { type: "text/csv;charset=utf-8;" });
   const stamp = new Date().toISOString().replace(/[:.]/g, "-");
   const anchor = document.createElement("a");
   anchor.href = URL.createObjectURL(blob);
-  anchor.download = `${filePrefix}-${stamp}.xls`;
+  anchor.download = `${filePrefix}-${stamp}.csv`;
   document.body.appendChild(anchor);
   anchor.click();
   anchor.remove();
   setTimeout(() => URL.revokeObjectURL(anchor.href), 500);
 
   if (statusElement) {
-    statusElement.textContent = "ส่งออกไฟล์ Excel เรียบร้อย";
+    statusElement.textContent = "ส่งออกไฟล์ CSV เรียบร้อย";
     statusElement.classList.remove("error");
   }
 };

@@ -116,6 +116,7 @@ const todayTaskQuickAdd = document.getElementById("todayTaskQuickAdd");
 const todayTaskQuickTitle = document.getElementById("todayTaskQuickTitle");
 const todayTaskQuickDate = document.getElementById("todayTaskQuickDate");
 const todayTaskQuickNote = document.getElementById("todayTaskQuickNote");
+const todayTaskQuickAddButton = document.getElementById("todayTaskQuickAddButton");
 const todayTaskQuickStatus = document.getElementById("todayTaskQuickStatus");
 const verifyRecordButton = document.getElementById("verifyRecord");
 const recordModal = document.getElementById("recordModal");
@@ -1559,7 +1560,7 @@ const buildHomeTaskItems = (records) => {
       const sourceData = source === "followup" ? followup : source === "caseStatus" ? caseStatus : info;
       const dateValue = sourceData?.[key];
       const days = getDaysUntil(dateValue);
-      if (days === null || days < 0 || days > 14) return;
+      if (days === null || days < 0 || days > 90) return;
       tasks.push({
         days,
         dateValue,
@@ -1579,7 +1580,7 @@ const buildHomeTaskItems = (records) => {
 
   loadCustomTodayTasks().forEach((task) => {
     const days = getDaysUntil(task.dateValue);
-    if (days === null || days < 0 || days > 14) return;
+    if (days === null || days < 0 || days > 90) return;
     const key = String(days);
     if (!grouped.has(key)) grouped.set(key, []);
     grouped.get(key).push({
@@ -1595,7 +1596,7 @@ const buildHomeTaskItems = (records) => {
   return Array.from(grouped.entries())
     .map(([dayKey, items]) => ({ days: Number.parseInt(dayKey, 10), items: items.sort((a, b) => String(a.formId).localeCompare(String(b.formId), "th")) }))
     .sort((a, b) => a.days - b.days)
-    .slice(0, 8);
+    .slice(0, 12);
 };
 
 const loadCustomTodayTasks = () => {
@@ -1636,8 +1637,7 @@ const openTaskBucketModal = (bucket) => {
 
 const initTodayTaskQuickAdd = () => {
   if (!todayTaskQuickAdd || !todayTaskQuickTitle || !todayTaskQuickDate) return;
-  todayTaskQuickAdd.addEventListener("submit", (event) => {
-    event.preventDefault();
+  const submitTask = () => {
     const title = String(todayTaskQuickTitle.value || "").trim();
     const dateValue = normalizeDisplayDateValue(todayTaskQuickDate.value);
     const note = String(todayTaskQuickNote?.value || "").trim();
@@ -1662,6 +1662,15 @@ const initTodayTaskQuickAdd = () => {
       todayTaskQuickStatus.textContent = "เพิ่มงานใหม่เรียบร้อย";
       todayTaskQuickStatus.classList.remove("error");
     }
+  };
+
+  todayTaskQuickAdd.addEventListener("submit", (event) => {
+    event.preventDefault();
+    submitTask();
+  });
+  todayTaskQuickAddButton?.addEventListener("click", (event) => {
+    event.preventDefault();
+    submitTask();
   });
 };
 
@@ -1669,13 +1678,13 @@ const renderTodayTaskSpotlight = (records) => {
   if (!todayTaskSpotlight || !todayTaskBuckets || !todayTaskSubtitle) return;
   homeTaskBuckets = buildHomeTaskItems(records);
   if (!homeTaskBuckets.length) {
-    todayTaskSubtitle.textContent = "วันนี้ยังไม่มีงานที่ต้องติดตามเร่งด่วนใน 14 วันข้างหน้า";
+    todayTaskSubtitle.textContent = "ยังไม่มีงานที่ต้องติดตามใน 90 วันข้างหน้า";
     todayTaskBuckets.innerHTML = '<p class="status-text">ไม่มีงานค้างกำหนด</p>';
     return;
   }
 
   const totalTasks = homeTaskBuckets.reduce((sum, bucket) => sum + bucket.items.length, 0);
-  todayTaskSubtitle.textContent = `พบ ${totalTasks} งานในช่วงวันนี้ถึง 14 วันข้างหน้า • กดที่วันเพื่อดูรายละเอียด`;
+  todayTaskSubtitle.textContent = `พบ ${totalTasks} งานในช่วงวันนี้ถึง 90 วันข้างหน้า • กดที่วันเพื่อดูรายละเอียด`;
   todayTaskBuckets.innerHTML = homeTaskBuckets.map((bucket, index) => {
     const dayLabel = bucket.days === 0 ? "วันนี้" : `อีก ${bucket.days} วัน`;
     const firstLabel = bucket.items[0]?.label || "";

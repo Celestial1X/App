@@ -112,6 +112,11 @@ const indexExpiryAlert = document.getElementById("indexExpiryAlert");
 const todayTaskSpotlight = document.getElementById("todayTaskSpotlight");
 const todayTaskSubtitle = document.getElementById("todayTaskSubtitle");
 const todayTaskBuckets = document.getElementById("todayTaskBuckets");
+const todayTaskQuickAdd = document.getElementById("todayTaskQuickAdd");
+const todayTaskQuickTitle = document.getElementById("todayTaskQuickTitle");
+const todayTaskQuickDate = document.getElementById("todayTaskQuickDate");
+const todayTaskQuickNote = document.getElementById("todayTaskQuickNote");
+const todayTaskQuickStatus = document.getElementById("todayTaskQuickStatus");
 const verifyRecordButton = document.getElementById("verifyRecord");
 const recordModal = document.getElementById("recordModal");
 const recordModalTitle = document.getElementById("recordModalTitle");
@@ -130,6 +135,7 @@ const EDIT_KEY = "editRecordId";
 const RECORD_SEARCH_KEY = "recordSearchQuery";
 const FORM_DRAFT_KEY = "workerFormDraft";
 const API_BASE_KEY = "recordsApiBaseUrl";
+const TODAY_TASK_CUSTOM_KEY = "todayTaskCustomItems";
 const DIRTY_RECORD_IDS_KEY = "dirtyRecordIds";
 const DIRTY_RECORD_TTL_MS = 10 * 60 * 1000;
 
@@ -1571,10 +1577,42 @@ const buildHomeTaskItems = (records) => {
     grouped.get(key).push(task);
   });
 
+  loadCustomTodayTasks().forEach((task) => {
+    const days = getDaysUntil(task.dateValue);
+    if (days === null || days < 0 || days > 14) return;
+    const key = String(days);
+    if (!grouped.has(key)) grouped.set(key, []);
+    grouped.get(key).push({
+      days,
+      dateValue: task.dateValue,
+      formId: "เพิ่มเอง",
+      assignee: task.title,
+      label: "งานเพิ่มเอง",
+      note: task.note || "",
+    });
+  });
+
   return Array.from(grouped.entries())
     .map(([dayKey, items]) => ({ days: Number.parseInt(dayKey, 10), items: items.sort((a, b) => String(a.formId).localeCompare(String(b.formId), "th")) }))
     .sort((a, b) => a.days - b.days)
     .slice(0, 8);
+};
+
+const loadCustomTodayTasks = () => {
+  const parsed = safeParseJSON(localStorage.getItem(TODAY_TASK_CUSTOM_KEY), []);
+  if (!Array.isArray(parsed)) return [];
+  return parsed
+    .map((item) => ({
+      id: String(item?.id || ""),
+      title: String(item?.title || "").trim(),
+      dateValue: normalizeDisplayDateValue(item?.dateValue || ""),
+      note: String(item?.note || "").trim(),
+    }))
+    .filter((item) => item.title && item.dateValue);
+};
+
+const saveCustomTodayTasks = (items) => {
+  localStorage.setItem(TODAY_TASK_CUSTOM_KEY, JSON.stringify(items || []));
 };
 
 const openTaskBucketModal = (bucket) => {
@@ -1587,12 +1625,44 @@ const openTaskBucketModal = (bucket) => {
   bucket.items.forEach((item) => {
     const li = document.createElement("li");
     li.className = "timeline-item";
-    li.innerHTML = `<span class="timeline-tag">${item.label}</span><h3>${item.formId} • ${item.assignee}</h3><p>${formatDateOnlyDMY(item.dateValue)} • ${dayText}</p>`;
+    const note = item.note ? `<p>${item.note}</p>` : "";
+    li.innerHTML = `<span class="timeline-tag">${item.label}</span><h3>${item.formId} • ${item.assignee}</h3><p>${formatDateOnlyDMY(item.dateValue)} • ${dayText}</p>${note}`;
     list.appendChild(li);
   });
   recordModalBody.appendChild(list);
   recordModal.classList.add("is-open");
   recordModal.setAttribute("aria-hidden", "false");
+};
+
+const initTodayTaskQuickAdd = () => {
+  if (!todayTaskQuickAdd || !todayTaskQuickTitle || !todayTaskQuickDate) return;
+  todayTaskQuickAdd.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const title = String(todayTaskQuickTitle.value || "").trim();
+    const dateValue = normalizeDisplayDateValue(todayTaskQuickDate.value);
+    const note = String(todayTaskQuickNote?.value || "").trim();
+    if (!title || !dateValue) {
+      if (todayTaskQuickStatus) {
+        todayTaskQuickStatus.textContent = "กรุณากรอกชื่องานและวันที่ให้ครบ";
+        todayTaskQuickStatus.classList.add("error");
+      }
+      return;
+    }
+    const items = loadCustomTodayTasks();
+    items.unshift({
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      title,
+      dateValue,
+      note,
+    });
+    saveCustomTodayTasks(items.slice(0, 120));
+    todayTaskQuickAdd.reset();
+    renderLatestRecordCard();
+    if (todayTaskQuickStatus) {
+      todayTaskQuickStatus.textContent = "เพิ่มงานใหม่เรียบร้อย";
+      todayTaskQuickStatus.classList.remove("error");
+    }
+  });
 };
 
 const renderTodayTaskSpotlight = (records) => {
@@ -3396,6 +3466,7 @@ ensureWorkerCards();
 renderGenericAttachments();
 refreshNameSuggestions();
 loadFormDraft();
+initTodayTaskQuickAdd();
 initTheme();
 renderRecords();
 renderLatestRecordCard();

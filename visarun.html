@@ -19,13 +19,13 @@
 
     <main class="container">
       <nav class="page-tabs">
+        <a class="tab-btn" href="receivedocs.html">รับเอกสาร</a>
         <a class="tab-btn" href="index.html">ค้นหาข้อมูล</a>
         <a class="tab-btn" href="records.html">ข้อมูลบันทึก</a>
         <a class="tab-btn" href="form.html">กรอกแบบฟอร์ม</a>
         <a class="tab-btn" href="report90.html">รายงานตัว 90 วัน</a>
         <a class="tab-btn is-active" href="visarun.html">Visa run</a>
         <a class="tab-btn" href="nextform.html">MOU ลาว</a>
-        <a class="tab-btn" href="receivedocs.html">รับเอกสาร</a>
         <a class="tab-btn" href="returndocs.html">ส่งคืนเอกสาร</a>
       </nav>
 
@@ -62,11 +62,11 @@
       </section>
 
       <section class="panel">
-        <h3>ข้อมูลบันทึก Visa run</h3>
+        <div class="records-toolbar"><h3>ข้อมูลบันทึก Visa run</h3><div class="table-actions"><input id="visaRunSearch" type="search" placeholder="ค้นหาชื่อต่างด้าว" /><button type="button" class="secondary" id="exportVisaRun">ส่งออก Excel</button></div></div>
         <div id="visaAlert" class="warning-banner is-hidden"></div>
         <div class="records-table-wrapper">
           <table class="records-table">
-            <thead><tr><th>ชื่อต่างด้าว</th><th>นายจ้าง</th><th>ผู้บันทึก</th><th>เล่มที่บันทึกล่าสุด</th><th>วันหมด Visa</th><th>สถานะเตือน</th><th>การจัดการ</th></tr></thead>
+            <thead><tr><th><input type="checkbox" data-export-check-all aria-label="เลือกทั้งหมด" /></th><th>ชื่อต่างด้าว</th><th>นายจ้าง</th><th>ผู้บันทึก</th><th>เล่มที่บันทึกล่าสุด</th><th>วันหมด Visa</th><th>สถานะเตือน</th><th>การจัดการ</th></tr></thead>
             <tbody id="visaList"></tbody>
           </table>
         </div>
@@ -89,5 +89,6 @@
     </div>
 
     <script src="followup.js?v=20260211"></script>
+      <script src="datepicker.js?v=20260211"></script>
   </body>
 </html>

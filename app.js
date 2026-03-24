@@ -1758,38 +1758,45 @@ const renderTodayTaskSpotlight = (records) => {
   todayTaskSubtitle.textContent = `พบ ${totalTasks} งาน • เสร็จแล้ว ${completed} งาน`;
 
   const todayAndNextDayBuckets = homeTaskBuckets.filter((bucket) => bucket.days >= 0 && bucket.days <= 1);
-  if (!todayAndNextDayBuckets.length) {
-    todayTaskBuckets.innerHTML = '<p class="status-text">ยังไม่มีงานของวันนี้หรือวันถัดไป</p>';
-  } else {
-    todayTaskBuckets.innerHTML = todayAndNextDayBuckets.map((bucket, index) => {
-      const dayLabel = getTodayTaskDayLabel(bucket.days);
-      const firstOpenTask = bucket.items.find((item) => !doneTaskIds.has(item.taskId));
-      const completedCount = bucket.items.filter((item) => doneTaskIds.has(item.taskId)).length;
-      const firstLabel = firstOpenTask?.label || bucket.items[0]?.label || "";
-      return `<button type="button" class="today-task-bucket" data-task-bucket="${index}"><strong>${dayLabel}</strong><span>${bucket.items.length} งาน</span><small>${firstLabel}</small><small>เสร็จแล้ว ${completedCount}</small></button>`;
-    }).join("");
+  const fallbackNearBuckets = homeTaskBuckets.filter((bucket) => bucket.days >= -7 && bucket.days <= 7);
+  const displayPrimaryBuckets = todayAndNextDayBuckets.length
+    ? todayAndNextDayBuckets
+    : (fallbackNearBuckets.length ? fallbackNearBuckets.slice(0, 8) : homeTaskBuckets.slice(0, 8));
 
-    todayTaskBuckets.querySelectorAll("[data-task-bucket]").forEach((button) => {
-      button.addEventListener("click", () => {
-        const index = Number.parseInt(button.getAttribute("data-task-bucket") || "-1", 10);
-        const bucket = todayAndNextDayBuckets[index];
-        if (!bucket) return;
-        openTaskBucketModal(bucket);
-      });
+  todayTaskBuckets.innerHTML = displayPrimaryBuckets.map((bucket, index) => {
+    const dayLabel = getTodayTaskDayLabel(bucket.days);
+    const firstOpenTask = bucket.items.find((item) => !doneTaskIds.has(item.taskId));
+    const completedCount = bucket.items.filter((item) => doneTaskIds.has(item.taskId)).length;
+    const firstLabel = firstOpenTask?.label || bucket.items[0]?.label || "";
+    return `<button type="button" class="today-task-bucket" data-task-bucket="${index}"><strong>${dayLabel}</strong><span>${bucket.items.length} งาน</span><small>${firstLabel}</small><small>เสร็จแล้ว ${completedCount}</small></button>`;
+  }).join("");
+
+  todayTaskBuckets.querySelectorAll("[data-task-bucket]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const index = Number.parseInt(button.getAttribute("data-task-bucket") || "-1", 10);
+      const bucket = displayPrimaryBuckets[index];
+      if (!bucket) return;
+      openTaskBucketModal(bucket);
     });
-  }
+  });
 
   const upcomingThirtyDays = homeTaskBuckets
     .filter((bucket) => bucket.days >= 0 && bucket.days <= 30)
     .flatMap((bucket) => bucket.items.map((item) => ({ ...item, dayLabel: getTodayTaskDayLabel(bucket.days) })))
     .sort((a, b) => a.days - b.days)
     .slice(0, 30);
+  const fallbackUpcoming = homeTaskBuckets
+    .filter((bucket) => bucket.days > 30)
+    .flatMap((bucket) => bucket.items.map((item) => ({ ...item, dayLabel: getTodayTaskDayLabel(bucket.days) })))
+    .sort((a, b) => a.days - b.days)
+    .slice(0, 10);
 
   if (todayTaskUpcoming) {
-    if (!upcomingThirtyDays.length) {
-      todayTaskUpcoming.innerHTML = '<p class="status-text">ยังไม่มีงานในอีก 30 วัน</p>';
+    const upcomingForDisplay = upcomingThirtyDays.length ? upcomingThirtyDays : fallbackUpcoming;
+    if (!upcomingForDisplay.length) {
+      todayTaskUpcoming.innerHTML = '<p class="status-text">ยังไม่มีงานที่กำลังจะถึงกำหนด</p>';
     } else {
-      todayTaskUpcoming.innerHTML = upcomingThirtyDays
+      todayTaskUpcoming.innerHTML = upcomingForDisplay
         .map((item) => `<p class="today-task-upcoming-item"><strong>${item.dayLabel}</strong><span>${item.label} • ${item.assignee}</span></p>`)
         .join("");
     }

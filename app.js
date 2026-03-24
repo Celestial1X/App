@@ -1563,7 +1563,7 @@ const buildHomeTaskItems = (records) => {
       const sourceData = source === "followup" ? followup : source === "caseStatus" ? caseStatus : info;
       const dateValue = sourceData?.[key];
       const days = getDaysUntil(dateValue);
-      if (days === null || days < 0 || days > 90) return;
+      if (days === null || days < 0 || days > 365) return;
       tasks.push({
         days,
         dateValue,
@@ -1584,7 +1584,7 @@ const buildHomeTaskItems = (records) => {
 
   loadCustomTodayTasks().forEach((task) => {
     const days = getDaysUntil(task.dateValue);
-    if (days === null || days < 0 || days > 90) return;
+    if (days === null || days < 0 || days > 365) return;
     const key = String(days);
     if (!grouped.has(key)) grouped.set(key, []);
     grouped.get(key).push({
@@ -1656,25 +1656,27 @@ const initTodayTaskQuickAdd = () => {
     const title = String(todayTaskQuickTitle.value || "").trim();
     const dateValue = normalizeDisplayDateValue(todayTaskQuickDate.value);
     const note = String(todayTaskQuickNote?.value || "").trim();
-    if (!title || !dateValue) {
+    if (!title) {
       if (todayTaskQuickStatus) {
-        todayTaskQuickStatus.textContent = "กรุณากรอกชื่องานและวันที่ให้ครบ";
+        todayTaskQuickStatus.textContent = "กรุณากรอกชื่องานอย่างน้อย 1 รายการ";
         todayTaskQuickStatus.classList.add("error");
       }
       return;
     }
+    const fallbackDate = formatDateOnlyDMY(new Date());
+    const finalDateValue = dateValue || fallbackDate;
     const items = loadCustomTodayTasks();
     items.unshift({
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       title,
-      dateValue,
+      dateValue: finalDateValue,
       note,
     });
     saveCustomTodayTasks(items.slice(0, 120));
     todayTaskQuickAdd.reset();
-    renderLatestRecordCard();
+    renderTodayTaskSpotlight(loadRecords());
     if (todayTaskQuickStatus) {
-      todayTaskQuickStatus.textContent = "เพิ่มงานใหม่เรียบร้อย";
+      todayTaskQuickStatus.textContent = dateValue ? "เพิ่มงานใหม่เรียบร้อย" : `เพิ่มงานใหม่เรียบร้อย (ใช้วันที่วันนี้ ${fallbackDate})`;
       todayTaskQuickStatus.classList.remove("error");
     }
   };
@@ -1693,14 +1695,14 @@ const renderTodayTaskSpotlight = (records) => {
   if (!todayTaskSpotlight || !todayTaskBuckets || !todayTaskSubtitle) return;
   homeTaskBuckets = buildHomeTaskItems(records);
   if (!homeTaskBuckets.length) {
-    todayTaskSubtitle.textContent = "ยังไม่มีงานที่ต้องติดตามใน 90 วันข้างหน้า";
+    todayTaskSubtitle.textContent = "ยังไม่มีงานที่ต้องติดตามใน 365 วันข้างหน้า";
     todayTaskBuckets.innerHTML = '<p class="status-text">ไม่มีงานค้างกำหนด</p>';
     return;
   }
 
   const totalTasks = homeTaskBuckets.reduce((sum, bucket) => sum + bucket.items.length, 0);
   const completed = homeTaskBuckets.reduce((sum, bucket) => sum + bucket.items.filter((item) => doneTaskIds.has(item.taskId)).length, 0);
-  todayTaskSubtitle.textContent = `พบ ${totalTasks} งานในช่วงวันนี้ถึง 90 วันข้างหน้า • เสร็จแล้ว ${completed} งาน`;
+  todayTaskSubtitle.textContent = `พบ ${totalTasks} งานในช่วงวันนี้ถึง 365 วันข้างหน้า • เสร็จแล้ว ${completed} งาน`;
   todayTaskBuckets.innerHTML = homeTaskBuckets.map((bucket, index) => {
     const dayLabel = bucket.days === 0 ? "วันนี้" : `อีก ${bucket.days} วัน`;
     const firstOpenTask = bucket.items.find((item) => !doneTaskIds.has(item.taskId));

@@ -1392,30 +1392,6 @@ button:hover,
   padding: 4px 10px;
 }
 
-
-.today-task-panels {
-  margin-top: 12px;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 10px;
-}
-
-.today-task-panel {
-  border: 1px solid #f9a8d4;
-  border-radius: 14px;
-  padding: 10px;
-  background: rgba(255, 255, 255, 0.8);
-}
-
-.today-task-panel h4 {
-  margin: 0 0 8px;
-  color: #9d174d;
-  font-size: 0.96rem;
-}
-
-.today-task-panel--today {
-  margin-top: 10px;
-}
 .today-task-buckets {
   margin-top: 12px;
   display: grid;
@@ -1465,31 +1441,6 @@ button:hover,
   box-shadow: 0 10px 18px rgba(236, 72, 153, 0.2);
 }
 
-
-.today-task-upcoming {
-  display: grid;
-  gap: 7px;
-}
-
-.today-task-upcoming-item {
-  margin: 0;
-  border-radius: 10px;
-  border: 1px solid #fbcfe8;
-  background: #fff;
-  padding: 8px 10px;
-  display: grid;
-  gap: 2px;
-}
-
-.today-task-upcoming-item strong {
-  color: #831843;
-  font-size: 0.84rem;
-}
-
-.today-task-upcoming-item span {
-  color: #334155;
-  font-size: 0.9rem;
-}
 .today-task-checklist {
   margin-top: 10px;
   padding-top: 8px;

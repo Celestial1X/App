@@ -119,7 +119,6 @@ const todayTaskQuickNote = document.getElementById("todayTaskQuickNote");
 const todayTaskQuickAddButton = document.getElementById("todayTaskQuickAddButton");
 const todayTaskQuickStatus = document.getElementById("todayTaskQuickStatus");
 const todayTaskChecklist = document.getElementById("todayTaskChecklist");
-const todayTaskUpcoming = document.getElementById("todayTaskUpcoming");
 const verifyRecordButton = document.getElementById("verifyRecord");
 const recordModal = document.getElementById("recordModal");
 const recordModalTitle = document.getElementById("recordModalTitle");
@@ -140,8 +139,6 @@ const FORM_DRAFT_KEY = "workerFormDraft";
 const API_BASE_KEY = "recordsApiBaseUrl";
 const TODAY_TASK_CUSTOM_KEY = "todayTaskCustomItems";
 const TODAY_TASK_DONE_KEY = "todayTaskDoneItems";
-const RECORDS_BACKUP_KEY = "workerRecordsBackup";
-const RECORDS_BACKUP_HISTORY_KEY = "workerRecordsBackupHistory";
 const DIRTY_RECORD_IDS_KEY = "dirtyRecordIds";
 const DIRTY_RECORD_TTL_MS = 10 * 60 * 1000;
 
@@ -1023,29 +1020,11 @@ const readJsonStorage = (key, fallback) => {
   }
 };
 
-const readArrayStorage = (key) => {
-  const parsed = readJsonStorage(key, null);
-  return Array.isArray(parsed) ? parsed : null;
-};
-
 const loadRecords = () => {
-  let records = readJsonStorage("workerRecords", []);
+  const records = readJsonStorage("workerRecords", []);
   if (!Array.isArray(records)) {
-    records = [];
-  }
-
-  if (!records.length) {
-    const backupRecords = readArrayStorage(RECORDS_BACKUP_KEY);
-    const backupHistory = readJsonStorage(RECORDS_BACKUP_HISTORY_KEY, []);
-    const fromHistory = Array.isArray(backupHistory)
-      ? backupHistory.find((item) => Array.isArray(item?.records) && item.records.length)?.records
-      : null;
-    const legacyRecords = readArrayStorage("records");
-    const recovered = backupRecords?.length ? backupRecords : fromHistory?.length ? fromHistory : legacyRecords?.length ? legacyRecords : null;
-    if (recovered) {
-      records = recovered;
-      saveRecords(records);
-    }
+    localStorage.removeItem("workerRecords");
+    return [];
   }
   const normalized = records
     .filter((record) => record && typeof record === "object")
@@ -1160,14 +1139,6 @@ const refreshNameSuggestions = () => {
 
 const saveRecords = (records) => {
   localStorage.setItem("workerRecords", JSON.stringify(records));
-  localStorage.setItem(RECORDS_BACKUP_KEY, JSON.stringify(records));
-  const history = readJsonStorage(RECORDS_BACKUP_HISTORY_KEY, []);
-  const nextHistory = Array.isArray(history) ? history : [];
-  nextHistory.unshift({
-    savedAt: new Date().toISOString(),
-    records,
-  });
-  localStorage.setItem(RECORDS_BACKUP_HISTORY_KEY, JSON.stringify(nextHistory.slice(0, 8)));
 };
 
 const canUseServerSync = () => Boolean(API_BASE_URL) || window.location.protocol.startsWith("http");
@@ -1412,12 +1383,6 @@ const getDaysUntil = (value) => {
   return days;
 };
 
-const getTodayTaskDayLabel = (days) => {
-  if (days === 0) return "วันนี้";
-  if (days > 0) return `อีก ${days} วัน`;
-  return `เกินกำหนด ${Math.abs(days)} วัน`;
-};
-
 const getDaysBetweenDateValues = (startValue, endValue) => {
   const start = parseDateOnlyLocal(startValue);
   const end = parseDateOnlyLocal(endValue);
@@ -1598,7 +1563,7 @@ const buildHomeTaskItems = (records) => {
       const sourceData = source === "followup" ? followup : source === "caseStatus" ? caseStatus : info;
       const dateValue = sourceData?.[key];
       const days = getDaysUntil(dateValue);
-      if (days === null || days < -365 || days > 365) return;
+      if (days === null || days < 0 || days > 90) return;
       tasks.push({
         days,
         dateValue,
@@ -1619,7 +1584,7 @@ const buildHomeTaskItems = (records) => {
 
   loadCustomTodayTasks().forEach((task) => {
     const days = getDaysUntil(task.dateValue);
-    if (days === null || days < -365 || days > 365) return;
+    if (days === null || days < 0 || days > 90) return;
     const key = String(days);
     if (!grouped.has(key)) grouped.set(key, []);
     grouped.get(key).push({
@@ -1685,45 +1650,31 @@ const openTaskBucketModal = (bucket) => {
   recordModal.setAttribute("aria-hidden", "false");
 };
 
-const getDefaultTaskDateInputValue = () => {
-  const today = new Date();
-  const yyyy = today.getFullYear();
-  const mm = String(today.getMonth() + 1).padStart(2, "0");
-  const dd = String(today.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
-};
-
 const initTodayTaskQuickAdd = () => {
   if (!todayTaskQuickAdd || !todayTaskQuickTitle || !todayTaskQuickDate) return;
-  if (!todayTaskQuickDate.value) {
-    todayTaskQuickDate.value = getDefaultTaskDateInputValue();
-  }
   const submitTask = () => {
     const title = String(todayTaskQuickTitle.value || "").trim();
     const dateValue = normalizeDisplayDateValue(todayTaskQuickDate.value);
     const note = String(todayTaskQuickNote?.value || "").trim();
-    if (!title) {
+    if (!title || !dateValue) {
       if (todayTaskQuickStatus) {
-        todayTaskQuickStatus.textContent = "กรุณากรอกชื่องานอย่างน้อย 1 รายการ";
+        todayTaskQuickStatus.textContent = "กรุณากรอกชื่องานและวันที่ให้ครบ";
         todayTaskQuickStatus.classList.add("error");
       }
       return;
     }
-    const fallbackDate = formatDateOnlyDMY(new Date());
-    const finalDateValue = dateValue || fallbackDate;
     const items = loadCustomTodayTasks();
     items.unshift({
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       title,
-      dateValue: finalDateValue,
+      dateValue,
       note,
     });
     saveCustomTodayTasks(items.slice(0, 120));
     todayTaskQuickAdd.reset();
-    todayTaskQuickDate.value = getDefaultTaskDateInputValue();
-    renderTodayTaskSpotlight(loadRecords());
+    renderLatestRecordCard();
     if (todayTaskQuickStatus) {
-      todayTaskQuickStatus.textContent = dateValue ? "เพิ่มงานใหม่เรียบร้อย" : `เพิ่มงานใหม่เรียบร้อย (ใช้วันที่วันนี้ ${fallbackDate})`;
+      todayTaskQuickStatus.textContent = "เพิ่มงานใหม่เรียบร้อย";
       todayTaskQuickStatus.classList.remove("error");
     }
   };
@@ -1742,29 +1693,16 @@ const renderTodayTaskSpotlight = (records) => {
   if (!todayTaskSpotlight || !todayTaskBuckets || !todayTaskSubtitle) return;
   homeTaskBuckets = buildHomeTaskItems(records);
   if (!homeTaskBuckets.length) {
-    todayTaskSubtitle.textContent = "ยังไม่มีงานที่ต้องติดตาม";
-    todayTaskBuckets.innerHTML = '<p class="status-text">ยังไม่มีงานของวันนี้หรือวันถัดไป</p>';
-    if (todayTaskUpcoming) {
-      todayTaskUpcoming.innerHTML = '<p class="status-text">ยังไม่มีงานในอีก 30 วัน</p>';
-    }
-    if (todayTaskChecklist) {
-      todayTaskChecklist.innerHTML = '<p class="status-text">วันนี้ยังไม่มีงาน</p>';
-    }
+    todayTaskSubtitle.textContent = "ยังไม่มีงานที่ต้องติดตามใน 90 วันข้างหน้า";
+    todayTaskBuckets.innerHTML = '<p class="status-text">ไม่มีงานค้างกำหนด</p>';
     return;
   }
 
   const totalTasks = homeTaskBuckets.reduce((sum, bucket) => sum + bucket.items.length, 0);
   const completed = homeTaskBuckets.reduce((sum, bucket) => sum + bucket.items.filter((item) => doneTaskIds.has(item.taskId)).length, 0);
-  todayTaskSubtitle.textContent = `พบ ${totalTasks} งาน • เสร็จแล้ว ${completed} งาน`;
-
-  const todayAndNextDayBuckets = homeTaskBuckets.filter((bucket) => bucket.days >= 0 && bucket.days <= 1);
-  const fallbackNearBuckets = homeTaskBuckets.filter((bucket) => bucket.days >= -7 && bucket.days <= 7);
-  const displayPrimaryBuckets = todayAndNextDayBuckets.length
-    ? todayAndNextDayBuckets
-    : (fallbackNearBuckets.length ? fallbackNearBuckets.slice(0, 8) : homeTaskBuckets.slice(0, 8));
-
-  todayTaskBuckets.innerHTML = displayPrimaryBuckets.map((bucket, index) => {
-    const dayLabel = getTodayTaskDayLabel(bucket.days);
+  todayTaskSubtitle.textContent = `พบ ${totalTasks} งานในช่วงวันนี้ถึง 90 วันข้างหน้า • เสร็จแล้ว ${completed} งาน`;
+  todayTaskBuckets.innerHTML = homeTaskBuckets.map((bucket, index) => {
+    const dayLabel = bucket.days === 0 ? "วันนี้" : `อีก ${bucket.days} วัน`;
     const firstOpenTask = bucket.items.find((item) => !doneTaskIds.has(item.taskId));
     const completedCount = bucket.items.filter((item) => doneTaskIds.has(item.taskId)).length;
     const firstLabel = firstOpenTask?.label || bucket.items[0]?.label || "";
@@ -1774,48 +1712,20 @@ const renderTodayTaskSpotlight = (records) => {
   todayTaskBuckets.querySelectorAll("[data-task-bucket]").forEach((button) => {
     button.addEventListener("click", () => {
       const index = Number.parseInt(button.getAttribute("data-task-bucket") || "-1", 10);
-      const bucket = displayPrimaryBuckets[index];
+      const bucket = homeTaskBuckets[index];
       if (!bucket) return;
       openTaskBucketModal(bucket);
     });
   });
 
-  const upcomingThirtyDays = homeTaskBuckets
-    .filter((bucket) => bucket.days >= 0 && bucket.days <= 30)
-    .flatMap((bucket) => bucket.items.map((item) => ({ ...item, dayLabel: getTodayTaskDayLabel(bucket.days) })))
-    .sort((a, b) => a.days - b.days)
-    .slice(0, 30);
-  const fallbackUpcoming = homeTaskBuckets
-    .filter((bucket) => bucket.days > 30)
-    .flatMap((bucket) => bucket.items.map((item) => ({ ...item, dayLabel: getTodayTaskDayLabel(bucket.days) })))
-    .sort((a, b) => a.days - b.days)
-    .slice(0, 10);
-
-  if (todayTaskUpcoming) {
-    const upcomingForDisplay = upcomingThirtyDays.length ? upcomingThirtyDays : fallbackUpcoming;
-    if (!upcomingForDisplay.length) {
-      todayTaskUpcoming.innerHTML = '<p class="status-text">ยังไม่มีงานที่กำลังจะถึงกำหนด</p>';
-    } else {
-      todayTaskUpcoming.innerHTML = upcomingForDisplay
-        .map((item) => `<p class="today-task-upcoming-item"><strong>${item.dayLabel}</strong><span>${item.label} • ${item.assignee}</span></p>`)
-        .join("");
-    }
-  }
-
   if (!todayTaskChecklist) return;
-  const todayChecklistItems = homeTaskBuckets
-    .filter((bucket) => bucket.days === 0)
-    .flatMap((bucket) => bucket.items)
+  const checklistItems = homeTaskBuckets
+    .flatMap((bucket) => bucket.items.map((item) => ({ ...item, dayLabel: bucket.days === 0 ? "วันนี้" : `อีก ${bucket.days} วัน` })))
     .slice(0, 20);
-  if (!todayChecklistItems.length) {
-    todayTaskChecklist.innerHTML = '<p class="status-text">วันนี้ยังไม่มีงาน</p>';
-    return;
-  }
-
-  todayTaskChecklist.innerHTML = todayChecklistItems.map((item, index) => {
+  todayTaskChecklist.innerHTML = checklistItems.map((item, index) => {
     const checked = doneTaskIds.has(item.taskId) ? "checked" : "";
     const id = `todayTaskDone_${index}`;
-    return `<label class="today-task-check"><input id="${id}" type="checkbox" data-task-id="${item.taskId}" ${checked} /><span>${item.label} • ${item.assignee}</span></label>`;
+    return `<label class="today-task-check"><input id="${id}" type="checkbox" data-task-id="${item.taskId}" ${checked} /><span>${item.dayLabel} • ${item.label} • ${item.assignee}</span></label>`;
   }).join("");
   todayTaskChecklist.querySelectorAll("input[data-task-id]").forEach((input) => {
     input.addEventListener("change", () => {

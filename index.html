@@ -10,7 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=20260324" />
+    <link rel="stylesheet" href="styles.css?v=20260211" />
   </head>
   <body>
     <header class="hero">
@@ -66,30 +66,18 @@
         <section class="today-task-spotlight" id="todayTaskSpotlight" aria-live="polite">
           <div class="today-task-spotlight__head">
             <p class="today-task-spotlight__tag">งานที่ต้องทำประจำวัน</p>
-            <h3>สรุปงาน</h3>
+            <h3>งานของวันนี้ + วันถัดไป</h3>
             <p id="todayTaskSubtitle" class="status-text">กำลังตรวจสอบรายการ...</p>
           </div>
           <form id="todayTaskQuickAdd" class="today-task-quickadd">
             <input id="todayTaskQuickTitle" type="text" placeholder="เพิ่มชื่องาน เช่น ต่อใบอนุญาตแรงงาน" />
             <input id="todayTaskQuickDate" type="date" />
             <input id="todayTaskQuickNote" type="text" placeholder="หมายเหตุ (ถ้ามี)" />
-            <button id="todayTaskQuickAddButton" type="submit" class="primary">บันทึกงาน</button>
+            <button id="todayTaskQuickAddButton" type="submit" class="primary">เพิ่มรายการ</button>
           </form>
           <p id="todayTaskQuickStatus" class="status-text"></p>
-          <div class="today-task-panels">
-            <section class="today-task-panel">
-              <h4>งานของวันนี้ + วันถัดไป</h4>
-              <div id="todayTaskBuckets" class="today-task-buckets"></div>
-            </section>
-            <section class="today-task-panel">
-              <h4>งานที่ใกล้ถึงกำหนดใน 30 วัน</h4>
-              <div id="todayTaskUpcoming" class="today-task-upcoming"></div>
-            </section>
-          </div>
-          <section class="today-task-panel today-task-panel--today">
-            <h4>ของวันนี้มีงานอะไรบ้าง</h4>
-            <div id="todayTaskChecklist" class="today-task-checklist"></div>
-          </section>
+          <div id="todayTaskBuckets" class="today-task-buckets"></div>
+          <div id="todayTaskChecklist" class="today-task-checklist"></div>
         </section>
         <div id="indexExpiryAlert" class="warning-banner is-hidden"></div>
         <div class="summary-grid summary-grid--followup" id="followupSummaryGrid">
@@ -150,7 +138,7 @@
       </div>
     </div>
 
-    <script src="app.js?v=20260324"></script>
-      <script src="datepicker.js?v=20260324"></script>
+    <script src="app.js?v=20260211"></script>
+      <script src="datepicker.js?v=20260211"></script>
   </body>
 </html>

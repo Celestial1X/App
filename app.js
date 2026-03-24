@@ -1411,6 +1411,12 @@ const getDaysUntil = (value) => {
   return days;
 };
 
+const getTodayTaskDayLabel = (days) => {
+  if (days === 0) return "วันนี้";
+  if (days > 0) return `อีก ${days} วัน`;
+  return `เกินกำหนด ${Math.abs(days)} วัน`;
+};
+
 const getDaysBetweenDateValues = (startValue, endValue) => {
   const start = parseDateOnlyLocal(startValue);
   const end = parseDateOnlyLocal(endValue);
@@ -1591,7 +1597,7 @@ const buildHomeTaskItems = (records) => {
       const sourceData = source === "followup" ? followup : source === "caseStatus" ? caseStatus : info;
       const dateValue = sourceData?.[key];
       const days = getDaysUntil(dateValue);
-      if (days === null || days < 0 || days > 365) return;
+      if (days === null || days < -365 || days > 365) return;
       tasks.push({
         days,
         dateValue,
@@ -1612,7 +1618,7 @@ const buildHomeTaskItems = (records) => {
 
   loadCustomTodayTasks().forEach((task) => {
     const days = getDaysUntil(task.dateValue);
-    if (days === null || days < 0 || days > 365) return;
+    if (days === null || days < -365 || days > 365) return;
     const key = String(days);
     if (!grouped.has(key)) grouped.set(key, []);
     grouped.get(key).push({
@@ -1680,6 +1686,13 @@ const openTaskBucketModal = (bucket) => {
 
 const initTodayTaskQuickAdd = () => {
   if (!todayTaskQuickAdd || !todayTaskQuickTitle || !todayTaskQuickDate) return;
+  if (!todayTaskQuickDate.value) {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const dd = String(today.getDate()).padStart(2, "0");
+    todayTaskQuickDate.value = `${yyyy}-${mm}-${dd}`;
+  }
   const submitTask = () => {
     const title = String(todayTaskQuickTitle.value || "").trim();
     const dateValue = normalizeDisplayDateValue(todayTaskQuickDate.value);
@@ -1723,16 +1736,16 @@ const renderTodayTaskSpotlight = (records) => {
   if (!todayTaskSpotlight || !todayTaskBuckets || !todayTaskSubtitle) return;
   homeTaskBuckets = buildHomeTaskItems(records);
   if (!homeTaskBuckets.length) {
-    todayTaskSubtitle.textContent = "ยังไม่มีงานที่ต้องติดตามใน 365 วันข้างหน้า";
+    todayTaskSubtitle.textContent = "ยังไม่มีงานที่ต้องติดตาม (รวมงานเกินกำหนด 365 วันย้อนหลัง)";
     todayTaskBuckets.innerHTML = '<p class="status-text">ไม่มีงานค้างกำหนด</p>';
     return;
   }
 
   const totalTasks = homeTaskBuckets.reduce((sum, bucket) => sum + bucket.items.length, 0);
   const completed = homeTaskBuckets.reduce((sum, bucket) => sum + bucket.items.filter((item) => doneTaskIds.has(item.taskId)).length, 0);
-  todayTaskSubtitle.textContent = `พบ ${totalTasks} งานในช่วงวันนี้ถึง 365 วันข้างหน้า • เสร็จแล้ว ${completed} งาน`;
+  todayTaskSubtitle.textContent = `พบ ${totalTasks} งาน (ย้อนหลังได้สูงสุด 365 วัน และล่วงหน้า 365 วัน) • เสร็จแล้ว ${completed} งาน`;
   todayTaskBuckets.innerHTML = homeTaskBuckets.map((bucket, index) => {
-    const dayLabel = bucket.days === 0 ? "วันนี้" : `อีก ${bucket.days} วัน`;
+    const dayLabel = getTodayTaskDayLabel(bucket.days);
     const firstOpenTask = bucket.items.find((item) => !doneTaskIds.has(item.taskId));
     const completedCount = bucket.items.filter((item) => doneTaskIds.has(item.taskId)).length;
     const firstLabel = firstOpenTask?.label || bucket.items[0]?.label || "";
@@ -1750,7 +1763,7 @@ const renderTodayTaskSpotlight = (records) => {
 
   if (!todayTaskChecklist) return;
   const checklistItems = homeTaskBuckets
-    .flatMap((bucket) => bucket.items.map((item) => ({ ...item, dayLabel: bucket.days === 0 ? "วันนี้" : `อีก ${bucket.days} วัน` })))
+    .flatMap((bucket) => bucket.items.map((item) => ({ ...item, dayLabel: getTodayTaskDayLabel(bucket.days) })))
     .slice(0, 20);
   todayTaskChecklist.innerHTML = checklistItems.map((item, index) => {
     const checked = doneTaskIds.has(item.taskId) ? "checked" : "";

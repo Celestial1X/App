@@ -109,6 +109,9 @@ const indexReport90Summary = document.getElementById("indexReport90Summary");
 const indexVisaSummary = document.getElementById("indexVisaSummary");
 const indexMouSummary = document.getElementById("indexMouSummary");
 const indexExpiryAlert = document.getElementById("indexExpiryAlert");
+const todayTaskSpotlight = document.getElementById("todayTaskSpotlight");
+const todayTaskSubtitle = document.getElementById("todayTaskSubtitle");
+const todayTaskBuckets = document.getElementById("todayTaskBuckets");
 const verifyRecordButton = document.getElementById("verifyRecord");
 const recordModal = document.getElementById("recordModal");
 const recordModalTitle = document.getElementById("recordModalTitle");
@@ -178,6 +181,7 @@ let latestRenderedRecords = [];
 let selectedRecordExportIds = new Set();
 const uploadCache = {};
 let genericAttachments = [];
+let homeTaskBuckets = [];
 
 const getSelectedFormTypes = () => {
   const selected = Array.from(formTypeInputs || [])
@@ -1524,6 +1528,98 @@ const renderHomeFollowupSummaries = () => {
       indexExpiryAlert.classList.add("is-hidden");
     }
   }
+  renderTodayTaskSpotlight(all);
+};
+
+const buildHomeTaskItems = (records) => {
+  const taskDefs = [
+    { key: "appointmentDate", label: "นัดหมายดำเนินการ", source: "caseStatus" },
+    { key: "nextDate", label: "รายงานตัว 90 วัน", source: "followup" },
+    { key: "endDate", label: "ครบกำหนด Visa / MOU", source: "followup" },
+    { key: "documentReceivedDate", label: "วันรับเอกสาร", source: "followup" },
+    { key: "documentReturnDate", label: "วันคืนเอกสาร", source: "followup" },
+    { key: "workPermitExpiry", label: "ใบอนุญาตทำงานใกล้หมดอายุ", source: "personalInfo" },
+    { key: "passExpiryDate", label: "พาสปอร์ตใกล้หมดอายุ", source: "personalInfo" },
+    { key: "personalVisaExpiryDate", label: "Visa ส่วนบุคคลใกล้หมดอายุ", source: "personalInfo" },
+  ];
+  const tasks = [];
+  (records || []).forEach((record) => {
+    const info = record?.data?.personalInfo || {};
+    const followup = record?.data?.followup || {};
+    const caseStatus = record?.data?.caseStatus || {};
+    const assignee = info.fullName || info.employerName || record?.displayName || "-";
+
+    taskDefs.forEach(({ key, label, source }) => {
+      const sourceData = source === "followup" ? followup : source === "caseStatus" ? caseStatus : info;
+      const dateValue = sourceData?.[key];
+      const days = getDaysUntil(dateValue);
+      if (days === null || days < 0 || days > 14) return;
+      tasks.push({
+        days,
+        dateValue,
+        formId: record?.formId || "-",
+        assignee,
+        label,
+      });
+    });
+  });
+
+  const grouped = new Map();
+  tasks.forEach((task) => {
+    const key = String(task.days);
+    if (!grouped.has(key)) grouped.set(key, []);
+    grouped.get(key).push(task);
+  });
+
+  return Array.from(grouped.entries())
+    .map(([dayKey, items]) => ({ days: Number.parseInt(dayKey, 10), items: items.sort((a, b) => String(a.formId).localeCompare(String(b.formId), "th")) }))
+    .sort((a, b) => a.days - b.days)
+    .slice(0, 8);
+};
+
+const openTaskBucketModal = (bucket) => {
+  if (!recordModal || !recordModalTitle || !recordModalBody) return;
+  const dayText = bucket.days === 0 ? "วันนี้" : `อีก ${bucket.days} วัน`;
+  recordModalTitle.textContent = `งานที่ต้องทำ: ${dayText}`;
+  recordModalBody.innerHTML = "";
+  const list = document.createElement("ul");
+  list.className = "timeline";
+  bucket.items.forEach((item) => {
+    const li = document.createElement("li");
+    li.className = "timeline-item";
+    li.innerHTML = `<span class="timeline-tag">${item.label}</span><h3>${item.formId} • ${item.assignee}</h3><p>${formatDateOnlyDMY(item.dateValue)} • ${dayText}</p>`;
+    list.appendChild(li);
+  });
+  recordModalBody.appendChild(list);
+  recordModal.classList.add("is-open");
+  recordModal.setAttribute("aria-hidden", "false");
+};
+
+const renderTodayTaskSpotlight = (records) => {
+  if (!todayTaskSpotlight || !todayTaskBuckets || !todayTaskSubtitle) return;
+  homeTaskBuckets = buildHomeTaskItems(records);
+  if (!homeTaskBuckets.length) {
+    todayTaskSubtitle.textContent = "วันนี้ยังไม่มีงานที่ต้องติดตามเร่งด่วนใน 14 วันข้างหน้า";
+    todayTaskBuckets.innerHTML = '<p class="status-text">ไม่มีงานค้างกำหนด</p>';
+    return;
+  }
+
+  const totalTasks = homeTaskBuckets.reduce((sum, bucket) => sum + bucket.items.length, 0);
+  todayTaskSubtitle.textContent = `พบ ${totalTasks} งานในช่วงวันนี้ถึง 14 วันข้างหน้า • กดที่วันเพื่อดูรายละเอียด`;
+  todayTaskBuckets.innerHTML = homeTaskBuckets.map((bucket, index) => {
+    const dayLabel = bucket.days === 0 ? "วันนี้" : `อีก ${bucket.days} วัน`;
+    const firstLabel = bucket.items[0]?.label || "";
+    return `<button type="button" class="today-task-bucket" data-task-bucket="${index}"><strong>${dayLabel}</strong><span>${bucket.items.length} งาน</span><small>${firstLabel}</small></button>`;
+  }).join("");
+
+  todayTaskBuckets.querySelectorAll("[data-task-bucket]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const index = Number.parseInt(button.getAttribute("data-task-bucket") || "-1", 10);
+      const bucket = homeTaskBuckets[index];
+      if (!bucket) return;
+      openTaskBucketModal(bucket);
+    });
+  });
 };
 
 const getFormTypeLabel = (value) => {

@@ -119,6 +119,7 @@ const todayTaskQuickNote = document.getElementById("todayTaskQuickNote");
 const todayTaskQuickAddButton = document.getElementById("todayTaskQuickAddButton");
 const todayTaskQuickStatus = document.getElementById("todayTaskQuickStatus");
 const todayTaskChecklist = document.getElementById("todayTaskChecklist");
+const todayTaskUpcoming = document.getElementById("todayTaskUpcoming");
 const verifyRecordButton = document.getElementById("verifyRecord");
 const recordModal = document.getElementById("recordModal");
 const recordModalTitle = document.getElementById("recordModalTitle");
@@ -1684,14 +1685,18 @@ const openTaskBucketModal = (bucket) => {
   recordModal.setAttribute("aria-hidden", "false");
 };
 
+const getDefaultTaskDateInputValue = () => {
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, "0");
+  const dd = String(today.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+};
+
 const initTodayTaskQuickAdd = () => {
   if (!todayTaskQuickAdd || !todayTaskQuickTitle || !todayTaskQuickDate) return;
   if (!todayTaskQuickDate.value) {
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, "0");
-    const dd = String(today.getDate()).padStart(2, "0");
-    todayTaskQuickDate.value = `${yyyy}-${mm}-${dd}`;
+    todayTaskQuickDate.value = getDefaultTaskDateInputValue();
   }
   const submitTask = () => {
     const title = String(todayTaskQuickTitle.value || "").trim();
@@ -1715,6 +1720,7 @@ const initTodayTaskQuickAdd = () => {
     });
     saveCustomTodayTasks(items.slice(0, 120));
     todayTaskQuickAdd.reset();
+    todayTaskQuickDate.value = getDefaultTaskDateInputValue();
     renderTodayTaskSpotlight(loadRecords());
     if (todayTaskQuickStatus) {
       todayTaskQuickStatus.textContent = dateValue ? "เพิ่มงานใหม่เรียบร้อย" : `เพิ่มงานใหม่เรียบร้อย (ใช้วันที่วันนี้ ${fallbackDate})`;
@@ -1736,39 +1742,73 @@ const renderTodayTaskSpotlight = (records) => {
   if (!todayTaskSpotlight || !todayTaskBuckets || !todayTaskSubtitle) return;
   homeTaskBuckets = buildHomeTaskItems(records);
   if (!homeTaskBuckets.length) {
-    todayTaskSubtitle.textContent = "ยังไม่มีงานที่ต้องติดตาม (รวมงานเกินกำหนด 365 วันย้อนหลัง)";
-    todayTaskBuckets.innerHTML = '<p class="status-text">ไม่มีงานค้างกำหนด</p>';
+    todayTaskSubtitle.textContent = "ยังไม่มีงานที่ต้องติดตาม";
+    todayTaskBuckets.innerHTML = '<p class="status-text">ยังไม่มีงานของวันนี้หรือวันถัดไป</p>';
+    if (todayTaskUpcoming) {
+      todayTaskUpcoming.innerHTML = '<p class="status-text">ยังไม่มีงานในอีก 30 วัน</p>';
+    }
+    if (todayTaskChecklist) {
+      todayTaskChecklist.innerHTML = '<p class="status-text">วันนี้ยังไม่มีงาน</p>';
+    }
     return;
   }
 
   const totalTasks = homeTaskBuckets.reduce((sum, bucket) => sum + bucket.items.length, 0);
   const completed = homeTaskBuckets.reduce((sum, bucket) => sum + bucket.items.filter((item) => doneTaskIds.has(item.taskId)).length, 0);
-  todayTaskSubtitle.textContent = `พบ ${totalTasks} งาน (ย้อนหลังได้สูงสุด 365 วัน และล่วงหน้า 365 วัน) • เสร็จแล้ว ${completed} งาน`;
-  todayTaskBuckets.innerHTML = homeTaskBuckets.map((bucket, index) => {
-    const dayLabel = getTodayTaskDayLabel(bucket.days);
-    const firstOpenTask = bucket.items.find((item) => !doneTaskIds.has(item.taskId));
-    const completedCount = bucket.items.filter((item) => doneTaskIds.has(item.taskId)).length;
-    const firstLabel = firstOpenTask?.label || bucket.items[0]?.label || "";
-    return `<button type="button" class="today-task-bucket" data-task-bucket="${index}"><strong>${dayLabel}</strong><span>${bucket.items.length} งาน</span><small>${firstLabel}</small><small>เสร็จแล้ว ${completedCount}</small></button>`;
-  }).join("");
+  todayTaskSubtitle.textContent = `พบ ${totalTasks} งาน • เสร็จแล้ว ${completed} งาน`;
 
-  todayTaskBuckets.querySelectorAll("[data-task-bucket]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const index = Number.parseInt(button.getAttribute("data-task-bucket") || "-1", 10);
-      const bucket = homeTaskBuckets[index];
-      if (!bucket) return;
-      openTaskBucketModal(bucket);
+  const todayAndNextDayBuckets = homeTaskBuckets.filter((bucket) => bucket.days >= 0 && bucket.days <= 1);
+  if (!todayAndNextDayBuckets.length) {
+    todayTaskBuckets.innerHTML = '<p class="status-text">ยังไม่มีงานของวันนี้หรือวันถัดไป</p>';
+  } else {
+    todayTaskBuckets.innerHTML = todayAndNextDayBuckets.map((bucket, index) => {
+      const dayLabel = getTodayTaskDayLabel(bucket.days);
+      const firstOpenTask = bucket.items.find((item) => !doneTaskIds.has(item.taskId));
+      const completedCount = bucket.items.filter((item) => doneTaskIds.has(item.taskId)).length;
+      const firstLabel = firstOpenTask?.label || bucket.items[0]?.label || "";
+      return `<button type="button" class="today-task-bucket" data-task-bucket="${index}"><strong>${dayLabel}</strong><span>${bucket.items.length} งาน</span><small>${firstLabel}</small><small>เสร็จแล้ว ${completedCount}</small></button>`;
+    }).join("");
+
+    todayTaskBuckets.querySelectorAll("[data-task-bucket]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const index = Number.parseInt(button.getAttribute("data-task-bucket") || "-1", 10);
+        const bucket = todayAndNextDayBuckets[index];
+        if (!bucket) return;
+        openTaskBucketModal(bucket);
+      });
     });
-  });
+  }
+
+  const upcomingThirtyDays = homeTaskBuckets
+    .filter((bucket) => bucket.days >= 0 && bucket.days <= 30)
+    .flatMap((bucket) => bucket.items.map((item) => ({ ...item, dayLabel: getTodayTaskDayLabel(bucket.days) })))
+    .sort((a, b) => a.days - b.days)
+    .slice(0, 30);
+
+  if (todayTaskUpcoming) {
+    if (!upcomingThirtyDays.length) {
+      todayTaskUpcoming.innerHTML = '<p class="status-text">ยังไม่มีงานในอีก 30 วัน</p>';
+    } else {
+      todayTaskUpcoming.innerHTML = upcomingThirtyDays
+        .map((item) => `<p class="today-task-upcoming-item"><strong>${item.dayLabel}</strong><span>${item.label} • ${item.assignee}</span></p>`)
+        .join("");
+    }
+  }
 
   if (!todayTaskChecklist) return;
-  const checklistItems = homeTaskBuckets
-    .flatMap((bucket) => bucket.items.map((item) => ({ ...item, dayLabel: getTodayTaskDayLabel(bucket.days) })))
+  const todayChecklistItems = homeTaskBuckets
+    .filter((bucket) => bucket.days === 0)
+    .flatMap((bucket) => bucket.items)
     .slice(0, 20);
-  todayTaskChecklist.innerHTML = checklistItems.map((item, index) => {
+  if (!todayChecklistItems.length) {
+    todayTaskChecklist.innerHTML = '<p class="status-text">วันนี้ยังไม่มีงาน</p>';
+    return;
+  }
+
+  todayTaskChecklist.innerHTML = todayChecklistItems.map((item, index) => {
     const checked = doneTaskIds.has(item.taskId) ? "checked" : "";
     const id = `todayTaskDone_${index}`;
-    return `<label class="today-task-check"><input id="${id}" type="checkbox" data-task-id="${item.taskId}" ${checked} /><span>${item.dayLabel} • ${item.label} • ${item.assignee}</span></label>`;
+    return `<label class="today-task-check"><input id="${id}" type="checkbox" data-task-id="${item.taskId}" ${checked} /><span>${item.label} • ${item.assignee}</span></label>`;
   }).join("");
   todayTaskChecklist.querySelectorAll("input[data-task-id]").forEach((input) => {
     input.addEventListener("change", () => {

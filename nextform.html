@@ -19,13 +19,13 @@
 
     <main class="container">
       <nav class="page-tabs">
+        <a class="tab-btn" href="receivedocs.html">รับเอกสาร</a>
         <a class="tab-btn" href="index.html">ค้นหาข้อมูล</a>
         <a class="tab-btn" href="records.html">ข้อมูลบันทึก</a>
         <a class="tab-btn" href="form.html">กรอกแบบฟอร์ม</a>
         <a class="tab-btn" href="report90.html">รายงานตัว 90 วัน</a>
         <a class="tab-btn" href="visarun.html">Visa run</a>
         <a class="tab-btn is-active" href="nextform.html">MOU ลาว</a>
-        <a class="tab-btn" href="receivedocs.html">รับเอกสาร</a>
         <a class="tab-btn" href="returndocs.html">ส่งคืนเอกสาร</a>
       </nav>
 
@@ -35,11 +35,15 @@
           <div class="grid-3">
             <div class="form-row"><label for="mouWorkerName">ชื่อต่างด้าว</label><input id="mouWorkerName" type="text" list="workerNameSuggestions" /></div>
             <div class="form-row"><label for="mouAlienId">เลขประจำตัว</label><input id="mouAlienId" type="text" /></div>
+            <div class="form-row"><label for="mouWorkPermitNumber">เลขใบอนุญาตทำงาน</label><input id="mouWorkPermitNumber" type="text" /></div>
+          </div>
+          <div class="grid-3">
+            <div class="form-row"><label for="mouEmployerName">ชื่อนายจ้าง</label><input id="mouEmployerName" type="text" /></div>
             <div class="form-row"><label for="mouRecordedBy">ผู้บันทึกข้อมูล</label><input id="mouRecordedBy" type="text" /></div>
           </div>
           <div class="grid-3">
-            <div class="form-row"><label for="mouStartDate">วันเริ่ม MOU</label><input id="mouStartDate" type="date" /></div>
-            <div class="form-row"><label for="mouEndDate">วันครบกำหนด MOU</label><input id="mouEndDate" type="date" /></div>
+            <div class="form-row"><label for="mouStartDate">วันเริ่ม Visa</label><input id="mouStartDate" type="date" /></div>
+            <div class="form-row"><label for="mouEndDate">วันหมด Visa</label><input id="mouEndDate" type="date" /></div>
             <div class="form-row"><label for="mouDocReceiveDate">วันรับเอกสาร</label><input id="mouDocReceiveDate" type="date" /></div>
           </div>
           <div class="grid-3">
@@ -50,11 +54,11 @@
       </section>
 
       <section class="panel">
-        <h3>ข้อมูลบันทึก MOU ลาว</h3>
+        <div class="records-toolbar"><h3>ข้อมูลบันทึก MOU ลาว</h3><div class="table-actions"><input id="mouSearch" type="search" placeholder="ค้นหาชื่อต่างด้าว" /><button type="button" class="secondary" id="exportMouLaos">ส่งออก Excel</button></div></div>
         <div id="mouAlert" class="warning-banner is-hidden"></div>
         <div class="records-table-wrapper">
           <table class="records-table">
-            <thead><tr><th>ชื่อต่างด้าว</th><th>เลขประจำตัว</th><th>วันเริ่ม MOU</th><th>วันครบกำหนด MOU</th><th>วันรับเอกสาร</th><th>วันคืนเอกสาร</th><th>ผู้บันทึก</th><th>คงเหลือ</th><th>การจัดการ</th></tr></thead>
+            <thead><tr><th><input type="checkbox" data-export-check-all aria-label="เลือกทั้งหมด" /></th><th>ชื่อต่างด้าว</th><th>เลขประจำตัว</th><th>ชื่อนายจ้าง</th><th>เลขใบอนุญาตทำงาน</th><th>วันเริ่ม Visa</th><th>วันหมด Visa</th><th>วันรับเอกสาร</th><th>วันคืนเอกสาร</th><th>ผู้บันทึก</th><th>คงเหลือ</th><th>การจัดการ</th></tr></thead>
             <tbody id="mouList"></tbody>
           </table>
         </div>
@@ -76,5 +80,6 @@
     </div>
 
     <script src="followup.js?v=20260211"></script>
+      <script src="datepicker.js?v=20260211"></script>
   </body>
 </html>

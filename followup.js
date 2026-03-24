@@ -76,10 +76,9 @@ const toDateOnly = (value) => {
 };
 
 const formatDateInputValue = (date) => {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
   const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  return `${d}/${m}/${date.getFullYear() + 543}`;
 };
 
 const addDays = (value, days) => {
@@ -204,6 +203,81 @@ const getAggregateBookStats = (rows, item, type) => {
 };
 
 
+const toCsvValue = (value) => {
+  const raw = String(value ?? "");
+  const escaped = raw.replace(/"/g, '""');
+  return `"${escaped}"`;
+};
+
+const exportTableToCsv = ({ listElement, filePrefix, statusElement }) => {
+  if (!listElement) return;
+  const table = listElement.closest("table");
+  if (!table) return;
+  const title = table.closest(".panel")?.querySelector(".records-toolbar h3")?.textContent?.trim() || "รายงานข้อมูล";
+  const headers = Array.from(table.querySelectorAll("thead th")).map((th) => String(th.textContent || "").trim());
+  const exportableIndexes = headers
+    .map((header, index) => ({ header, index }))
+    .filter(({ header }) => header && header !== "การจัดการ");
+
+  const dataRows = [];
+  const rows = Array.from(listElement.querySelectorAll("tr"));
+  const selectableRows = rows.filter((tr) => tr.querySelector("input[data-export-select]"));
+  const rowsToExport = selectableRows.length
+    ? selectableRows.filter((tr) => tr.querySelector("input[data-export-select]")?.checked)
+    : rows;
+
+  if (selectableRows.length && !rowsToExport.length) {
+    if (statusElement) {
+      statusElement.textContent = "กรุณาเลือกรายการที่ต้องการส่งออก";
+      statusElement.classList.add("error");
+    }
+    return;
+  }
+
+  rowsToExport.forEach((tr) => {
+    const cells = Array.from(tr.querySelectorAll("td"));
+    if (!cells.length) return;
+    if (cells.length === 1 && String(cells[0].textContent || "").includes("ยังไม่มีข้อมูล")) return;
+    const values = exportableIndexes.map(({ index }) => {
+      const cell = cells[index];
+      if (!cell) return "";
+      return String(cell.innerText || cell.textContent || "").replace(/\s+/g, " ").trim();
+    });
+    dataRows.push(values);
+  });
+
+  if (!dataRows.length) {
+    if (statusElement) {
+      statusElement.textContent = "ยังไม่มีข้อมูลสำหรับส่งออก";
+      statusElement.classList.add("error");
+    }
+    return;
+  }
+
+  const reportDate = new Date().toLocaleString("th-TH");
+  const csvLines = [
+    toCsvValue(title),
+    toCsvValue(`วันที่ออกรายงาน: ${reportDate}`),
+    [],
+    exportableIndexes.map(({ header }) => toCsvValue(header)).join(","),
+    ...dataRows.map((cols) => cols.map((col) => toCsvValue(col || "-")).join(",")),
+  ];
+  const blob = new Blob([`\uFEFF${csvLines.join("\n")}`], { type: "text/csv;charset=utf-8;" });
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const anchor = document.createElement("a");
+  anchor.href = URL.createObjectURL(blob);
+  anchor.download = `${filePrefix}-${stamp}.csv`;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  setTimeout(() => URL.revokeObjectURL(anchor.href), 500);
+
+  if (statusElement) {
+    statusElement.textContent = "ส่งออกไฟล์ CSV เรียบร้อย";
+    statusElement.classList.remove("error");
+  }
+};
+
 const setupModal = () => {
   const modal = document.getElementById("followupModal");
   const closeButton = document.getElementById("followupModalClose");
@@ -245,6 +319,34 @@ const setupModal = () => {
 
   return { open };
 };
+
+const showConfirmDialog = ({ title = "ยืนยันการลบข้อมูล", message = "ต้องการลบรายการนี้หรือไม่?" } = {}) =>
+  new Promise((resolve) => {
+    const overlay = document.createElement("div");
+    overlay.className = "confirm-dialog";
+    overlay.innerHTML = `
+      <div class="confirm-dialog__card" role="dialog" aria-modal="true" aria-label="${title}">
+        <p class="confirm-dialog__title">${title}</p>
+        <p class="confirm-dialog__message">${message}</p>
+        <div class="confirm-dialog__actions">
+          <button type="button" class="secondary" data-confirm-action="cancel">ยกเลิก</button>
+          <button type="button" class="danger" data-confirm-action="ok">ลบข้อมูล</button>
+        </div>
+      </div>
+    `;
+
+    const close = (result) => {
+      overlay.remove();
+      resolve(result);
+    };
+
+    overlay.addEventListener("click", (event) => {
+      if (event.target === overlay) close(false);
+    });
+    overlay.querySelector('[data-confirm-action="cancel"]')?.addEventListener("click", () => close(false));
+    overlay.querySelector('[data-confirm-action="ok"]')?.addEventListener("click", () => close(true));
+    document.body.appendChild(overlay);
+  });
 
 const readLocalRecords = () => {
   try {
@@ -432,7 +534,7 @@ const toReport90Payload = (values, formId = "") => ({
   data: {
     recordedBy: values.recordedBy || "",
     company: "",
-    startDate: values.startDate || "",
+    startDate: normalizeDateInputValue(values.startDate),
     personalInfo: {
       fullName: values.workerName,
       gender: values.gender,
@@ -445,10 +547,10 @@ const toReport90Payload = (values, formId = "") => ({
     },
     followupType: "report90",
     followup: {
-      startDate: values.startDate,
+      startDate: normalizeDateInputValue(values.startDate),
       nextDate: normalizeDateInputValue(values.nextDate) || computeFollowupDateFromStart(values.startDate),
-      documentReceivedDate: values.documentReceivedDate,
-      documentReturnDate: values.documentReturnDate,
+      documentReceivedDate: normalizeDateInputValue(values.documentReceivedDate),
+      documentReturnDate: normalizeDateInputValue(values.documentReturnDate),
       overdueFine: values.overdueFine,
       sentImmigration: values.sentImmigration,
       returnBook: values.returnBook,
@@ -466,7 +568,7 @@ const toVisaRunPayload = (values, formId = "") => ({
   data: {
     recordedBy: values.recordedBy || "",
     company: "",
-    startDate: values.startDate || "",
+    startDate: normalizeDateInputValue(values.startDate),
     personalInfo: {
       fullName: values.workerName,
       gender: values.gender,
@@ -479,10 +581,10 @@ const toVisaRunPayload = (values, formId = "") => ({
     },
     followupType: "visarun",
     followup: {
-      startDate: values.startDate,
+      startDate: normalizeDateInputValue(values.startDate),
       endDate: normalizeDateInputValue(values.endDate) || computeFollowupDateFromStart(values.startDate),
-      documentReceivedDate: values.documentReceivedDate,
-      documentReturnDate: values.documentReturnDate,
+      documentReceivedDate: normalizeDateInputValue(values.documentReceivedDate),
+      documentReturnDate: normalizeDateInputValue(values.documentReturnDate),
       visaOverdue: values.visaOverdue,
       sentImmigration: values.sentImmigration,
       returnBook: values.returnBook,
@@ -497,16 +599,18 @@ const toMouLaosPayload = (values, formId = "") => ({
   formId,
   formType: "mouLaos",
   formTypeLabel: "MOU ลาว",
-  displayName: `MOU ลาว - ${values.workerName || "-"}`,
+  displayName: `MOU ลาว - ${values.workerName || "-"}${values.employerName ? ` (${values.employerName})` : ""}`,
   status: "final",
   updatedAt: new Date().toISOString(),
   data: {
     recordedBy: values.recordedBy || "",
     company: "",
-    startDate: values.startDate || "",
+    startDate: normalizeDateInputValue(values.startDate),
     personalInfo: {
       fullName: values.workerName,
       alienId: values.alienId,
+      employerName: values.employerName || "",
+      workPermitNumber: values.workPermitNumber || "",
     },
     caseStatus: {
       status: "registered",
@@ -515,10 +619,10 @@ const toMouLaosPayload = (values, formId = "") => ({
     },
     followupType: "moulaos",
     followup: {
-      startDate: values.startDate,
+      startDate: normalizeDateInputValue(values.startDate),
       endDate: normalizeDateInputValue(values.endDate) || addYears(values.startDate, 2),
-      documentReceivedDate: values.documentReceivedDate,
-      documentReturnDate: values.documentReturnDate,
+      documentReceivedDate: normalizeDateInputValue(values.documentReceivedDate),
+      documentReturnDate: normalizeDateInputValue(values.documentReturnDate),
     },
   },
 });
@@ -533,7 +637,7 @@ const toReceiveDocsPayload = (values, formId = "") => ({
   data: {
     recordedBy: values.receiverName || "",
     company: "",
-    startDate: values.receiveDate || "",
+    startDate: normalizeDateInputValue(values.receiveDate),
     personalInfo: {
       fullName: values.workerName,
       employerName: values.employerName,
@@ -558,7 +662,7 @@ const toReturnDocsPayload = (values, formId = "") => ({
   data: {
     recordedBy: values.returnSenderName || "",
     company: "",
-    startDate: values.returnDate || "",
+    startDate: normalizeDateInputValue(values.returnDate),
     personalInfo: {
       fullName: values.workerName,
       employerName: values.employerName,
@@ -580,6 +684,8 @@ const runReport90Page = () => {
   const nextDate = document.getElementById("r90NextDate");
   const status = document.getElementById("report90Status");
   const list = document.getElementById("report90List");
+  const exportButton = document.getElementById("exportReport90");
+  const searchInput = document.getElementById("report90Search");
   const alert = document.getElementById("report90Alert");
   const modal = setupModal();
   let rows = [];
@@ -620,10 +726,10 @@ const runReport90Page = () => {
     document.getElementById("r90Gender").value = item.gender || "";
     document.getElementById("r90Employer").value = item.employerName || "";
     document.getElementById("r90RecordedBy").value = item.recordedBy || "";
-    startDate.value = item.startDate || "";
-    nextDate.value = item.nextDate || "";
-    document.getElementById("r90DocReceiveDate").value = item.documentReceivedDate || "";
-    document.getElementById("r90DocReturnDate").value = item.documentReturnDate || "";
+    startDate.value = normalizeDateInputValue(item.startDate);
+    nextDate.value = normalizeDateInputValue(item.nextDate);
+    document.getElementById("r90DocReceiveDate").value = normalizeDateInputValue(item.documentReceivedDate);
+    document.getElementById("r90DocReturnDate").value = normalizeDateInputValue(item.documentReturnDate);
     document.getElementById("r90Overdue").checked = !!item.overdueFine;
     document.getElementById("r90SentImm").checked = !!item.sentImmigration;
     document.getElementById("r90ReturnBook").checked = !!item.returnBook;
@@ -662,12 +768,15 @@ const runReport90Page = () => {
       alert.classList.add("is-hidden");
     }
 
-    rows.forEach((item) => {
+    const keyword = String(searchInput?.value || "").trim().toLowerCase();
+    const filteredRows = keyword ? rows.filter((item) => String(item.workerName || "").toLowerCase().includes(keyword)) : rows;
+
+    filteredRows.forEach((item) => {
       const cycleDays = diffDaysBetween(item.startDate, item.nextDate);
       const cycleText = cycleDays === null ? "-" : `${fmtDate(item.nextDate)} (${cycleDays} วัน)`;
       const cycleTone = getDeadlineToneByRemainingDays(cycleDays);
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${getAggregateBookStats(rows, item, "report90").latestText}</td><td>${fmtDate(item.nextDate)}</td><td><span class="deadline-box ${cycleTone}">${cycleText}</span></td>`;
+      tr.innerHTML = `<td><input type="checkbox" data-export-select aria-label="เลือกรายการ" /></td><td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${getAggregateBookStats(rows, item, "report90").latestText}</td><td>${fmtDate(item.nextDate)}</td><td><span class="deadline-box ${cycleTone}">${cycleText}</span></td>`;
       const actionCell = document.createElement("td");
       const actionWrap = document.createElement("div");
       actionWrap.className = "table-actions";
@@ -690,6 +799,22 @@ const runReport90Page = () => {
       tr.appendChild(actionCell);
       list.appendChild(tr);
     });
+
+    if (!filteredRows.length) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = '<td colspan="8">ยังไม่มีข้อมูล</td>';
+      list.appendChild(tr);
+    }
+
+    const checkAll = list.closest("table")?.querySelector("thead [data-export-check-all]");
+    if (checkAll) {
+      checkAll.checked = false;
+      checkAll.onchange = () => {
+        list.querySelectorAll("input[data-export-select]").forEach((cb) => {
+          cb.checked = checkAll.checked;
+        });
+      };
+    }
   };
 
   const refreshRows = async () => {
@@ -712,6 +837,11 @@ const runReport90Page = () => {
   };
   startDate?.addEventListener("change", updateReport90NextDate);
   startDate?.addEventListener("input", updateReport90NextDate);
+
+  exportButton?.addEventListener("click", () => {
+    exportTableToCsv({ listElement: list, filePrefix: "report90-records", statusElement: status });
+  });
+  searchInput?.addEventListener("input", renderRows);
 
   form?.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -738,7 +868,8 @@ const runReport90Page = () => {
 
     try {
       const submittingEditId = editFormId || requestedEditId || "";
-      startDate.value = values.startDate;
+      startDate.value = normalizeDateInputValue(values.startDate);
+      nextDate.value = normalizeDateInputValue(values.nextDate);
       await saveRecord(toReport90Payload(values, submittingEditId));
       const wasEdit = Boolean(submittingEditId);
       resetForm();
@@ -765,6 +896,8 @@ const runVisaPage = () => {
   const endDate = document.getElementById("visaEndDate");
   const status = document.getElementById("visaStatus");
   const list = document.getElementById("visaList");
+  const exportButton = document.getElementById("exportVisaRun");
+  const searchInput = document.getElementById("visaRunSearch");
   const alert = document.getElementById("visaAlert");
   const modal = setupModal();
   let rows = [];
@@ -807,10 +940,10 @@ const runVisaPage = () => {
     document.getElementById("visaGender").value = item.gender || "";
     document.getElementById("visaEmployer").value = item.employerName || "";
     document.getElementById("visaRecordedBy").value = item.recordedBy || "";
-    startDate.value = item.startDate || "";
-    endDate.value = item.endDate || "";
-    document.getElementById("visaDocReceiveDate").value = item.documentReceivedDate || "";
-    document.getElementById("visaDocReturnDate").value = item.documentReturnDate || "";
+    startDate.value = normalizeDateInputValue(item.startDate);
+    endDate.value = normalizeDateInputValue(item.endDate);
+    document.getElementById("visaDocReceiveDate").value = normalizeDateInputValue(item.documentReceivedDate);
+    document.getElementById("visaDocReturnDate").value = normalizeDateInputValue(item.documentReturnDate);
     document.getElementById("visaOverdue").checked = !!item.visaOverdue;
     document.getElementById("visaSentImm").checked = !!item.sentImmigration;
     document.getElementById("visaReturnBook").checked = !!item.returnBook;
@@ -853,12 +986,15 @@ const runVisaPage = () => {
       alert.classList.add("is-hidden");
     }
 
-    rows.forEach((item) => {
+    const keyword = String(searchInput?.value || "").trim().toLowerCase();
+    const filteredRows = keyword ? rows.filter((item) => String(item.workerName || "").toLowerCase().includes(keyword)) : rows;
+
+    filteredRows.forEach((item) => {
       const cycleDays = diffDaysBetween(item.startDate, item.endDate);
       const cycleText = cycleDays === null ? "-" : `${fmtDate(item.endDate)} (${cycleDays} วัน)`;
       const cycleTone = getDeadlineToneByRemainingDays(cycleDays);
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${getAggregateBookStats(rows, item, "visarun").latestText}</td><td>${fmtDate(item.endDate)}</td><td><span class="deadline-box ${cycleTone}">${cycleText}</span></td>`;
+      tr.innerHTML = `<td><input type="checkbox" data-export-select aria-label="เลือกรายการ" /></td><td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${getAggregateBookStats(rows, item, "visarun").latestText}</td><td>${fmtDate(item.endDate)}</td><td><span class="deadline-box ${cycleTone}">${cycleText}</span></td>`;
       const actionCell = document.createElement("td");
       const actionWrap = document.createElement("div");
       actionWrap.className = "table-actions";
@@ -881,6 +1017,22 @@ const runVisaPage = () => {
       tr.appendChild(actionCell);
       list.appendChild(tr);
     });
+
+    if (!filteredRows.length) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = '<td colspan="8">ยังไม่มีข้อมูล</td>';
+      list.appendChild(tr);
+    }
+
+    const checkAll = list.closest("table")?.querySelector("thead [data-export-check-all]");
+    if (checkAll) {
+      checkAll.checked = false;
+      checkAll.onchange = () => {
+        list.querySelectorAll("input[data-export-select]").forEach((cb) => {
+          cb.checked = checkAll.checked;
+        });
+      };
+    }
   };
 
   const refreshRows = async () => {
@@ -903,6 +1055,11 @@ const runVisaPage = () => {
   };
   startDate?.addEventListener("change", updateVisaEndDate);
   startDate?.addEventListener("input", updateVisaEndDate);
+
+  exportButton?.addEventListener("click", () => {
+    exportTableToCsv({ listElement: list, filePrefix: "visarun-records", statusElement: status });
+  });
+  searchInput?.addEventListener("input", renderRows);
 
   form?.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -931,7 +1088,8 @@ const runVisaPage = () => {
 
     try {
       const submittingEditId = editFormId || requestedEditId || "";
-      startDate.value = values.startDate;
+      startDate.value = normalizeDateInputValue(values.startDate);
+      endDate.value = normalizeDateInputValue(values.endDate);
       await saveRecord(toVisaRunPayload(values, submittingEditId));
       const wasEdit = Boolean(submittingEditId);
       resetForm();
@@ -958,6 +1116,8 @@ const runMouLaosPage = () => {
   const endDate = document.getElementById("mouEndDate");
   const status = document.getElementById("mouStatus");
   const list = document.getElementById("mouList");
+  const exportButton = document.getElementById("exportMouLaos");
+  const searchInput = document.getElementById("mouSearch");
   const alert = document.getElementById("mouAlert");
   const modal = setupModal();
   let rows = [];
@@ -979,6 +1139,8 @@ const runMouLaosPage = () => {
       id: record.formId,
       workerName: info.fullName || "",
       alienId: info.alienId || "",
+      employerName: info.employerName || "",
+      workPermitNumber: info.workPermitNumber || "",
       recordedBy: record?.data?.recordedBy || "",
       startDate: startDateValue,
       endDate: endDateValue,
@@ -990,11 +1152,13 @@ const runMouLaosPage = () => {
   const fillForEdit = (item) => {
     document.getElementById("mouWorkerName").value = item.workerName || "";
     document.getElementById("mouAlienId").value = item.alienId || "";
+    document.getElementById("mouEmployerName").value = item.employerName || "";
+    document.getElementById("mouWorkPermitNumber").value = item.workPermitNumber || "";
     document.getElementById("mouRecordedBy").value = item.recordedBy || "";
-    startDate.value = item.startDate || "";
-    endDate.value = item.endDate || "";
-    document.getElementById("mouDocReceiveDate").value = item.documentReceivedDate || "";
-    document.getElementById("mouDocReturnDate").value = item.documentReturnDate || "";
+    startDate.value = normalizeDateInputValue(item.startDate);
+    endDate.value = normalizeDateInputValue(item.endDate);
+    document.getElementById("mouDocReceiveDate").value = normalizeDateInputValue(item.documentReceivedDate);
+    document.getElementById("mouDocReturnDate").value = normalizeDateInputValue(item.documentReturnDate);
     editFormId = item.id;
   };
 
@@ -1003,8 +1167,10 @@ const runMouLaosPage = () => {
       ["เลขฟอร์ม", item.id || "-"],
       ["ชื่อต่างด้าว", item.workerName || "-"],
       ["เลขประจำตัว", item.alienId || "-"],
-      ["วันเริ่ม MOU", fmtDate(item.startDate)],
-      ["วันครบกำหนด MOU", fmtDate(item.endDate)],
+      ["ชื่อนายจ้าง", item.employerName || "-"],
+      ["เลขใบอนุญาตทำงาน", item.workPermitNumber || "-"],
+      ["วันเริ่ม Visa", fmtDate(item.startDate)],
+      ["วันหมด Visa", fmtDate(item.endDate)],
       ["วันรับเอกสาร", fmtDate(item.documentReceivedDate)],
       ["วันคืนเอกสาร", fmtDate(item.documentReturnDate)],
       ["ผู้บันทึกข้อมูล", item.recordedBy || "-"],
@@ -1037,9 +1203,14 @@ const runMouLaosPage = () => {
       }
     }
 
-    rows.forEach((item) => {
+    const keyword = String(searchInput?.value || "").trim().toLowerCase();
+    const filteredRows = keyword
+      ? rows.filter((item) => [item.workerName, item.employerName, item.alienId, item.workPermitNumber].some((value) => String(value || "").toLowerCase().includes(keyword)))
+      : rows;
+
+    filteredRows.forEach((item) => {
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.alienId || "-"}</td><td>${fmtDate(item.startDate)}</td><td>${fmtDate(item.endDate)}</td><td>${fmtDate(item.documentReceivedDate)}</td><td>${fmtDate(item.documentReturnDate)}</td><td>${item.recordedBy || "-"}</td><td><span class="deadline-box">${formatRemainingYMD(item.endDate)}</span></td>`;
+      tr.innerHTML = `<td><input type="checkbox" data-export-select aria-label="เลือกรายการ" /></td><td>${item.workerName || "-"}</td><td>${item.alienId || "-"}</td><td>${item.employerName || "-"}</td><td>${item.workPermitNumber || "-"}</td><td>${fmtDate(item.startDate)}</td><td>${fmtDate(item.endDate)}</td><td>${fmtDate(item.documentReceivedDate)}</td><td>${fmtDate(item.documentReturnDate)}</td><td>${item.recordedBy || "-"}</td><td><span class="deadline-box">${formatRemainingYMD(item.endDate)}</span></td>`;
       const actionCell = document.createElement("td");
       const actionWrap = document.createElement("div");
       actionWrap.className = "table-actions";
@@ -1061,7 +1232,10 @@ const runMouLaosPage = () => {
       deleteButton.className = "danger";
       deleteButton.textContent = "ลบ";
       deleteButton.addEventListener("click", async () => {
-        if (!window.confirm(`ยืนยันการลบข้อมูล MOU ลาว ของ ${item.workerName || "-"} ?`)) return;
+        const shouldDelete = await showConfirmDialog({
+          message: `ยืนยันการลบข้อมูล MOU ลาว ของ ${item.workerName || "-"} ?`,
+        });
+        if (!shouldDelete) return;
         await deleteRecordById(item.id);
         await refreshRows();
       });
@@ -1072,10 +1246,20 @@ const runMouLaosPage = () => {
       list.appendChild(tr);
     });
 
-    if (!rows.length) {
+    if (!filteredRows.length) {
       const tr = document.createElement("tr");
-      tr.innerHTML = '<td colspan="9">ยังไม่มีข้อมูล</td>';
+      tr.innerHTML = '<td colspan="12">ยังไม่มีข้อมูล</td>';
       list.appendChild(tr);
+    }
+
+    const checkAll = list.closest("table")?.querySelector("thead [data-export-check-all]");
+    if (checkAll) {
+      checkAll.checked = false;
+      checkAll.onchange = () => {
+        list.querySelectorAll("input[data-export-select]").forEach((cb) => {
+          cb.checked = checkAll.checked;
+        });
+      };
     }
   };
 
@@ -1087,11 +1271,18 @@ const runMouLaosPage = () => {
   startDate?.addEventListener("change", updateMouEndDate);
   startDate?.addEventListener("input", updateMouEndDate);
 
+  exportButton?.addEventListener("click", () => {
+    exportTableToCsv({ listElement: list, filePrefix: "moulaos-records", statusElement: status });
+  });
+  searchInput?.addEventListener("input", renderRows);
+
   form?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const values = {
       workerName: document.getElementById("mouWorkerName").value.trim(),
       alienId: document.getElementById("mouAlienId").value.trim(),
+      employerName: document.getElementById("mouEmployerName").value.trim(),
+      workPermitNumber: document.getElementById("mouWorkPermitNumber").value.trim(),
       recordedBy: document.getElementById("mouRecordedBy").value.trim(),
       startDate: startDate.value,
       endDate: endDate.value,
@@ -1100,15 +1291,12 @@ const runMouLaosPage = () => {
     };
 
     values.startDate = normalizeDateInputValue(values.startDate);
-    if (!values.startDate) {
-      status.textContent = "กรุณาใส่วันเริ่ม MOU ก่อนบันทึก";
-      status.classList.add("error");
-      return;
-    }
+    values.endDate = normalizeDateInputValue(values.endDate);
 
     try {
       const submittingEditId = editFormId || requestedEditId || "";
-      startDate.value = values.startDate;
+      startDate.value = normalizeDateInputValue(values.startDate);
+      endDate.value = normalizeDateInputValue(values.endDate);
       await saveRecord(toMouLaosPayload(values, submittingEditId));
       const wasEdit = Boolean(submittingEditId);
       resetForm();
@@ -1132,6 +1320,8 @@ const runReceiveDocsPage = () => {
   const form = document.getElementById("receiveDocsForm");
   const status = document.getElementById("receiveDocsStatus");
   const list = document.getElementById("receiveDocsList");
+  const exportButton = document.getElementById("exportReceiveDocs");
+  const searchInput = document.getElementById("receiveDocsSearch");
   const modal = setupModal();
   let rows = [];
   let editFormId = "";
@@ -1160,7 +1350,7 @@ const runReceiveDocsPage = () => {
     document.getElementById("receiveWorkerName").value = item.workerName || "";
     document.getElementById("receiveEmployerName").value = item.employerName || "";
     document.getElementById("receiveTaskType").value = item.taskType || "";
-    document.getElementById("receiveDate").value = item.receiveDate || "";
+    document.getElementById("receiveDate").value = normalizeDateInputValue(item.receiveDate);
     document.getElementById("receiveBy").value = item.receiverName || "";
     editFormId = String(item.id || "");
   };
@@ -1177,9 +1367,12 @@ const runReceiveDocsPage = () => {
 
   const renderRows = () => {
     list.innerHTML = "";
-    rows.forEach((item) => {
+    const keyword = String(searchInput?.value || "").trim().toLowerCase();
+    const filteredRows = keyword ? rows.filter((item) => String(item.workerName || "").toLowerCase().includes(keyword)) : rows;
+
+    filteredRows.forEach((item) => {
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.taskType || "-"}</td><td>${fmtDate(item.receiveDate)}</td><td>${item.receiverName || "-"}</td>`;
+      tr.innerHTML = `<td><input type="checkbox" data-export-select aria-label="เลือกรายการ" /></td><td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.taskType || "-"}</td><td>${fmtDate(item.receiveDate)}</td><td>${item.receiverName || "-"}</td>`;
       const actionCell = document.createElement("td");
       const actionWrap = document.createElement("div");
       actionWrap.className = "table-actions";
@@ -1198,7 +1391,10 @@ const runReceiveDocsPage = () => {
       deleteButton.className = "danger";
       deleteButton.textContent = "ลบ";
       deleteButton.addEventListener("click", async () => {
-        if (!window.confirm(`ยืนยันการลบข้อมูลรับเอกสาร ของ ${item.workerName || "-"} ?`)) return;
+        const shouldDelete = await showConfirmDialog({
+          message: `ยืนยันการลบข้อมูลรับเอกสาร ของ ${item.workerName || "-"} ?`,
+        });
+        if (!shouldDelete) return;
         await deleteRecordById(item.id);
         await refreshRows();
       });
@@ -1207,10 +1403,20 @@ const runReceiveDocsPage = () => {
       tr.appendChild(actionCell);
       list.appendChild(tr);
     });
-    if (!rows.length) {
+    if (!filteredRows.length) {
       const tr = document.createElement("tr");
-      tr.innerHTML = '<td colspan="6">ยังไม่มีข้อมูล</td>';
+      tr.innerHTML = '<td colspan="7">ยังไม่มีข้อมูล</td>';
       list.appendChild(tr);
+    }
+
+    const checkAll = list.closest("table")?.querySelector("thead [data-export-check-all]");
+    if (checkAll) {
+      checkAll.checked = false;
+      checkAll.onchange = () => {
+        list.querySelectorAll("input[data-export-select]").forEach((cb) => {
+          cb.checked = checkAll.checked;
+        });
+      };
     }
   };
 
@@ -1223,6 +1429,11 @@ const runReceiveDocsPage = () => {
       if (target) fillForEdit(target);
     }
   };
+
+  exportButton?.addEventListener("click", () => {
+    exportTableToCsv({ listElement: list, filePrefix: "receivedocs-records", statusElement: status });
+  });
+  searchInput?.addEventListener("input", renderRows);
 
   form?.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -1263,6 +1474,7 @@ const runReturnDocsPage = () => {
   const form = document.getElementById("returnDocsForm");
   const status = document.getElementById("returnDocsStatus");
   const list = document.getElementById("returnDocsList");
+  const exportButton = document.getElementById("exportReturnDocs");
   const modal = setupModal();
   let rows = [];
   let editFormId = "";
@@ -1291,7 +1503,7 @@ const runReturnDocsPage = () => {
     document.getElementById("returnWorkerName").value = item.workerName || "";
     document.getElementById("returnEmployerName").value = item.employerName || "";
     document.getElementById("returnTaskType").value = item.taskType || "";
-    document.getElementById("returnDate").value = item.returnDate || "";
+    document.getElementById("returnDate").value = normalizeDateInputValue(item.returnDate);
     document.getElementById("returnBy").value = item.returnSenderName || "";
     editFormId = String(item.id || "");
   };
@@ -1310,7 +1522,7 @@ const runReturnDocsPage = () => {
     list.innerHTML = "";
     rows.forEach((item) => {
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.taskType || "-"}</td><td>${fmtDate(item.returnDate)}</td><td>${item.returnSenderName || "-"}</td>`;
+      tr.innerHTML = `<td><input type="checkbox" data-export-select aria-label="เลือกรายการ" /></td><td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.taskType || "-"}</td><td>${fmtDate(item.returnDate)}</td><td>${item.returnSenderName || "-"}</td>`;
       const actionCell = document.createElement("td");
       const actionWrap = document.createElement("div");
       actionWrap.className = "table-actions";
@@ -1329,7 +1541,10 @@ const runReturnDocsPage = () => {
       deleteButton.className = "danger";
       deleteButton.textContent = "ลบ";
       deleteButton.addEventListener("click", async () => {
-        if (!window.confirm(`ยืนยันการลบข้อมูลส่งคืนเอกสาร ของ ${item.workerName || "-"} ?`)) return;
+        const shouldDelete = await showConfirmDialog({
+          message: `ยืนยันการลบข้อมูลส่งคืนเอกสาร ของ ${item.workerName || "-"} ?`,
+        });
+        if (!shouldDelete) return;
         await deleteRecordById(item.id);
         await refreshRows();
       });
@@ -1340,8 +1555,18 @@ const runReturnDocsPage = () => {
     });
     if (!rows.length) {
       const tr = document.createElement("tr");
-      tr.innerHTML = '<td colspan="6">ยังไม่มีข้อมูล</td>';
+      tr.innerHTML = '<td colspan="7">ยังไม่มีข้อมูล</td>';
       list.appendChild(tr);
+    }
+
+    const checkAll = list.closest("table")?.querySelector("thead [data-export-check-all]");
+    if (checkAll) {
+      checkAll.checked = false;
+      checkAll.onchange = () => {
+        list.querySelectorAll("input[data-export-select]").forEach((cb) => {
+          cb.checked = checkAll.checked;
+        });
+      };
     }
   };
 
@@ -1354,6 +1579,10 @@ const runReturnDocsPage = () => {
       if (target) fillForEdit(target);
     }
   };
+
+  exportButton?.addEventListener("click", () => {
+    exportTableToCsv({ listElement: list, filePrefix: "returndocs-records", statusElement: status });
+  });
 
   form?.addEventListener("submit", async (event) => {
     event.preventDefault();

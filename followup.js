@@ -599,7 +599,7 @@ const toMouLaosPayload = (values, formId = "") => ({
   formId,
   formType: "mouLaos",
   formTypeLabel: "MOU ลาว",
-  displayName: `MOU ลาว - ${values.workerName || "-"}`,
+  displayName: `MOU ลาว - ${values.workerName || "-"}${values.employerName ? ` (${values.employerName})` : ""}`,
   status: "final",
   updatedAt: new Date().toISOString(),
   data: {
@@ -609,6 +609,8 @@ const toMouLaosPayload = (values, formId = "") => ({
     personalInfo: {
       fullName: values.workerName,
       alienId: values.alienId,
+      employerName: values.employerName || "",
+      workPermitNumber: values.workPermitNumber || "",
     },
     caseStatus: {
       status: "registered",
@@ -1137,6 +1139,8 @@ const runMouLaosPage = () => {
       id: record.formId,
       workerName: info.fullName || "",
       alienId: info.alienId || "",
+      employerName: info.employerName || "",
+      workPermitNumber: info.workPermitNumber || "",
       recordedBy: record?.data?.recordedBy || "",
       startDate: startDateValue,
       endDate: endDateValue,
@@ -1148,6 +1152,8 @@ const runMouLaosPage = () => {
   const fillForEdit = (item) => {
     document.getElementById("mouWorkerName").value = item.workerName || "";
     document.getElementById("mouAlienId").value = item.alienId || "";
+    document.getElementById("mouEmployerName").value = item.employerName || "";
+    document.getElementById("mouWorkPermitNumber").value = item.workPermitNumber || "";
     document.getElementById("mouRecordedBy").value = item.recordedBy || "";
     startDate.value = normalizeDateInputValue(item.startDate);
     endDate.value = normalizeDateInputValue(item.endDate);
@@ -1161,6 +1167,8 @@ const runMouLaosPage = () => {
       ["เลขฟอร์ม", item.id || "-"],
       ["ชื่อต่างด้าว", item.workerName || "-"],
       ["เลขประจำตัว", item.alienId || "-"],
+      ["ชื่อนายจ้าง", item.employerName || "-"],
+      ["เลขใบอนุญาตทำงาน", item.workPermitNumber || "-"],
       ["วันเริ่ม Visa", fmtDate(item.startDate)],
       ["วันหมด Visa", fmtDate(item.endDate)],
       ["วันรับเอกสาร", fmtDate(item.documentReceivedDate)],
@@ -1196,11 +1204,13 @@ const runMouLaosPage = () => {
     }
 
     const keyword = String(searchInput?.value || "").trim().toLowerCase();
-    const filteredRows = keyword ? rows.filter((item) => String(item.workerName || "").toLowerCase().includes(keyword)) : rows;
+    const filteredRows = keyword
+      ? rows.filter((item) => [item.workerName, item.employerName, item.alienId, item.workPermitNumber].some((value) => String(value || "").toLowerCase().includes(keyword)))
+      : rows;
 
     filteredRows.forEach((item) => {
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td><input type="checkbox" data-export-select aria-label="เลือกรายการ" /></td><td>${item.workerName || "-"}</td><td>${item.alienId || "-"}</td><td>${fmtDate(item.startDate)}</td><td>${fmtDate(item.endDate)}</td><td>${fmtDate(item.documentReceivedDate)}</td><td>${fmtDate(item.documentReturnDate)}</td><td>${item.recordedBy || "-"}</td><td><span class="deadline-box">${formatRemainingYMD(item.endDate)}</span></td>`;
+      tr.innerHTML = `<td><input type="checkbox" data-export-select aria-label="เลือกรายการ" /></td><td>${item.workerName || "-"}</td><td>${item.alienId || "-"}</td><td>${item.employerName || "-"}</td><td>${item.workPermitNumber || "-"}</td><td>${fmtDate(item.startDate)}</td><td>${fmtDate(item.endDate)}</td><td>${fmtDate(item.documentReceivedDate)}</td><td>${fmtDate(item.documentReturnDate)}</td><td>${item.recordedBy || "-"}</td><td><span class="deadline-box">${formatRemainingYMD(item.endDate)}</span></td>`;
       const actionCell = document.createElement("td");
       const actionWrap = document.createElement("div");
       actionWrap.className = "table-actions";
@@ -1238,7 +1248,7 @@ const runMouLaosPage = () => {
 
     if (!filteredRows.length) {
       const tr = document.createElement("tr");
-      tr.innerHTML = '<td colspan="10">ยังไม่มีข้อมูล</td>';
+      tr.innerHTML = '<td colspan="12">ยังไม่มีข้อมูล</td>';
       list.appendChild(tr);
     }
 
@@ -1271,6 +1281,8 @@ const runMouLaosPage = () => {
     const values = {
       workerName: document.getElementById("mouWorkerName").value.trim(),
       alienId: document.getElementById("mouAlienId").value.trim(),
+      employerName: document.getElementById("mouEmployerName").value.trim(),
+      workPermitNumber: document.getElementById("mouWorkPermitNumber").value.trim(),
       recordedBy: document.getElementById("mouRecordedBy").value.trim(),
       startDate: startDate.value,
       endDate: endDate.value,

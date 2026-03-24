@@ -139,6 +139,8 @@ const FORM_DRAFT_KEY = "workerFormDraft";
 const API_BASE_KEY = "recordsApiBaseUrl";
 const TODAY_TASK_CUSTOM_KEY = "todayTaskCustomItems";
 const TODAY_TASK_DONE_KEY = "todayTaskDoneItems";
+const RECORDS_BACKUP_KEY = "workerRecordsBackup";
+const RECORDS_BACKUP_HISTORY_KEY = "workerRecordsBackupHistory";
 const DIRTY_RECORD_IDS_KEY = "dirtyRecordIds";
 const DIRTY_RECORD_TTL_MS = 10 * 60 * 1000;
 
@@ -1020,11 +1022,29 @@ const readJsonStorage = (key, fallback) => {
   }
 };
 
+const readArrayStorage = (key) => {
+  const parsed = readJsonStorage(key, null);
+  return Array.isArray(parsed) ? parsed : null;
+};
+
 const loadRecords = () => {
-  const records = readJsonStorage("workerRecords", []);
+  let records = readJsonStorage("workerRecords", []);
   if (!Array.isArray(records)) {
-    localStorage.removeItem("workerRecords");
-    return [];
+    records = [];
+  }
+
+  if (!records.length) {
+    const backupRecords = readArrayStorage(RECORDS_BACKUP_KEY);
+    const backupHistory = readJsonStorage(RECORDS_BACKUP_HISTORY_KEY, []);
+    const fromHistory = Array.isArray(backupHistory)
+      ? backupHistory.find((item) => Array.isArray(item?.records) && item.records.length)?.records
+      : null;
+    const legacyRecords = readArrayStorage("records");
+    const recovered = backupRecords?.length ? backupRecords : fromHistory?.length ? fromHistory : legacyRecords?.length ? legacyRecords : null;
+    if (recovered) {
+      records = recovered;
+      saveRecords(records);
+    }
   }
   const normalized = records
     .filter((record) => record && typeof record === "object")
@@ -1139,6 +1159,14 @@ const refreshNameSuggestions = () => {
 
 const saveRecords = (records) => {
   localStorage.setItem("workerRecords", JSON.stringify(records));
+  localStorage.setItem(RECORDS_BACKUP_KEY, JSON.stringify(records));
+  const history = readJsonStorage(RECORDS_BACKUP_HISTORY_KEY, []);
+  const nextHistory = Array.isArray(history) ? history : [];
+  nextHistory.unshift({
+    savedAt: new Date().toISOString(),
+    records,
+  });
+  localStorage.setItem(RECORDS_BACKUP_HISTORY_KEY, JSON.stringify(nextHistory.slice(0, 8)));
 };
 
 const canUseServerSync = () => Boolean(API_BASE_URL) || window.location.protocol.startsWith("http");

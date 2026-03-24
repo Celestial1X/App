@@ -300,6 +300,19 @@
         <p data-i18n="loadingText">กำลังโหลด...</p>
       </div>
     </div>
+    <script>
+      (() => {
+        const hideLoader = () => {
+          const loader = document.getElementById("pageLoader");
+          if (!loader) return;
+          loader.classList.remove("is-active");
+          loader.setAttribute("aria-hidden", "true");
+        };
+        setTimeout(hideLoader, 3800);
+        document.addEventListener("DOMContentLoaded", () => setTimeout(hideLoader, 80));
+        window.addEventListener("pageshow", () => setTimeout(hideLoader, 80));
+      })();
+    </script>
 
     <script src="app.js?v=20260211"></script>
       <script src="datepicker.js?v=20260211"></script>

@@ -106,6 +106,19 @@
         <p data-i18n="loadingText">กำลังโหลด...</p>
       </div>
     </div>
+    <script>
+      (() => {
+        const hideLoader = () => {
+          const loader = document.getElementById("pageLoader");
+          if (!loader) return;
+          loader.classList.remove("is-active");
+          loader.setAttribute("aria-hidden", "true");
+        };
+        setTimeout(hideLoader, 3800);
+        document.addEventListener("DOMContentLoaded", () => setTimeout(hideLoader, 80));
+        window.addEventListener("pageshow", () => setTimeout(hideLoader, 80));
+      })();
+    </script>
 
     <div class="modal" id="recordModal" aria-hidden="true">
       <div class="modal-content">

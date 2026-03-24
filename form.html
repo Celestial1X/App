@@ -22,13 +22,13 @@
 
     <main class="container">
       <nav class="page-tabs">
+        <a class="tab-btn" href="receivedocs.html">รับเอกสาร</a>
         <a class="tab-btn" href="index.html" data-i18n="tabLookup">ค้นหาข้อมูล</a>
         <a class="tab-btn" href="records.html" data-i18n="tabRecords">ข้อมูลบันทึก</a>
         <a class="tab-btn is-active" href="form.html" data-i18n="tabForm">หน้าทำรายการต่างๆ</a>
         <a class="tab-btn" href="report90.html">รายงานตัว 90 วัน</a>
         <a class="tab-btn" href="visarun.html">Visa run</a>
         <a class="tab-btn" href="nextform.html">MOU ลาว</a>
-        <a class="tab-btn" href="receivedocs.html">รับเอกสาร</a>
         <a class="tab-btn" href="returndocs.html">ส่งคืนเอกสาร</a>
       </nav>
 
@@ -154,6 +154,10 @@
                   <input id="employerEmail" type="email" placeholder="company@email.com" />
                 </div>
                 <div class="form-row">
+                  <label for="employerEmailCode">รหัสเมลนายจ้าง</label>
+                  <input id="employerEmailCode" type="text" placeholder="กรอกรหัสเมลนายจ้าง" />
+                </div>
+                <div class="form-row">
                   <label for="employerAddress">ที่อยู่นายจ้าง</label>
                   <textarea id="employerAddress" rows="2" placeholder="บ้านเลขที่/ถนน/ตำบล/อำเภอ/จังหวัด/รหัสไปรษณีย์"></textarea>
                 </div>
@@ -174,14 +178,14 @@
             <div class="form-row">
               <label>ประเภทงาน</label>
               <div class="radio-grid">
-                <label class="radio-item"><input type="radio" name="formType" value="changeEmployer" checked /><span>เปลี่ยนนายจ้าง</span></label>
-                <label class="radio-item"><input type="radio" name="formType" value="residence37_38" /><span>แจ้งที่พัก 37,38</span></label>
-                <label class="radio-item"><input type="radio" name="formType" value="visaStamp" /><span>ลงตรา Visa</span></label>
-                <label class="radio-item"><input type="radio" name="formType" value="ciReport" /><span>ทำเล่ม CI</span></label>
-                <label class="radio-item"><input type="radio" name="formType" value="workPermitRenewal" /><span>ต่ออนุญาตทำงานแรงงานต่างด้าว</span></label>
-                <label class="radio-item"><input type="radio" name="formType" value="noDocsRegister" /><span>ขึ้นทะเบียนคนไม่มีเอกสาร</span></label>
-                <label class="radio-item"><input type="radio" name="formType" value="exitNotice" /><span>แจ้งออก</span></label>
-                <label class="radio-item"><input type="radio" name="formType" value="other" /><span>อื่น ๆ</span></label>
+                <label class="radio-item"><input type="checkbox" name="formType" value="changeEmployer" checked /><span>เปลี่ยนนายจ้าง</span></label>
+                <label class="radio-item"><input type="checkbox" name="formType" value="residence37_38" /><span>แจ้งที่พัก 37,38</span></label>
+                <label class="radio-item"><input type="checkbox" name="formType" value="visaStamp" /><span>ลงตรา Visa</span></label>
+                <label class="radio-item"><input type="checkbox" name="formType" value="ciReport" /><span>ทำเล่ม CI</span></label>
+                <label class="radio-item"><input type="checkbox" name="formType" value="workPermitRenewal" /><span>ต่ออนุญาตทำงานแรงงานต่างด้าว</span></label>
+                <label class="radio-item"><input type="checkbox" name="formType" value="noDocsRegister" /><span>ขึ้นทะเบียนคนไม่มีเอกสาร</span></label>
+                <label class="radio-item"><input type="checkbox" name="formType" value="exitNotice" /><span>แจ้งออก</span></label>
+                <label class="radio-item"><input type="checkbox" name="formType" value="other" /><span>อื่น ๆ</span></label>
               </div>
               <div class="form-row is-hidden" id="formTypeOtherRow">
                 <label for="formTypeOtherDetail">ระบุรายละเอียดอื่น ๆ</label>
@@ -260,9 +264,16 @@
               <div class="form-row">
                 <label for="attachmentsInput">เพิ่มรูป/ไฟล์</label>
                 <div class="form-actions attachments-actions">
-                  <input id="attachmentsInput" type="file" accept="image/*,.pdf" multiple />
+                  <div class="attachments-picker">
+                    <label for="attachmentsInput" class="file-picker-button">
+                      <span class="file-picker-icon" aria-hidden="true">📁</span>
+                      <span>เพิ่มไฟล์เอกสาร</span>
+                    </label>
+                    <input id="attachmentsInput" type="file" accept="image/*,.pdf" multiple />
+                    <span class="file-picker-hint" id="attachmentsFileHint">ยังไม่ได้เลือกไฟล์</span>
+                  </div>
                   <input id="attachmentsCameraInput" type="file" accept="image/*" capture="environment" class="is-hidden" />
-                  <button type="button" class="secondary" id="openCameraButton">เปิดกล้อง</button>
+                  <button type="button" class="secondary camera-button" id="openCameraButton"><span class="camera-button-icon" aria-hidden="true">📸</span><span>เปิดกล้อง</span></button>
                 </div>
               </div>
               <div class="upload-preview" id="attachmentsPreview"></div>
@@ -289,7 +300,21 @@
         <p data-i18n="loadingText">กำลังโหลด...</p>
       </div>
     </div>
+    <script>
+      (() => {
+        const hideLoader = () => {
+          const loader = document.getElementById("pageLoader");
+          if (!loader) return;
+          loader.classList.remove("is-active");
+          loader.setAttribute("aria-hidden", "true");
+        };
+        setTimeout(hideLoader, 3800);
+        document.addEventListener("DOMContentLoaded", () => setTimeout(hideLoader, 80));
+        window.addEventListener("pageshow", () => setTimeout(hideLoader, 80));
+      })();
+    </script>
 
     <script src="app.js?v=20260211"></script>
+      <script src="datepicker.js?v=20260211"></script>
   </body>
 </html>

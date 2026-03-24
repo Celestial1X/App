@@ -1441,6 +1441,33 @@ button:hover,
   box-shadow: 0 10px 18px rgba(236, 72, 153, 0.2);
 }
 
+.today-task-checklist {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed #f5a4cf;
+  display: grid;
+  gap: 6px;
+}
+
+.today-task-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.92rem;
+  color: #374151;
+}
+
+.today-task-check input {
+  width: 16px;
+  height: 16px;
+  accent-color: #db2777;
+}
+
+.today-task-check input:checked + span {
+  text-decoration: line-through;
+  color: #6b7280;
+}
+
 @media (max-width: 900px) {
   .today-task-quickadd {
     grid-template-columns: 1fr;

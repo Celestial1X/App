@@ -118,6 +118,7 @@ const todayTaskQuickDate = document.getElementById("todayTaskQuickDate");
 const todayTaskQuickNote = document.getElementById("todayTaskQuickNote");
 const todayTaskQuickAddButton = document.getElementById("todayTaskQuickAddButton");
 const todayTaskQuickStatus = document.getElementById("todayTaskQuickStatus");
+const todayTaskChecklist = document.getElementById("todayTaskChecklist");
 const verifyRecordButton = document.getElementById("verifyRecord");
 const recordModal = document.getElementById("recordModal");
 const recordModalTitle = document.getElementById("recordModalTitle");
@@ -137,6 +138,7 @@ const RECORD_SEARCH_KEY = "recordSearchQuery";
 const FORM_DRAFT_KEY = "workerFormDraft";
 const API_BASE_KEY = "recordsApiBaseUrl";
 const TODAY_TASK_CUSTOM_KEY = "todayTaskCustomItems";
+const TODAY_TASK_DONE_KEY = "todayTaskDoneItems";
 const DIRTY_RECORD_IDS_KEY = "dirtyRecordIds";
 const DIRTY_RECORD_TTL_MS = 10 * 60 * 1000;
 
@@ -189,6 +191,7 @@ let selectedRecordExportIds = new Set();
 const uploadCache = {};
 let genericAttachments = [];
 let homeTaskBuckets = [];
+let doneTaskIds = new Set();
 
 const getSelectedFormTypes = () => {
   const selected = Array.from(formTypeInputs || [])
@@ -1567,6 +1570,7 @@ const buildHomeTaskItems = (records) => {
         formId: record?.formId || "-",
         assignee,
         label,
+        taskId: `sys:${record?.formId || "-"}:${label}:${normalizeDisplayDateValue(dateValue)}`,
       });
     });
   });
@@ -1590,6 +1594,7 @@ const buildHomeTaskItems = (records) => {
       assignee: task.title,
       label: "งานเพิ่มเอง",
       note: task.note || "",
+      taskId: `custom:${task.id}`,
     });
   });
 
@@ -1614,6 +1619,16 @@ const loadCustomTodayTasks = () => {
 
 const saveCustomTodayTasks = (items) => {
   localStorage.setItem(TODAY_TASK_CUSTOM_KEY, JSON.stringify(items || []));
+};
+
+const loadDoneTaskIds = () => {
+  const parsed = safeParseJSON(localStorage.getItem(TODAY_TASK_DONE_KEY), []);
+  if (!Array.isArray(parsed)) return new Set();
+  return new Set(parsed.map((item) => String(item || "").trim()).filter(Boolean));
+};
+
+const saveDoneTaskIds = () => {
+  localStorage.setItem(TODAY_TASK_DONE_KEY, JSON.stringify([...doneTaskIds]));
 };
 
 const openTaskBucketModal = (bucket) => {
@@ -1684,11 +1699,14 @@ const renderTodayTaskSpotlight = (records) => {
   }
 
   const totalTasks = homeTaskBuckets.reduce((sum, bucket) => sum + bucket.items.length, 0);
-  todayTaskSubtitle.textContent = `พบ ${totalTasks} งานในช่วงวันนี้ถึง 90 วันข้างหน้า • กดที่วันเพื่อดูรายละเอียด`;
+  const completed = homeTaskBuckets.reduce((sum, bucket) => sum + bucket.items.filter((item) => doneTaskIds.has(item.taskId)).length, 0);
+  todayTaskSubtitle.textContent = `พบ ${totalTasks} งานในช่วงวันนี้ถึง 90 วันข้างหน้า • เสร็จแล้ว ${completed} งาน`;
   todayTaskBuckets.innerHTML = homeTaskBuckets.map((bucket, index) => {
     const dayLabel = bucket.days === 0 ? "วันนี้" : `อีก ${bucket.days} วัน`;
-    const firstLabel = bucket.items[0]?.label || "";
-    return `<button type="button" class="today-task-bucket" data-task-bucket="${index}"><strong>${dayLabel}</strong><span>${bucket.items.length} งาน</span><small>${firstLabel}</small></button>`;
+    const firstOpenTask = bucket.items.find((item) => !doneTaskIds.has(item.taskId));
+    const completedCount = bucket.items.filter((item) => doneTaskIds.has(item.taskId)).length;
+    const firstLabel = firstOpenTask?.label || bucket.items[0]?.label || "";
+    return `<button type="button" class="today-task-bucket" data-task-bucket="${index}"><strong>${dayLabel}</strong><span>${bucket.items.length} งาน</span><small>${firstLabel}</small><small>เสร็จแล้ว ${completedCount}</small></button>`;
   }).join("");
 
   todayTaskBuckets.querySelectorAll("[data-task-bucket]").forEach((button) => {
@@ -1697,6 +1715,29 @@ const renderTodayTaskSpotlight = (records) => {
       const bucket = homeTaskBuckets[index];
       if (!bucket) return;
       openTaskBucketModal(bucket);
+    });
+  });
+
+  if (!todayTaskChecklist) return;
+  const checklistItems = homeTaskBuckets
+    .flatMap((bucket) => bucket.items.map((item) => ({ ...item, dayLabel: bucket.days === 0 ? "วันนี้" : `อีก ${bucket.days} วัน` })))
+    .slice(0, 20);
+  todayTaskChecklist.innerHTML = checklistItems.map((item, index) => {
+    const checked = doneTaskIds.has(item.taskId) ? "checked" : "";
+    const id = `todayTaskDone_${index}`;
+    return `<label class="today-task-check"><input id="${id}" type="checkbox" data-task-id="${item.taskId}" ${checked} /><span>${item.dayLabel} • ${item.label} • ${item.assignee}</span></label>`;
+  }).join("");
+  todayTaskChecklist.querySelectorAll("input[data-task-id]").forEach((input) => {
+    input.addEventListener("change", () => {
+      const taskId = String(input.getAttribute("data-task-id") || "");
+      if (!taskId) return;
+      if (input.checked) {
+        doneTaskIds.add(taskId);
+      } else {
+        doneTaskIds.delete(taskId);
+      }
+      saveDoneTaskIds();
+      renderTodayTaskSpotlight(loadRecords());
     });
   });
 };
@@ -3476,6 +3517,7 @@ renderGenericAttachments();
 refreshNameSuggestions();
 loadFormDraft();
 initTodayTaskQuickAdd();
+doneTaskIds = loadDoneTaskIds();
 initTheme();
 renderRecords();
 renderLatestRecordCard();

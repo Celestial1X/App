@@ -3478,6 +3478,15 @@ document.querySelectorAll("a.tab-btn").forEach((link) => {
   });
 });
 if (pageLoader) {
+  window.addEventListener("DOMContentLoaded", () => {
+    setTimeout(hideLoader, 50);
+  });
+  window.addEventListener("error", () => {
+    hideLoader();
+  });
+  window.addEventListener("unhandledrejection", () => {
+    hideLoader();
+  });
   showLoader();
   window.addEventListener("load", () => {
     setTimeout(hideLoader, 350);

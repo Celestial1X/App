@@ -1639,30 +1639,38 @@ const initTodayTaskQuickAdd = () => {
   if (!todayTaskQuickAdd || !todayTaskQuickTitle || !todayTaskQuickDate) return;
   const submitTask = () => {
     const title = String(todayTaskQuickTitle.value || "").trim();
-    const dateValue = normalizeDisplayDateValue(todayTaskQuickDate.value);
+    const fallbackToday = formatDateOnlyDMY(new Date());
+    const dateValue = normalizeDisplayDateValue(todayTaskQuickDate.value) || fallbackToday;
     const note = String(todayTaskQuickNote?.value || "").trim();
-    if (!title || !dateValue) {
+    if (!title) {
       if (todayTaskQuickStatus) {
-        todayTaskQuickStatus.textContent = "กรุณากรอกชื่องานและวันที่ให้ครบ";
+        todayTaskQuickStatus.textContent = "กรุณากรอกชื่องาน";
         todayTaskQuickStatus.classList.add("error");
       }
       return;
     }
-    const items = loadCustomTodayTasks();
-    items.unshift({
-      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      title,
-      dateValue,
-      note,
-    });
-    saveCustomTodayTasks(items.slice(0, 120));
-    todayTaskQuickAdd.reset();
-    const records = loadRecords();
-    renderTodayTaskSpotlight(records);
-    renderLatestRecordCard();
-    if (todayTaskQuickStatus) {
-      todayTaskQuickStatus.textContent = "เพิ่มงานใหม่เรียบร้อย";
-      todayTaskQuickStatus.classList.remove("error");
+    try {
+      const items = loadCustomTodayTasks();
+      items.unshift({
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        title,
+        dateValue,
+        note,
+      });
+      saveCustomTodayTasks(items.slice(0, 120));
+      todayTaskQuickAdd.reset();
+      const records = loadRecords();
+      renderTodayTaskSpotlight(records);
+      renderLatestRecordCard();
+      if (todayTaskQuickStatus) {
+        todayTaskQuickStatus.textContent = `เพิ่มงานใหม่เรียบร้อย (${formatDateOnlyDMY(dateValue)})`;
+        todayTaskQuickStatus.classList.remove("error");
+      }
+    } catch (_error) {
+      if (todayTaskQuickStatus) {
+        todayTaskQuickStatus.textContent = "ไม่สามารถเพิ่มงานได้ กรุณาลองใหม่อีกครั้ง";
+        todayTaskQuickStatus.classList.add("error");
+      }
     }
   };
 

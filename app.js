@@ -1588,6 +1588,7 @@ const buildHomeTaskItems = (records) => {
   });
 
   loadCustomTodayTasks().forEach((task) => {
+    if (task.done) return;
     const days = getDaysUntil(task.dateValue);
     if (days === null || days < 0 || days > 90) return;
     const key = String(days);
@@ -1599,6 +1600,8 @@ const buildHomeTaskItems = (records) => {
       assignee: task.title,
       label: "งานเพิ่มเอง",
       note: task.note || "",
+      isCustom: true,
+      customTaskId: task.id,
     });
   });
 
@@ -1623,6 +1626,7 @@ const loadCustomTodayTasks = () => {
       title: String(item?.title || "").trim(),
       dateValue: normalizeDisplayDateValue(item?.dateValue || ""),
       note: String(item?.note || "").trim(),
+      done: Boolean(item?.done),
     }))
     .filter((item) => item.title && item.dateValue);
 };
@@ -1636,6 +1640,26 @@ const saveCustomTodayTasks = (items) => {
   }
 };
 
+const updateCustomTodayTask = (taskId, updater) => {
+  const id = String(taskId || "").trim();
+  if (!id) return false;
+  const items = loadCustomTodayTasks();
+  const index = items.findIndex((item) => item.id === id);
+  if (index < 0) return false;
+  const nextItems = [...items];
+  nextItems[index] = updater({ ...nextItems[index] });
+  return saveCustomTodayTasks(nextItems.slice(0, 120));
+};
+
+const deleteCustomTodayTask = (taskId) => {
+  const id = String(taskId || "").trim();
+  if (!id) return false;
+  const items = loadCustomTodayTasks();
+  const nextItems = items.filter((item) => item.id !== id);
+  if (nextItems.length === items.length) return false;
+  return saveCustomTodayTasks(nextItems.slice(0, 120));
+};
+
 const openTaskBucketModal = (bucket) => {
   if (!recordModal || !recordModalTitle || !recordModalBody) return;
   const dayText = bucket.days === 0 ? "วันนี้" : `อีก ${bucket.days} วัน`;
@@ -1647,10 +1671,36 @@ const openTaskBucketModal = (bucket) => {
     const li = document.createElement("li");
     li.className = "timeline-item";
     const note = item.note ? `<p>${item.note}</p>` : "";
-    li.innerHTML = `<span class="timeline-tag">${item.label}</span><h3>${item.formId} • ${item.assignee}</h3><p>${formatDateOnlyDMY(item.dateValue)} • ${dayText}</p>${note}`;
+    const customActions = item.isCustom
+      ? `<div class="table-actions">
+          <button type="button" class="secondary" data-custom-task-done="${item.customTaskId}">✓ เสร็จแล้ว</button>
+          <button type="button" class="danger" data-custom-task-delete="${item.customTaskId}">ลบ</button>
+        </div>`
+      : "";
+    li.innerHTML = `<span class="timeline-tag">${item.label}</span><h3>${item.formId} • ${item.assignee}</h3><p>${formatDateOnlyDMY(item.dateValue)} • ${dayText}</p>${note}${customActions}`;
     list.appendChild(li);
   });
   recordModalBody.appendChild(list);
+  list.querySelectorAll("[data-custom-task-done]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const id = button.getAttribute("data-custom-task-done") || "";
+      const updated = updateCustomTodayTask(id, (task) => ({ ...task, done: true }));
+      if (!updated) return;
+      recordModal.classList.remove("is-open");
+      recordModal.setAttribute("aria-hidden", "true");
+      renderLatestRecordCard();
+    });
+  });
+  list.querySelectorAll("[data-custom-task-delete]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const id = button.getAttribute("data-custom-task-delete") || "";
+      const removed = deleteCustomTodayTask(id);
+      if (!removed) return;
+      recordModal.classList.remove("is-open");
+      recordModal.setAttribute("aria-hidden", "true");
+      renderLatestRecordCard();
+    });
+  });
   recordModal.classList.add("is-open");
   recordModal.setAttribute("aria-hidden", "false");
 };
@@ -1676,6 +1726,7 @@ const initTodayTaskQuickAdd = () => {
         title,
         dateValue,
         note,
+        done: false,
       });
       const saved = saveCustomTodayTasks(items.slice(0, 120));
       if (!saved) {

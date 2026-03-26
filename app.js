@@ -1389,6 +1389,15 @@ const getDaysBetweenDateValues = (startValue, endValue) => {
   return days;
 };
 
+const safeParseJSON = (text, fallback) => {
+  try {
+    const parsed = JSON.parse(String(text ?? ""));
+    return parsed ?? fallback;
+  } catch (_error) {
+    return fallback;
+  }
+};
+
 const getDeadlineToneClass = (days) => {
   if (days === null) return "deadline-box--none";
   if (days < 30) return "deadline-box--danger";
@@ -1600,7 +1609,13 @@ const buildHomeTaskItems = (records) => {
 };
 
 const loadCustomTodayTasks = () => {
-  const parsed = safeParseJSON(localStorage.getItem(TODAY_TASK_CUSTOM_KEY), []);
+  let raw = "[]";
+  try {
+    raw = localStorage.getItem(TODAY_TASK_CUSTOM_KEY) || "[]";
+  } catch (_error) {
+    raw = "[]";
+  }
+  const parsed = safeParseJSON(raw, []);
   if (!Array.isArray(parsed)) return [];
   return parsed
     .map((item) => ({
@@ -1613,7 +1628,12 @@ const loadCustomTodayTasks = () => {
 };
 
 const saveCustomTodayTasks = (items) => {
-  localStorage.setItem(TODAY_TASK_CUSTOM_KEY, JSON.stringify(items || []));
+  try {
+    localStorage.setItem(TODAY_TASK_CUSTOM_KEY, JSON.stringify(items || []));
+    return true;
+  } catch (_error) {
+    return false;
+  }
 };
 
 const openTaskBucketModal = (bucket) => {
@@ -1657,7 +1677,10 @@ const initTodayTaskQuickAdd = () => {
         dateValue,
         note,
       });
-      saveCustomTodayTasks(items.slice(0, 120));
+      const saved = saveCustomTodayTasks(items.slice(0, 120));
+      if (!saved) {
+        throw new Error("today-task-save-failed");
+      }
       todayTaskQuickAdd.reset();
       const records = loadRecords();
       renderTodayTaskSpotlight(records);

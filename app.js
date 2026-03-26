@@ -1680,6 +1680,9 @@ const openTaskBucketModal = (bucket) => {
 
 const initTodayTaskQuickAdd = () => {
   if (!todayTaskQuickAdd || !todayTaskQuickTitle || !todayTaskQuickDate) return;
+  if (todayTaskQuickAdd.dataset.bound === "1") return;
+  todayTaskQuickAdd.dataset.bound = "1";
+
   const submitTask = () => {
     const title = String(todayTaskQuickTitle.value || "").trim();
     const dateValue = normalizeDisplayDateValue(todayTaskQuickDate.value);
@@ -1700,7 +1703,15 @@ const initTodayTaskQuickAdd = () => {
       dateValue: finalDateValue,
       note,
     });
-    saveCustomTodayTasks(items.slice(0, 120));
+    try {
+      saveCustomTodayTasks(items.slice(0, 120));
+    } catch (error) {
+      if (todayTaskQuickStatus) {
+        todayTaskQuickStatus.textContent = "ไม่สามารถบันทึกงานเพิ่มได้ (พื้นที่จัดเก็บเต็มหรือถูกปิดใช้งาน)";
+        todayTaskQuickStatus.classList.add("error");
+      }
+      return;
+    }
     todayTaskQuickAdd.reset();
     renderTodayTaskSpotlight(loadRecords());
     if (todayTaskQuickStatus) {
@@ -1710,10 +1721,6 @@ const initTodayTaskQuickAdd = () => {
   };
 
   todayTaskQuickAdd.addEventListener("submit", (event) => {
-    event.preventDefault();
-    submitTask();
-  });
-  todayTaskQuickAddButton?.addEventListener("click", (event) => {
     event.preventDefault();
     submitTask();
   });

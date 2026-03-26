@@ -1657,6 +1657,8 @@ const initTodayTaskQuickAdd = () => {
     });
     saveCustomTodayTasks(items.slice(0, 120));
     todayTaskQuickAdd.reset();
+    const records = loadRecords();
+    renderTodayTaskSpotlight(records);
     renderLatestRecordCard();
     if (todayTaskQuickStatus) {
       todayTaskQuickStatus.textContent = "เพิ่มงานใหม่เรียบร้อย";

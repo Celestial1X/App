@@ -10,7 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=20260211" />
+    <link rel="stylesheet" href="styles.css?v=20260324" />
   </head>
   <body>
     <header class="hero">
@@ -22,13 +22,13 @@
 
     <main class="container">
       <nav class="page-tabs">
+        <a class="tab-btn" href="receivedocs.html">รับเอกสาร</a>
         <a class="tab-btn is-active" href="index.html" data-i18n="tabLookup">ค้นหาข้อมูล</a>
         <a class="tab-btn" href="records.html" data-i18n="tabRecords">ข้อมูลบันทึก</a>
         <a class="tab-btn" href="form.html" data-i18n="tabForm">กรอกแบบฟอร์ม</a>
         <a class="tab-btn" href="report90.html">รายงานตัว 90 วัน</a>
         <a class="tab-btn" href="visarun.html">Visa run</a>
         <a class="tab-btn" href="nextform.html">MOU ลาว</a>
-        <a class="tab-btn" href="receivedocs.html">รับเอกสาร</a>
         <a class="tab-btn" href="returndocs.html">ส่งคืนเอกสาร</a>
       </nav>
 
@@ -63,6 +63,22 @@
           <p class="summary-card__value" id="latestRecordTitle">-</p>
           <p class="status-text" id="latestRecordMeta">-</p>
         </div>
+        <section class="today-task-spotlight" id="todayTaskSpotlight" aria-live="polite">
+          <div class="today-task-spotlight__head">
+            <p class="today-task-spotlight__tag">งานที่ต้องทำประจำวัน</p>
+            <h3>งานของวันนี้ + วันถัดไป</h3>
+            <p id="todayTaskSubtitle" class="status-text">กำลังตรวจสอบรายการ...</p>
+          </div>
+          <form id="todayTaskQuickAdd" class="today-task-quickadd">
+            <input id="todayTaskQuickTitle" type="text" placeholder="เพิ่มชื่องาน เช่น ต่อใบอนุญาตแรงงาน" />
+            <input id="todayTaskQuickDate" type="date" />
+            <input id="todayTaskQuickNote" type="text" placeholder="หมายเหตุ (ถ้ามี)" />
+            <button id="todayTaskQuickAddButton" type="submit" class="primary">เพิ่มรายการ</button>
+          </form>
+          <p id="todayTaskQuickStatus" class="status-text"></p>
+          <div id="todayTaskBuckets" class="today-task-buckets"></div>
+          <div id="todayTaskChecklist" class="today-task-checklist"></div>
+        </section>
         <div id="indexExpiryAlert" class="warning-banner is-hidden"></div>
         <div class="summary-grid summary-grid--followup" id="followupSummaryGrid">
           <div class="summary-card">
@@ -91,6 +107,19 @@
         <p data-i18n="loadingText">กำลังโหลด...</p>
       </div>
     </div>
+    <script>
+      (() => {
+        const hideLoader = () => {
+          const loader = document.getElementById("pageLoader");
+          if (!loader) return;
+          loader.classList.remove("is-active");
+          loader.setAttribute("aria-hidden", "true");
+        };
+        setTimeout(hideLoader, 3800);
+        document.addEventListener("DOMContentLoaded", () => setTimeout(hideLoader, 80));
+        window.addEventListener("pageshow", () => setTimeout(hideLoader, 80));
+      })();
+    </script>
 
     <div class="modal" id="recordModal" aria-hidden="true">
       <div class="modal-content">
@@ -109,6 +138,7 @@
       </div>
     </div>
 
-    <script src="app.js?v=20260211"></script>
+    <script src="app.js?v=20260324"></script>
+      <script src="datepicker.js?v=20260324"></script>
   </body>
 </html>

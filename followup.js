@@ -80,12 +80,28 @@ const formatDateInputValue = (date) => {
   const m = String(date.getMonth() + 1).padStart(2, "0");
   return `${d}/${m}/${date.getFullYear() + 543}`;
 };
+const formatDateNativeInputValue = (date) => {
+  const d = String(date.getDate()).padStart(2, "0");
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  return `${date.getFullYear()}-${m}-${d}`;
+};
+const normalizeDateNativeInputValue = (value) => {
+  const dt = toDateOnly(value);
+  if (!dt) return "";
+  return formatDateNativeInputValue(dt);
+};
 
 const addDays = (value, days) => {
   const dt = toDateOnly(value);
   if (!dt) return "";
   dt.setDate(dt.getDate() + days);
   return formatDateInputValue(dt);
+};
+const addDaysNative = (value, days) => {
+  const dt = toDateOnly(value);
+  if (!dt) return "";
+  dt.setDate(dt.getDate() + days);
+  return formatDateNativeInputValue(dt);
 };
 const addYears = (value, years) => {
   const dt = toDateOnly(value);
@@ -726,10 +742,10 @@ const runReport90Page = () => {
     document.getElementById("r90Gender").value = item.gender || "";
     document.getElementById("r90Employer").value = item.employerName || "";
     document.getElementById("r90RecordedBy").value = item.recordedBy || "";
-    startDate.value = normalizeDateInputValue(item.startDate);
-    nextDate.value = normalizeDateInputValue(item.nextDate);
-    document.getElementById("r90DocReceiveDate").value = normalizeDateInputValue(item.documentReceivedDate);
-    document.getElementById("r90DocReturnDate").value = normalizeDateInputValue(item.documentReturnDate);
+    startDate.value = normalizeDateNativeInputValue(item.startDate);
+    nextDate.value = normalizeDateNativeInputValue(item.nextDate);
+    document.getElementById("r90DocReceiveDate").value = normalizeDateNativeInputValue(item.documentReceivedDate);
+    document.getElementById("r90DocReturnDate").value = normalizeDateNativeInputValue(item.documentReturnDate);
     document.getElementById("r90Overdue").checked = !!item.overdueFine;
     document.getElementById("r90SentImm").checked = !!item.sentImmigration;
     document.getElementById("r90ReturnBook").checked = !!item.returnBook;
@@ -758,7 +774,7 @@ const runReport90Page = () => {
   const renderRows = () => {
     list.innerHTML = "";
     const alerts = rows.filter((item) => {
-      const days = diffDaysBetween(item.startDate, item.nextDate);
+      const days = diffDays(item.nextDate);
       return days !== null && days >= 0 && days <= 90;
     });
     if (alerts.length) {
@@ -772,8 +788,13 @@ const runReport90Page = () => {
     const filteredRows = keyword ? rows.filter((item) => String(item.workerName || "").toLowerCase().includes(keyword)) : rows;
 
     filteredRows.forEach((item) => {
-      const cycleDays = diffDaysBetween(item.startDate, item.nextDate);
-      const cycleText = cycleDays === null ? "-" : `${fmtDate(item.nextDate)} (${cycleDays} วัน)`;
+      const cycleDays = diffDays(item.nextDate);
+      const cycleText =
+        cycleDays === null
+          ? "-"
+          : cycleDays < 0
+            ? `เกิน ${Math.abs(cycleDays)} วัน (ครบ ${fmtDate(item.nextDate)})`
+            : `เหลือ ${cycleDays} วัน (ครบ ${fmtDate(item.nextDate)})`;
       const cycleTone = getDeadlineToneByRemainingDays(cycleDays);
       const tr = document.createElement("tr");
       tr.innerHTML = `<td><input type="checkbox" data-export-select aria-label="เลือกรายการ" /></td><td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${getAggregateBookStats(rows, item, "report90").latestText}</td><td>${fmtDate(item.nextDate)}</td><td><span class="deadline-box ${cycleTone}">${cycleText}</span></td>`;
@@ -831,9 +852,7 @@ const runReport90Page = () => {
   };
 
   const updateReport90NextDate = () => {
-    if (!nextDate.value) {
-      nextDate.value = addDays(startDate.value, 90);
-    }
+    nextDate.value = addDaysNative(startDate.value, 90);
   };
   startDate?.addEventListener("change", updateReport90NextDate);
   startDate?.addEventListener("input", updateReport90NextDate);
@@ -865,11 +884,12 @@ const runReport90Page = () => {
       status.classList.add("error");
       return;
     }
+    values.nextDate = normalizeDateInputValue(values.nextDate) || computeFollowupDateFromStart(values.startDate);
 
     try {
       const submittingEditId = editFormId || requestedEditId || "";
-      startDate.value = normalizeDateInputValue(values.startDate);
-      nextDate.value = normalizeDateInputValue(values.nextDate);
+      startDate.value = normalizeDateNativeInputValue(values.startDate);
+      nextDate.value = normalizeDateNativeInputValue(values.nextDate);
       await saveRecord(toReport90Payload(values, submittingEditId));
       const wasEdit = Boolean(submittingEditId);
       resetForm();

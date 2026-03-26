@@ -137,6 +137,7 @@ const RECORD_SEARCH_KEY = "recordSearchQuery";
 const FORM_DRAFT_KEY = "workerFormDraft";
 const API_BASE_KEY = "recordsApiBaseUrl";
 const TODAY_TASK_CUSTOM_KEY = "todayTaskCustomItems";
+const TODAY_TASK_STATE_KEY = "todayTaskItemState";
 const DIRTY_RECORD_IDS_KEY = "dirtyRecordIds";
 const DIRTY_RECORD_TTL_MS = 10 * 60 * 1000;
 
@@ -1574,26 +1575,35 @@ const buildHomeTaskItems = (records) => {
         days,
         dateValue,
         formId: record?.formId || "-",
+        recordId: record?.formId || "-",
+        formType: record?.formType || "",
         assignee,
         label,
       });
     });
   });
 
+  const taskState = loadTodayTaskStateMap();
+
   const grouped = new Map();
   tasks.forEach((task) => {
+    const taskKey = buildTodayTaskKey(task);
+    const state = taskState[taskKey] && typeof taskState[taskKey] === "object" ? taskState[taskKey] : {};
+    if (state.deleted) return;
     const key = String(task.days);
     if (!grouped.has(key)) grouped.set(key, []);
-    grouped.get(key).push(task);
+    grouped.get(key).push({
+      ...task,
+      taskKey,
+      done: Boolean(state.done),
+      targetUrl: getTaskTargetUrl(task),
+    });
   });
 
   loadCustomTodayTasks().forEach((task) => {
-    if (task.done) return;
     const days = getDaysUntil(task.dateValue);
     if (days === null || days < 0 || days > 90) return;
-    const key = String(days);
-    if (!grouped.has(key)) grouped.set(key, []);
-    grouped.get(key).push({
+    const taskItem = {
       days,
       dateValue: task.dateValue,
       formId: "เพิ่มเอง",
@@ -1602,6 +1612,19 @@ const buildHomeTaskItems = (records) => {
       note: task.note || "",
       isCustom: true,
       customTaskId: task.id,
+      formType: "custom",
+      recordId: task.id,
+    };
+    const taskKey = buildTodayTaskKey(taskItem);
+    const state = taskState[taskKey] && typeof taskState[taskKey] === "object" ? taskState[taskKey] : {};
+    if (state.deleted) return;
+    const key = String(days);
+    if (!grouped.has(key)) grouped.set(key, []);
+    grouped.get(key).push({
+      ...taskItem,
+      taskKey,
+      done: Boolean(task.done || state.done),
+      targetUrl: "",
     });
   });
 
@@ -1660,6 +1683,54 @@ const deleteCustomTodayTask = (taskId) => {
   return saveCustomTodayTasks(nextItems.slice(0, 120));
 };
 
+const loadTodayTaskStateMap = () => {
+  let raw = "{}";
+  try {
+    raw = localStorage.getItem(TODAY_TASK_STATE_KEY) || "{}";
+  } catch (_error) {
+    raw = "{}";
+  }
+  const parsed = safeParseJSON(raw, {});
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+  return parsed;
+};
+
+const saveTodayTaskStateMap = (stateMap) => {
+  try {
+    localStorage.setItem(TODAY_TASK_STATE_KEY, JSON.stringify(stateMap || {}));
+    return true;
+  } catch (_error) {
+    return false;
+  }
+};
+
+const updateTodayTaskState = (taskKey, patch) => {
+  const key = String(taskKey || "").trim();
+  if (!key) return false;
+  const stateMap = loadTodayTaskStateMap();
+  const current = stateMap[key] && typeof stateMap[key] === "object" ? stateMap[key] : {};
+  stateMap[key] = { ...current, ...patch };
+  return saveTodayTaskStateMap(stateMap);
+};
+
+const buildTodayTaskKey = (task) => {
+  const formId = String(task?.formId || "-").trim();
+  const label = String(task?.label || "-").trim();
+  const dateValue = normalizeDisplayDateValue(task?.dateValue || "");
+  const assignee = String(task?.assignee || "-").trim();
+  return [formId, label, dateValue, assignee].join("|");
+};
+
+const getTaskTargetUrl = (item) => {
+  const editId = encodeURIComponent(String(item?.recordId || item?.formId || "").trim());
+  const formType = String(item?.formType || "").trim();
+  if (!editId || item?.formId === "เพิ่มเอง") return "";
+  if (formType === "report90") return `report90.html?editId=${editId}`;
+  if (formType === "visarun") return `visarun.html?editId=${editId}`;
+  if (formType === "mouLaos") return `nextform.html?editId=${editId}`;
+  return `form.html?editId=${editId}`;
+};
+
 const openTaskBucketModal = (bucket) => {
   if (!recordModal || !recordModalTitle || !recordModalBody) return;
   const dayText = bucket.days === 0 ? "วันนี้" : `อีก ${bucket.days} วัน`;
@@ -1670,35 +1741,51 @@ const openTaskBucketModal = (bucket) => {
   bucket.items.forEach((item) => {
     const li = document.createElement("li");
     li.className = "timeline-item";
+    if (item.done) li.classList.add("timeline-item--done");
     const note = item.note ? `<p>${item.note}</p>` : "";
-    const customActions = item.isCustom
-      ? `<div class="table-actions">
-          <button type="button" class="secondary" data-custom-task-done="${item.customTaskId}">✓ เสร็จแล้ว</button>
-          <button type="button" class="danger" data-custom-task-delete="${item.customTaskId}">ลบ</button>
-        </div>`
+    const doneLabel = item.done ? "↺ ยกเลิกเสร็จแล้ว" : "✓ เสร็จแล้ว";
+    const openButton = item.targetUrl
+      ? `<button type="button" class="secondary" data-task-open="${item.targetUrl}">เปิดรายการ</button>`
       : "";
-    li.innerHTML = `<span class="timeline-tag">${item.label}</span><h3>${item.formId} • ${item.assignee}</h3><p>${formatDateOnlyDMY(item.dateValue)} • ${dayText}</p>${note}${customActions}`;
+    const taskActions = `<div class="table-actions">
+        <button type="button" class="secondary" data-task-done="${item.taskKey}" data-task-done-value="${item.done ? "0" : "1"}">${doneLabel}</button>
+        <button type="button" class="danger" data-task-delete="${item.taskKey}" data-task-custom-id="${item.customTaskId || ""}">ลบ</button>
+        ${openButton}
+      </div>`;
+    li.innerHTML = `<span class="timeline-tag">${item.label}</span><h3>${item.formId} • ${item.assignee}</h3><p>${formatDateOnlyDMY(item.dateValue)} • ${dayText}</p>${note}${taskActions}`;
     list.appendChild(li);
   });
   recordModalBody.appendChild(list);
-  list.querySelectorAll("[data-custom-task-done]").forEach((button) => {
+  list.querySelectorAll("[data-task-done]").forEach((button) => {
     button.addEventListener("click", () => {
-      const id = button.getAttribute("data-custom-task-done") || "";
-      const updated = updateCustomTodayTask(id, (task) => ({ ...task, done: true }));
+      const taskKey = button.getAttribute("data-task-done") || "";
+      const doneValue = button.getAttribute("data-task-done-value") === "1";
+      const updated = updateTodayTaskState(taskKey, { done: doneValue, deleted: false });
       if (!updated) return;
       recordModal.classList.remove("is-open");
       recordModal.setAttribute("aria-hidden", "true");
       renderLatestRecordCard();
     });
   });
-  list.querySelectorAll("[data-custom-task-delete]").forEach((button) => {
+  list.querySelectorAll("[data-task-delete]").forEach((button) => {
     button.addEventListener("click", () => {
-      const id = button.getAttribute("data-custom-task-delete") || "";
-      const removed = deleteCustomTodayTask(id);
+      const taskKey = button.getAttribute("data-task-delete") || "";
+      const customId = button.getAttribute("data-task-custom-id") || "";
+      let removed = updateTodayTaskState(taskKey, { deleted: true });
+      if (customId) {
+        removed = deleteCustomTodayTask(customId) && removed;
+      }
       if (!removed) return;
       recordModal.classList.remove("is-open");
       recordModal.setAttribute("aria-hidden", "true");
       renderLatestRecordCard();
+    });
+  });
+  list.querySelectorAll("[data-task-open]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const target = String(button.getAttribute("data-task-open") || "").trim();
+      if (!target) return;
+      window.location.href = target;
     });
   });
   recordModal.classList.add("is-open");

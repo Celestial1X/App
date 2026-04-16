@@ -807,6 +807,7 @@ const translations = {
 let currentLanguage = "th";
 const isNextFormPage = window.location.pathname.endsWith("/nextform.html") || window.location.pathname.endsWith("nextform.html");
 let currentFormStep = isNextFormPage ? 2 : 1;
+let hasShownEntryTaskAlert = false;
 
 const setStatus = (element, message, type = "") => {
   if (!element) return;
@@ -1851,6 +1852,10 @@ const renderTodayTaskSpotlight = (records) => {
   if (!homeTaskBuckets.length) {
     todayTaskSubtitle.textContent = "ยังไม่มีงานที่ต้องติดตามใน 90 วันข้างหน้า";
     todayTaskBuckets.innerHTML = '<p class="status-text">ไม่มีงานค้างกำหนด</p>';
+    if (!hasShownEntryTaskAlert) {
+      hasShownEntryTaskAlert = true;
+      window.setTimeout(() => window.alert("แจ้งเตือนงานที่ต้องทำ: วันนี้ยังไม่มีงานค้างกำหนด"), 120);
+    }
     return;
   }
 
@@ -1870,6 +1875,10 @@ const renderTodayTaskSpotlight = (records) => {
       openTaskBucketModal(bucket);
     });
   });
+  if (!hasShownEntryTaskAlert) {
+    hasShownEntryTaskAlert = true;
+    window.setTimeout(() => window.alert(`แจ้งเตือนงานที่ต้องทำ: พบ ${totalTasks} งานที่ต้องติดตาม`), 120);
+  }
 };
 
 const getFormTypeLabel = (value) => {

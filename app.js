@@ -118,6 +118,7 @@ const todayTaskQuickDate = document.getElementById("todayTaskQuickDate");
 const todayTaskQuickNote = document.getElementById("todayTaskQuickNote");
 const todayTaskQuickAddButton = document.getElementById("todayTaskQuickAddButton");
 const todayTaskQuickStatus = document.getElementById("todayTaskQuickStatus");
+const taskEntryNotice = document.getElementById("taskEntryNotice");
 const verifyRecordButton = document.getElementById("verifyRecord");
 const recordModal = document.getElementById("recordModal");
 const recordModalTitle = document.getElementById("recordModalTitle");
@@ -808,6 +809,13 @@ let currentLanguage = "th";
 const isNextFormPage = window.location.pathname.endsWith("/nextform.html") || window.location.pathname.endsWith("nextform.html");
 let currentFormStep = isNextFormPage ? 2 : 1;
 let hasShownEntryTaskAlert = false;
+
+const showTaskEntryNotice = (message, tone = "info") => {
+  if (!taskEntryNotice) return;
+  taskEntryNotice.textContent = message;
+  taskEntryNotice.classList.remove("is-hidden", "task-entry-notice--info", "task-entry-notice--success");
+  taskEntryNotice.classList.add(tone === "success" ? "task-entry-notice--success" : "task-entry-notice--info");
+};
 
 const setStatus = (element, message, type = "") => {
   if (!element) return;
@@ -1854,7 +1862,7 @@ const renderTodayTaskSpotlight = (records) => {
     todayTaskBuckets.innerHTML = '<p class="status-text">ไม่มีงานค้างกำหนด</p>';
     if (!hasShownEntryTaskAlert) {
       hasShownEntryTaskAlert = true;
-      window.setTimeout(() => window.alert("แจ้งเตือนงานที่ต้องทำ: วันนี้ยังไม่มีงานค้างกำหนด"), 120);
+      showTaskEntryNotice("วันนี้ยังไม่มีงานค้างกำหนด", "success");
     }
     return;
   }
@@ -1877,7 +1885,7 @@ const renderTodayTaskSpotlight = (records) => {
   });
   if (!hasShownEntryTaskAlert) {
     hasShownEntryTaskAlert = true;
-    window.setTimeout(() => window.alert(`แจ้งเตือนงานที่ต้องทำ: พบ ${totalTasks} งานที่ต้องติดตาม`), 120);
+    showTaskEntryNotice(`แจ้งเตือน: พบ ${totalTasks} งานที่ต้องติดตาม`, "info");
   }
 };
 

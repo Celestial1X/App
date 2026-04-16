@@ -1293,6 +1293,27 @@ body[data-page="returndocs"] input[type="date"]:focus {
   font-weight: 600;
 }
 
+.task-entry-notice {
+  margin-bottom: 14px;
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-weight: 700;
+  border: 1px solid transparent;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.task-entry-notice--info {
+  color: #831843;
+  border-color: #f9a8d4;
+  background: linear-gradient(135deg, #ffe4f1, #fdf2f8);
+}
+
+.task-entry-notice--success {
+  color: #14532d;
+  border-color: #86efac;
+  background: linear-gradient(135deg, #dcfce7, #f0fdf4);
+}
+
 .text-alert {
   color: #dc2626;
   font-weight: 700;

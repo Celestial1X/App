@@ -1476,6 +1476,7 @@ const renderRecordsSummary = (records) => {
 
 const renderLatestRecordCard = () => {
   if (!latestRecordTitle || !latestRecordMeta) {
+    renderHomeFollowupSummaries();
     return;
   }
   const records = loadRecords();
@@ -1530,8 +1531,9 @@ const renderFollowupSummaryList = (target, records, typeLabel, dateField) => {
 };
 
 const renderHomeFollowupSummaries = () => {
-  if (!indexReport90Summary && !indexVisaSummary && !indexMouSummary) return;
   const all = loadRecords();
+  renderTodayTaskSpotlight(all);
+  if (!indexReport90Summary && !indexVisaSummary && !indexMouSummary) return;
   const r90 = all.filter((item) => item?.formType === "report90");
   const visa = all.filter((item) => item?.formType === "visarun");
   const mou = all.filter((item) => item?.formType === "mouLaos");
@@ -1554,7 +1556,6 @@ const renderHomeFollowupSummaries = () => {
       indexExpiryAlert.classList.add("is-hidden");
     }
   }
-  renderTodayTaskSpotlight(all);
 };
 
 const buildHomeTaskItems = (records) => {
@@ -1756,9 +1757,10 @@ const openTaskBucketModal = (bucket) => {
     const openButton = item.targetUrl
       ? `<button type="button" class="secondary" data-task-open="${item.targetUrl}">เปิดรายการ</button>`
       : "";
+    const encodedTaskKey = encodeURIComponent(item.taskKey || "");
     const taskActions = `<div class="table-actions">
-        <button type="button" class="secondary" data-task-done="${item.taskKey}" data-task-done-value="${item.done ? "0" : "1"}">${doneLabel}</button>
-        <button type="button" class="danger" data-task-delete="${item.taskKey}" data-task-custom-id="${item.customTaskId || ""}">ลบ</button>
+        <button type="button" class="secondary" data-task-done="${encodedTaskKey}" data-task-done-value="${item.done ? "0" : "1"}">${doneLabel}</button>
+        <button type="button" class="danger" data-task-delete="${encodedTaskKey}" data-task-custom-id="${item.customTaskId || ""}">ลบ</button>
         ${openButton}
       </div>`;
     li.innerHTML = `<span class="timeline-tag">${item.label}</span><h3>${item.formId} • ${item.assignee}</h3><p>${formatDateOnlyDMY(item.dateValue)} • ${dayText}</p>${note}${taskActions}`;
@@ -1767,7 +1769,7 @@ const openTaskBucketModal = (bucket) => {
   recordModalBody.appendChild(list);
   list.querySelectorAll("[data-task-done]").forEach((button) => {
     button.addEventListener("click", () => {
-      const taskKey = button.getAttribute("data-task-done") || "";
+      const taskKey = decodeURIComponent(button.getAttribute("data-task-done") || "");
       const doneValue = button.getAttribute("data-task-done-value") === "1";
       const updated = updateTodayTaskState(taskKey, { done: doneValue, deleted: false });
       if (!updated) return;
@@ -1778,7 +1780,7 @@ const openTaskBucketModal = (bucket) => {
   });
   list.querySelectorAll("[data-task-delete]").forEach((button) => {
     button.addEventListener("click", () => {
-      const taskKey = button.getAttribute("data-task-delete") || "";
+      const taskKey = decodeURIComponent(button.getAttribute("data-task-delete") || "");
       const customId = button.getAttribute("data-task-custom-id") || "";
       let removed = updateTodayTaskState(taskKey, { deleted: true });
       if (customId) {
@@ -1868,6 +1870,9 @@ const renderTodayTaskSpotlight = (records) => {
   }
 
   const totalTasks = homeTaskBuckets.reduce((sum, bucket) => sum + bucket.items.length, 0);
+  const todayTasks = homeTaskBuckets
+    .filter((bucket) => bucket.days === 0)
+    .reduce((sum, bucket) => sum + bucket.items.length, 0);
   todayTaskSubtitle.textContent = `พบ ${totalTasks} งานในช่วงวันนี้ถึง 90 วันข้างหน้า • กดที่วันเพื่อดูรายละเอียด`;
   todayTaskBuckets.innerHTML = homeTaskBuckets.map((bucket, index) => {
     const dayLabel = bucket.days === 0 ? "วันนี้" : `อีก ${bucket.days} วัน`;
@@ -1885,7 +1890,11 @@ const renderTodayTaskSpotlight = (records) => {
   });
   if (!hasShownEntryTaskAlert) {
     hasShownEntryTaskAlert = true;
-    showTaskEntryNotice(`แจ้งเตือน: พบ ${totalTasks} งานที่ต้องติดตาม`, "info");
+    if (todayTasks > 0) {
+      showTaskEntryNotice(`แจ้งเตือนวันนี้: มี ${todayTasks} งานที่ต้องทำตอนนี้`, "info");
+    } else {
+      showTaskEntryNotice("วันนี้ไม่มีงานที่ต้องทำทันที", "success");
+    }
   }
 };
 

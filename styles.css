@@ -1433,7 +1433,7 @@ button:hover,
 .today-task-quickadd {
   margin-top: 10px;
   display: grid;
-  grid-template-columns: 1.3fr 1fr minmax(130px, 0.8fr) 1fr auto;
+  grid-template-columns: 1.5fr minmax(130px, 0.8fr) 1fr auto;
   gap: 8px;
 }
 

@@ -114,7 +114,6 @@ const todayTaskSubtitle = document.getElementById("todayTaskSubtitle");
 const todayTaskBuckets = document.getElementById("todayTaskBuckets");
 const todayTaskQuickAdd = document.getElementById("todayTaskQuickAdd");
 const todayTaskQuickTitle = document.getElementById("todayTaskQuickTitle");
-const todayTaskQuickOwner = document.getElementById("todayTaskQuickOwner");
 const todayTaskQuickDate = document.getElementById("todayTaskQuickDate");
 const todayTaskQuickNote = document.getElementById("todayTaskQuickNote");
 const todayTaskQuickAddButton = document.getElementById("todayTaskQuickAddButton");
@@ -1580,16 +1579,17 @@ const buildHomeTaskItems = (records) => {
       const dateValue = followup?.nextDate || record?.data?.startDate || "";
       const days = getDaysUntil(dateValue);
       if (days !== null && days >= 0 && days <= 90) {
+        const taskTitle = followup?.taskTitle || info.fullName || record?.displayName || "งานที่เพิ่มเอง";
         tasks.push({
           days,
           dateValue,
           formId: record?.formId || "-",
           recordId: record?.formId || "-",
           formType: "todaytask",
-          assignee: followup?.taskTitle || info.fullName || record?.displayName || "-",
-          label: "งานที่เพิ่มเอง",
+          assignee: taskTitle,
+          label: taskTitle,
           note: followup?.note || "",
-          owner: record?.data?.recordedBy || "-",
+          owner: "-",
         });
       }
       return;
@@ -1637,13 +1637,13 @@ const buildHomeTaskItems = (records) => {
       days,
       dateValue: task.dateValue,
       formId: "เพิ่มเอง",
-      assignee: task.title,
-      label: "งานเพิ่มเอง",
       note: task.note || "",
       isCustom: true,
       customTaskId: task.id,
       formType: "custom",
       recordId: task.id,
+      assignee: "-",
+      label: task.title || "งานที่เพิ่มเอง",
       owner: "-",
     };
     const taskKey = buildTodayTaskKey(taskItem);
@@ -1785,7 +1785,7 @@ const openTaskBucketModal = (bucket) => {
         <button type="button" class="danger" data-task-delete="${encodedTaskKey}" data-task-custom-id="${item.customTaskId || ""}">ลบ</button>
         ${openButton}
       </div>`;
-    li.innerHTML = `<span class="timeline-tag">${item.label}</span><h3>${item.formId} • ${item.assignee}</h3><p>ผู้รับผิดชอบ: ${item.owner || "-"}</p><p>${formatDateOnlyDMY(item.dateValue)} • ${dayText}</p>${note}${taskActions}`;
+    li.innerHTML = `<span class="timeline-tag">${item.label}</span><h3>${item.formId} • ${item.assignee}</h3><p>${formatDateOnlyDMY(item.dateValue)} • ${dayText}</p>${note}${taskActions}`;
     list.appendChild(li);
   });
   recordModalBody.appendChild(list);
@@ -1826,16 +1826,15 @@ const openTaskBucketModal = (bucket) => {
 };
 
 const initTodayTaskQuickAdd = () => {
-  if (!todayTaskQuickAdd || !todayTaskQuickTitle || !todayTaskQuickDate || !todayTaskQuickOwner) return;
+  if (!todayTaskQuickAdd || !todayTaskQuickTitle || !todayTaskQuickDate) return;
   const submitTask = async () => {
     const title = String(todayTaskQuickTitle.value || "").trim();
-    const owner = String(todayTaskQuickOwner.value || "").trim();
     const fallbackToday = formatDateOnlyDMY(new Date());
     const dateValue = normalizeDisplayDateValue(todayTaskQuickDate.value) || fallbackToday;
     const note = String(todayTaskQuickNote?.value || "").trim();
-    if (!title || !owner) {
+    if (!title) {
       if (todayTaskQuickStatus) {
-        todayTaskQuickStatus.textContent = "กรุณากรอกชื่องานและผู้รับผิดชอบ";
+        todayTaskQuickStatus.textContent = "กรุณากรอกชื่องาน";
         todayTaskQuickStatus.classList.add("error");
       }
       return;
@@ -1852,7 +1851,7 @@ const initTodayTaskQuickAdd = () => {
         status: "final",
         updatedAt: now,
         data: {
-          recordedBy: owner,
+          recordedBy: "",
           startDate: dateValue,
           personalInfo: {
             fullName: title,
@@ -1860,7 +1859,7 @@ const initTodayTaskQuickAdd = () => {
           },
           followup: {
             taskTitle: title,
-            taskOwner: owner,
+            taskOwner: "",
             nextDate: dateValue,
             note,
           },
@@ -1884,7 +1883,7 @@ const initTodayTaskQuickAdd = () => {
       todayTaskQuickAdd.reset();
       renderLatestRecordCard();
       if (todayTaskQuickStatus) {
-        todayTaskQuickStatus.textContent = `เพิ่มงานใหม่เรียบร้อย (${formatDateOnlyDMY(dateValue)}) • ผู้รับผิดชอบ: ${owner}`;
+        todayTaskQuickStatus.textContent = `เพิ่มงานใหม่เรียบร้อย (${formatDateOnlyDMY(dateValue)})`;
         todayTaskQuickStatus.classList.remove("error");
       }
     } catch (_error) {
@@ -1936,8 +1935,7 @@ const renderTodayTaskSpotlight = (records) => {
   todayTaskBuckets.innerHTML = homeTaskBuckets.map((bucket, index) => {
     const dayLabel = bucket.days === 0 ? "วันนี้" : `อีก ${bucket.days} วัน`;
     const firstLabel = bucket.items[0]?.label || "";
-    const firstOwner = bucket.items[0]?.owner || "-";
-    return `<button type="button" class="today-task-bucket" data-task-bucket="${index}"><strong>${dayLabel}</strong><span>${bucket.items.length} งาน</span><small>${firstLabel} • ${firstOwner}</small></button>`;
+    return `<button type="button" class="today-task-bucket" data-task-bucket="${index}"><strong>${dayLabel}</strong><span>${bucket.items.length} งาน</span><small>${firstLabel}</small></button>`;
   }).join("");
 
   todayTaskBuckets.querySelectorAll("[data-task-bucket]").forEach((button) => {

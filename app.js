@@ -1819,9 +1819,16 @@ const getTaskTargetUrl = (item) => {
   return `form.html?editId=${editId}`;
 };
 
+const buildTaskDueText = (days, dateValue) => {
+  const dayText = days === 0 ? "วันนี้" : `อีก ${days} วัน`;
+  const normalizedDate = normalizeDisplayDateValue(dateValue || "");
+  if (!normalizedDate) return dayText;
+  return `${formatDateOnlyDMY(normalizedDate)} • ${dayText}`;
+};
+
 const openTaskBucketModal = (bucket) => {
   if (!recordModal || !recordModalTitle || !recordModalBody) return;
-  const dayText = bucket.days === 0 ? "วันนี้" : `อีก ${bucket.days} วัน`;
+  const dayText = buildTaskDueText(bucket.days, bucket.items?.[0]?.dateValue || "");
   recordModalTitle.textContent = `งานที่ต้องทำ: ${dayText}`;
   recordModalBody.innerHTML = "";
   const list = document.createElement("ul");
@@ -2055,7 +2062,7 @@ const renderTodayTaskSpotlight = (records) => {
     .reduce((sum, bucket) => sum + bucket.items.length, 0);
   todayTaskSubtitle.textContent = `พบ ${totalTasks} งานในช่วงวันนี้ถึง 90 วันข้างหน้า • กดที่วันเพื่อดูรายละเอียด`;
   todayTaskBuckets.innerHTML = homeTaskBuckets.map((bucket, index) => {
-    const dayLabel = bucket.days === 0 ? "วันนี้" : `อีก ${bucket.days} วัน`;
+    const dayLabel = buildTaskDueText(bucket.days, bucket.items?.[0]?.dateValue || "");
     const firstLabel = bucket.items[0]?.label || "";
     return `<button type="button" class="today-task-bucket" data-task-bucket="${index}"><strong>${dayLabel}</strong><span>${bucket.items.length} งาน</span><small>${firstLabel}</small></button>`;
   }).join("");

@@ -1458,7 +1458,7 @@ button:hover,
 .today-task-spotlight {
   margin-top: 16px;
   border-radius: 18px;
-  padding: 16px;
+  padding: 18px;
   border: 1px solid #f8b4d9;
   background:
     radial-gradient(circle at top right, rgba(253, 224, 242, 0.8) 0%, transparent 40%),
@@ -1487,10 +1487,10 @@ button:hover,
 }
 
 .today-task-buckets {
-  margin-top: 12px;
+  margin-top: 14px;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
 }
 
 .today-task-quickadd {
@@ -1509,11 +1509,13 @@ button:hover,
   border: 1px solid #f9a8d4;
   border-radius: 14px;
   background: #fff;
-  padding: 10px 12px;
+  padding: 12px 14px;
   cursor: pointer;
   display: grid;
-  gap: 3px;
+  gap: 5px;
   transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+  min-height: 112px;
+  align-content: flex-start;
 }
 
 .today-task-bucket strong {
@@ -1527,6 +1529,7 @@ button:hover,
 
 .today-task-bucket small {
   color: #475569;
+  line-height: 1.35;
 }
 
 .today-task-bucket:hover {
@@ -1536,7 +1539,64 @@ button:hover,
 }
 
 @media (max-width: 900px) {
+  .container {
+    padding: 0 14px;
+    gap: 16px;
+  }
+  .panel {
+    padding: 16px;
+    border-radius: 14px;
+  }
+  .page-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    padding: 10px;
+  }
+  .page-tabs .tab-btn {
+    white-space: nowrap;
+    scroll-snap-align: start;
+  }
   .today-task-quickadd {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .today-task-quickadd .primary {
+    width: 100%;
+    min-height: 44px;
+  }
+  .today-task-buckets {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .today-task-bucket {
+    min-height: 96px;
+  }
+  .page-toast-host {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    max-width: none;
+  }
+  .page-toast {
+    padding: 10px 12px 9px;
+    border-radius: 12px;
+  }
+}
+
+@media (max-width: 560px) {
+  .container {
+    margin-top: 10px;
+  }
+  .today-task-spotlight {
+    padding: 14px;
+    border-radius: 14px;
+  }
+  .today-task-spotlight__head h3 {
+    font-size: 1.08rem;
+  }
+  .today-task-buckets {
     grid-template-columns: 1fr;
   }
 }

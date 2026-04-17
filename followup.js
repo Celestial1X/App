@@ -33,6 +33,23 @@ const initBrandIdentity = () => {
   top.prepend(brand);
 };
 const RECORDS_API_URL = API_BASE_URL ? `${API_BASE_URL}/api/records` : "/api/records";
+const STREAM_API_URL = API_BASE_URL ? `${API_BASE_URL}/api/stream` : "/api/stream";
+
+const setupRealtimeRefresh = (onRefresh) => {
+  if (typeof window.EventSource === "undefined" || typeof onRefresh !== "function") {
+    return () => {};
+  }
+  try {
+    const source = new EventSource(STREAM_API_URL);
+    const handler = () => onRefresh();
+    source.addEventListener("record-change", handler);
+    source.addEventListener("followup-change", handler);
+    source.onerror = () => {};
+    return () => source.close();
+  } catch (_error) {
+    return () => {};
+  }
+};
 
 const getEditIdFromQuery = () => {
   const params = new URLSearchParams(window.location.search || "");
@@ -832,6 +849,10 @@ const runReport90Page = () => {
       }
     }
   };
+  const closeRealtime = setupRealtimeRefresh(() => {
+    refreshRows().catch(() => {});
+  });
+  window.addEventListener("beforeunload", closeRealtime, { once: true });
 
   const updateReport90NextDate = () => {
     nextDate.value = addDays(startDate.value, 90);
@@ -1049,6 +1070,10 @@ const runVisaPage = () => {
       }
     }
   };
+  const closeRealtime = setupRealtimeRefresh(() => {
+    refreshRows().catch(() => {});
+  });
+  window.addEventListener("beforeunload", closeRealtime, { once: true });
 
   const updateVisaEndDate = () => {
     if (!endDate.value) {
@@ -1189,6 +1214,10 @@ const runMouLaosPage = () => {
       if (target) fillForEdit(target);
     }
   };
+  const closeRealtime = setupRealtimeRefresh(() => {
+    refreshRows().catch(() => {});
+  });
+  window.addEventListener("beforeunload", closeRealtime, { once: true });
 
   const renderRows = () => {
     list.innerHTML = "";

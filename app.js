@@ -1305,6 +1305,26 @@ const startServerSyncPolling = () => {
   });
 };
 
+const startRealtimeServerEvents = () => {
+  if (!canUseServerSync() || typeof window.EventSource === "undefined") {
+    return;
+  }
+  const streamUrl = API_BASE_URL ? `${API_BASE_URL}/api/stream` : "/api/stream";
+  try {
+    const source = new EventSource(streamUrl);
+    const refresh = () => {
+      syncRecordsFromServer();
+    };
+    source.addEventListener("record-change", refresh);
+    source.addEventListener("followup-change", refresh);
+    source.onerror = () => {
+      // EventSource auto-reconnects; keep silent to avoid noisy console for temporary network blips
+    };
+  } catch (_error) {
+    // fallback remains polling-based
+  }
+};
+
 
 const buildFormId = () => {
   const records = loadRecords();
@@ -3764,6 +3784,7 @@ renderRecords();
 renderLatestRecordCard();
 syncRecordsFromServer();
 startServerSyncPolling();
+startRealtimeServerEvents();
 document.querySelectorAll("a.tab-btn").forEach((link) => {
   link.addEventListener("click", () => {
     showLoader();

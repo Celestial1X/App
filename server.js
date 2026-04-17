@@ -24,6 +24,7 @@ const SERVER_LOG_FILE = process.env.SERVER_LOG_FILE
 
 const app = express();
 const sseClients = new Set();
+const ipRateLimitMap = new Map();
 
 const broadcastRealtimeEvent = (event, payload = {}) => {
   const data = `event: ${event}\ndata: ${JSON.stringify({ ...payload, at: new Date().toISOString() })}\n\n`;
@@ -40,8 +41,31 @@ app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", process.env.CORS_ORIGIN || "*");
   res.header("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
   res.header("Access-Control-Allow-Headers", "Content-Type");
+  res.header("X-Content-Type-Options", "nosniff");
+  res.header("X-Frame-Options", "DENY");
+  res.header("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.header("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
   if (req.method === "OPTIONS") {
     res.sendStatus(204);
+    return;
+  }
+  next();
+});
+
+app.use("/api", (req, res, next) => {
+  const ip = String(req.headers["x-forwarded-for"] || req.socket.remoteAddress || "unknown").split(",")[0].trim();
+  const now = Date.now();
+  const windowMs = 60 * 1000;
+  const maxRequests = 300;
+  const bucket = ipRateLimitMap.get(ip) || { count: 0, startAt: now };
+  if (now - bucket.startAt > windowMs) {
+    bucket.count = 0;
+    bucket.startAt = now;
+  }
+  bucket.count += 1;
+  ipRateLimitMap.set(ip, bucket);
+  if (bucket.count > maxRequests) {
+    res.status(429).json({ message: "Too many requests. Please try again later." });
     return;
   }
   next();

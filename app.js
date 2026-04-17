@@ -809,12 +809,44 @@ let currentLanguage = "th";
 const isNextFormPage = window.location.pathname.endsWith("/nextform.html") || window.location.pathname.endsWith("nextform.html");
 let currentFormStep = isNextFormPage ? 2 : 1;
 let hasShownEntryTaskAlert = false;
+let activePageToastTimer = null;
+let activePageToastRemovalTimer = null;
 
 const showTaskEntryNotice = (message, tone = "info") => {
   if (!taskEntryNotice) return;
   taskEntryNotice.textContent = message;
   taskEntryNotice.classList.remove("is-hidden", "task-entry-notice--info", "task-entry-notice--success");
   taskEntryNotice.classList.add(tone === "success" ? "task-entry-notice--success" : "task-entry-notice--info");
+};
+
+const showPageToast = (message, { duration = 6000, tone = "info" } = {}) => {
+  const text = String(message || "").trim();
+  if (!text) return;
+
+  let host = document.getElementById("pageToastHost");
+  if (!host) {
+    host = document.createElement("div");
+    host.id = "pageToastHost";
+    host.className = "page-toast-host";
+    document.body.appendChild(host);
+  }
+
+  const toast = document.createElement("div");
+  toast.className = `page-toast ${tone === "success" ? "page-toast--success" : "page-toast--info"}`;
+  toast.innerHTML = `<p>${text}</p><span class="page-toast__timer"></span>`;
+  host.appendChild(toast);
+
+  const timerBar = toast.querySelector(".page-toast__timer");
+  if (timerBar) {
+    timerBar.style.animationDuration = `${duration}ms`;
+  }
+
+  if (activePageToastTimer) window.clearTimeout(activePageToastTimer);
+  if (activePageToastRemovalTimer) window.clearTimeout(activePageToastRemovalTimer);
+  activePageToastTimer = window.setTimeout(() => {
+    toast.classList.add("is-leaving");
+    activePageToastRemovalTimer = window.setTimeout(() => toast.remove(), 220);
+  }, duration);
 };
 
 const setStatus = (element, message, type = "") => {
@@ -1686,6 +1718,9 @@ const buildHomeTaskItems = (records) => {
 };
 
 const loadCustomTodayTasks = () => {
+  if (canUseServerSync()) {
+    return [];
+  }
   let raw = "[]";
   try {
     raw = localStorage.getItem(TODAY_TASK_CUSTOM_KEY) || "[]";
@@ -1998,10 +2033,19 @@ const renderTodayTaskSpotlight = (records) => {
     hasShownEntryTaskAlert = true;
     if (todayTasks > 0) {
       showTaskEntryNotice(`แจ้งเตือนวันนี้: มี ${todayTasks} งานที่ต้องทำตอนนี้`, "info");
+      showPageToast(`งานที่ต้องทำวันนี้ ${todayTasks} รายการ`, { duration: 7000, tone: "info" });
     } else {
       showTaskEntryNotice("วันนี้ไม่มีงานที่ต้องทำทันที", "success");
+      showPageToast("วันนี้ไม่มีงานค้างกำหนด", { duration: 4500, tone: "success" });
     }
   }
+};
+
+const registerServiceWorker = () => {
+  if (!("serviceWorker" in navigator)) return;
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  });
 };
 
 const getFormTypeLabel = (value) => {
@@ -3785,6 +3829,7 @@ renderLatestRecordCard();
 syncRecordsFromServer();
 startServerSyncPolling();
 startRealtimeServerEvents();
+registerServiceWorker();
 document.querySelectorAll("a.tab-btn").forEach((link) => {
   link.addEventListener("click", () => {
     showLoader();

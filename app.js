@@ -1782,7 +1782,7 @@ const openTaskBucketModal = (bucket) => {
     const encodedTaskKey = encodeURIComponent(item.taskKey || "");
     const taskActions = `<div class="table-actions">
         <button type="button" class="secondary" data-task-done="${encodedTaskKey}" data-task-done-value="${item.done ? "0" : "1"}">${doneLabel}</button>
-        <button type="button" class="danger" data-task-delete="${encodedTaskKey}" data-task-custom-id="${item.customTaskId || ""}">ลบ</button>
+        <button type="button" class="danger" data-task-delete="${encodedTaskKey}" data-task-custom-id="${item.customTaskId || ""}" data-task-form-type="${item.formType || ""}" data-task-record-id="${item.recordId || ""}">ลบ</button>
         ${openButton}
       </div>`;
     li.innerHTML = `<span class="timeline-tag">${item.label}</span><h3>${item.formId} • ${item.assignee}</h3><p>${formatDateOnlyDMY(item.dateValue)} • ${dayText}</p>${note}${taskActions}`;
@@ -1801,14 +1801,42 @@ const openTaskBucketModal = (bucket) => {
     });
   });
   list.querySelectorAll("[data-task-delete]").forEach((button) => {
-    button.addEventListener("click", () => {
+    button.addEventListener("click", async () => {
       const taskKey = decodeURIComponent(button.getAttribute("data-task-delete") || "");
       const customId = button.getAttribute("data-task-custom-id") || "";
-      let removed = updateTodayTaskState(taskKey, { deleted: true });
-      if (customId) {
-        removed = deleteCustomTodayTask(customId) && removed;
+      const formType = String(button.getAttribute("data-task-form-type") || "").trim();
+      const recordId = String(button.getAttribute("data-task-record-id") || "").trim();
+      let removed = true;
+
+      if (formType === "todaytask" && recordId) {
+        const before = loadRecords();
+        const next = before.filter((record) => String(record?.formId || "") !== recordId);
+        if (next.length === before.length) {
+          removed = false;
+        } else {
+          saveRecords(next);
+          clearRecordDirty(recordId);
+          if (canUseServerSync()) {
+            const deletedOnServer = await deleteRecordFromServer(recordId);
+            if (!deletedOnServer) {
+              saveRecords(before);
+              removed = false;
+            }
+          }
+        }
+      } else {
+        removed = updateTodayTaskState(taskKey, { deleted: true });
+        if (customId) {
+          removed = deleteCustomTodayTask(customId) && removed;
+        }
       }
-      if (!removed) return;
+      if (!removed) {
+        if (todayTaskQuickStatus) {
+          todayTaskQuickStatus.textContent = "ลบงานไม่สำเร็จ กรุณาลองใหม่อีกครั้ง";
+          todayTaskQuickStatus.classList.add("error");
+        }
+        return;
+      }
       recordModal.classList.remove("is-open");
       recordModal.setAttribute("aria-hidden", "true");
       renderLatestRecordCard();

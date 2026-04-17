@@ -114,6 +114,7 @@ const todayTaskSubtitle = document.getElementById("todayTaskSubtitle");
 const todayTaskBuckets = document.getElementById("todayTaskBuckets");
 const todayTaskQuickAdd = document.getElementById("todayTaskQuickAdd");
 const todayTaskQuickTitle = document.getElementById("todayTaskQuickTitle");
+const todayTaskQuickOwner = document.getElementById("todayTaskQuickOwner");
 const todayTaskQuickDate = document.getElementById("todayTaskQuickDate");
 const todayTaskQuickNote = document.getElementById("todayTaskQuickNote");
 const todayTaskQuickAddButton = document.getElementById("todayTaskQuickAddButton");
@@ -1575,6 +1576,24 @@ const buildHomeTaskItems = (records) => {
     const followup = record?.data?.followup || {};
     const caseStatus = record?.data?.caseStatus || {};
     const assignee = info.fullName || info.employerName || record?.displayName || "-";
+    if (record?.formType === "todaytask") {
+      const dateValue = followup?.nextDate || record?.data?.startDate || "";
+      const days = getDaysUntil(dateValue);
+      if (days !== null && days >= 0 && days <= 90) {
+        tasks.push({
+          days,
+          dateValue,
+          formId: record?.formId || "-",
+          recordId: record?.formId || "-",
+          formType: "todaytask",
+          assignee: followup?.taskTitle || info.fullName || record?.displayName || "-",
+          label: "งานที่เพิ่มเอง",
+          note: followup?.note || "",
+          owner: record?.data?.recordedBy || "-",
+        });
+      }
+      return;
+    }
 
     taskDefs.forEach(({ key, label, source }) => {
       const sourceData = source === "followup" ? followup : source === "caseStatus" ? caseStatus : info;
@@ -1589,6 +1608,7 @@ const buildHomeTaskItems = (records) => {
         formType: record?.formType || "",
         assignee,
         label,
+        owner: record?.data?.recordedBy || "-",
       });
     });
   });
@@ -1624,6 +1644,7 @@ const buildHomeTaskItems = (records) => {
       customTaskId: task.id,
       formType: "custom",
       recordId: task.id,
+      owner: "-",
     };
     const taskKey = buildTodayTaskKey(taskItem);
     const state = taskState[taskKey] && typeof taskState[taskKey] === "object" ? taskState[taskKey] : {};
@@ -1724,7 +1745,7 @@ const updateTodayTaskState = (taskKey, patch) => {
 };
 
 const buildTodayTaskKey = (task) => {
-  const formId = String(task?.formId || "-").trim();
+  const formId = String(task?.recordId || task?.customTaskId || task?.formId || "-").trim();
   const label = String(task?.label || "-").trim();
   const dateValue = normalizeDisplayDateValue(task?.dateValue || "");
   const assignee = String(task?.assignee || "-").trim();
@@ -1735,6 +1756,7 @@ const getTaskTargetUrl = (item) => {
   const editId = encodeURIComponent(String(item?.recordId || item?.formId || "").trim());
   const formType = String(item?.formType || "").trim();
   if (!editId || item?.formId === "เพิ่มเอง") return "";
+  if (formType === "todaytask") return "";
   if (formType === "report90") return `report90.html?editId=${editId}`;
   if (formType === "visarun") return `visarun.html?editId=${editId}`;
   if (formType === "mouLaos") return `nextform.html?editId=${editId}`;
@@ -1763,7 +1785,7 @@ const openTaskBucketModal = (bucket) => {
         <button type="button" class="danger" data-task-delete="${encodedTaskKey}" data-task-custom-id="${item.customTaskId || ""}">ลบ</button>
         ${openButton}
       </div>`;
-    li.innerHTML = `<span class="timeline-tag">${item.label}</span><h3>${item.formId} • ${item.assignee}</h3><p>${formatDateOnlyDMY(item.dateValue)} • ${dayText}</p>${note}${taskActions}`;
+    li.innerHTML = `<span class="timeline-tag">${item.label}</span><h3>${item.formId} • ${item.assignee}</h3><p>ผู้รับผิดชอบ: ${item.owner || "-"}</p><p>${formatDateOnlyDMY(item.dateValue)} • ${dayText}</p>${note}${taskActions}`;
     list.appendChild(li);
   });
   recordModalBody.appendChild(list);
@@ -1804,38 +1826,65 @@ const openTaskBucketModal = (bucket) => {
 };
 
 const initTodayTaskQuickAdd = () => {
-  if (!todayTaskQuickAdd || !todayTaskQuickTitle || !todayTaskQuickDate) return;
-  const submitTask = () => {
+  if (!todayTaskQuickAdd || !todayTaskQuickTitle || !todayTaskQuickDate || !todayTaskQuickOwner) return;
+  const submitTask = async () => {
     const title = String(todayTaskQuickTitle.value || "").trim();
+    const owner = String(todayTaskQuickOwner.value || "").trim();
     const fallbackToday = formatDateOnlyDMY(new Date());
     const dateValue = normalizeDisplayDateValue(todayTaskQuickDate.value) || fallbackToday;
     const note = String(todayTaskQuickNote?.value || "").trim();
-    if (!title) {
+    if (!title || !owner) {
       if (todayTaskQuickStatus) {
-        todayTaskQuickStatus.textContent = "กรุณากรอกชื่องาน";
+        todayTaskQuickStatus.textContent = "กรุณากรอกชื่องานและผู้รับผิดชอบ";
         todayTaskQuickStatus.classList.add("error");
       }
       return;
     }
     try {
-      const items = loadCustomTodayTasks();
-      items.unshift({
-        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        title,
-        dateValue,
-        note,
-        done: false,
-      });
-      const saved = saveCustomTodayTasks(items.slice(0, 120));
-      if (!saved) {
-        throw new Error("today-task-save-failed");
-      }
-      todayTaskQuickAdd.reset();
       const records = loadRecords();
-      renderTodayTaskSpotlight(records);
+      const formId = nextLocalFormId(records);
+      const now = new Date().toISOString();
+      const taskRecord = {
+        formId,
+        formType: "todaytask",
+        formTypeLabel: "งานที่ต้องทำ",
+        displayName: `งานที่ต้องทำ - ${title}`,
+        status: "final",
+        updatedAt: now,
+        data: {
+          recordedBy: owner,
+          startDate: dateValue,
+          personalInfo: {
+            fullName: title,
+            employerName: "",
+          },
+          followup: {
+            taskTitle: title,
+            taskOwner: owner,
+            nextDate: dateValue,
+            note,
+          },
+        },
+      };
+
+      records.unshift(taskRecord);
+      saveRecords(records);
+      markRecordDirty(formId);
+      const synced = await upsertRecordToServer(taskRecord);
+      if (synced && synced.formId) {
+        const latest = loadRecords();
+        const index = latest.findIndex((item) => String(item.formId || "") === formId);
+        if (index >= 0) {
+          latest[index] = synced;
+          saveRecords(latest);
+        }
+        clearRecordDirty(formId);
+      }
+
+      todayTaskQuickAdd.reset();
       renderLatestRecordCard();
       if (todayTaskQuickStatus) {
-        todayTaskQuickStatus.textContent = `เพิ่มงานใหม่เรียบร้อย (${formatDateOnlyDMY(dateValue)})`;
+        todayTaskQuickStatus.textContent = `เพิ่มงานใหม่เรียบร้อย (${formatDateOnlyDMY(dateValue)}) • ผู้รับผิดชอบ: ${owner}`;
         todayTaskQuickStatus.classList.remove("error");
       }
     } catch (_error) {
@@ -1848,11 +1897,21 @@ const initTodayTaskQuickAdd = () => {
 
   todayTaskQuickAdd.addEventListener("submit", (event) => {
     event.preventDefault();
-    submitTask();
+    submitTask().catch(() => {
+      if (todayTaskQuickStatus) {
+        todayTaskQuickStatus.textContent = "ไม่สามารถเพิ่มงานได้ กรุณาลองใหม่อีกครั้ง";
+        todayTaskQuickStatus.classList.add("error");
+      }
+    });
   });
   todayTaskQuickAddButton?.addEventListener("click", (event) => {
     event.preventDefault();
-    submitTask();
+    submitTask().catch(() => {
+      if (todayTaskQuickStatus) {
+        todayTaskQuickStatus.textContent = "ไม่สามารถเพิ่มงานได้ กรุณาลองใหม่อีกครั้ง";
+        todayTaskQuickStatus.classList.add("error");
+      }
+    });
   });
 };
 
@@ -1877,7 +1936,8 @@ const renderTodayTaskSpotlight = (records) => {
   todayTaskBuckets.innerHTML = homeTaskBuckets.map((bucket, index) => {
     const dayLabel = bucket.days === 0 ? "วันนี้" : `อีก ${bucket.days} วัน`;
     const firstLabel = bucket.items[0]?.label || "";
-    return `<button type="button" class="today-task-bucket" data-task-bucket="${index}"><strong>${dayLabel}</strong><span>${bucket.items.length} งาน</span><small>${firstLabel}</small></button>`;
+    const firstOwner = bucket.items[0]?.owner || "-";
+    return `<button type="button" class="today-task-bucket" data-task-bucket="${index}"><strong>${dayLabel}</strong><span>${bucket.items.length} งาน</span><small>${firstLabel} • ${firstOwner}</small></button>`;
   }).join("");
 
   todayTaskBuckets.querySelectorAll("[data-task-bucket]").forEach((button) => {

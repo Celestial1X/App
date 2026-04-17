@@ -23,11 +23,28 @@ const SERVER_LOG_FILE = process.env.SERVER_LOG_FILE
   : path.join(MOUNT_PATH, "server.log");
 
 const app = express();
+const sseClients = new Set();
+const ipRateLimitMap = new Map();
+
+const broadcastRealtimeEvent = (event, payload = {}) => {
+  const data = `event: ${event}\ndata: ${JSON.stringify({ ...payload, at: new Date().toISOString() })}\n\n`;
+  sseClients.forEach((client) => {
+    try {
+      client.write(data);
+    } catch (_error) {
+      sseClients.delete(client);
+    }
+  });
+};
 
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", process.env.CORS_ORIGIN || "*");
   res.header("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
   res.header("Access-Control-Allow-Headers", "Content-Type");
+  res.header("X-Content-Type-Options", "nosniff");
+  res.header("X-Frame-Options", "DENY");
+  res.header("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.header("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
   if (req.method === "OPTIONS") {
     res.sendStatus(204);
     return;
@@ -35,8 +52,41 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use("/api", (req, res, next) => {
+  const ip = String(req.headers["x-forwarded-for"] || req.socket.remoteAddress || "unknown").split(",")[0].trim();
+  const now = Date.now();
+  const windowMs = 60 * 1000;
+  const maxRequests = 300;
+  const bucket = ipRateLimitMap.get(ip) || { count: 0, startAt: now };
+  if (now - bucket.startAt > windowMs) {
+    bucket.count = 0;
+    bucket.startAt = now;
+  }
+  bucket.count += 1;
+  ipRateLimitMap.set(ip, bucket);
+  if (bucket.count > maxRequests) {
+    res.status(429).json({ message: "Too many requests. Please try again later." });
+    return;
+  }
+  next();
+});
+
 app.use(express.json({ limit: "2mb" }));
 app.use(express.static(__dirname));
+
+app.get("/api/stream", (req, res) => {
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.flushHeaders?.();
+
+  res.write(`event: hello\ndata: ${JSON.stringify({ status: "connected", at: new Date().toISOString() })}\n\n`);
+  sseClients.add(res);
+  req.on("close", () => {
+    sseClients.delete(res);
+    res.end();
+  });
+});
 
 const appendServerLog = async (message) => {
   const timestamp = new Date().toISOString();
@@ -173,6 +223,7 @@ app.post("/api/records", async (req, res) => {
   if (index >= 0) {
     records[index] = { ...payload, formId: incomingId };
     await writeRecords(records);
+    broadcastRealtimeEvent("record-change", { action: "update", formId: incomingId });
     res.json(records[index]);
     return;
   }
@@ -185,6 +236,7 @@ app.post("/api/records", async (req, res) => {
   const nextRecord = { ...payload, formId: nextId };
   records.unshift(nextRecord);
   await writeRecords(records);
+  broadcastRealtimeEvent("record-change", { action: "create", formId: nextId });
   res.json(nextRecord);
 });
 
@@ -203,11 +255,13 @@ app.put("/api/records/:id", async (req, res) => {
   }
   records[index] = { ...payload, formId: requestedId };
   await writeRecords(records);
+  broadcastRealtimeEvent("record-change", { action: "update", formId: requestedId });
   res.json(records[index]);
 });
 
 app.delete("/api/records", async (_req, res) => {
   await writeRecords([]);
+  broadcastRealtimeEvent("record-change", { action: "clear" });
   res.json({ status: "ok" });
 });
 
@@ -216,6 +270,7 @@ app.delete("/api/records/:id", async (req, res) => {
   const requestedId = String(req.params.id || "").trim();
   const nextRecords = records.filter((item) => String(item.formId || "") !== requestedId);
   await writeRecords(nextRecords);
+  broadcastRealtimeEvent("record-change", { action: "delete", formId: requestedId });
   res.json({ status: "ok" });
 });
 
@@ -248,6 +303,7 @@ app.post("/api/followups/:type", async (req, res) => {
       rows[index] = updated;
       followups[type] = rows;
       await writeFollowups(followups);
+      broadcastRealtimeEvent("followup-change", { action: "update", type, id: incomingId });
       res.json(updated);
       return;
     }
@@ -258,6 +314,7 @@ app.post("/api/followups/:type", async (req, res) => {
   rows.unshift(created);
   followups[type] = rows;
   await writeFollowups(followups);
+  broadcastRealtimeEvent("followup-change", { action: "create", type, id: nextId });
   res.json(created);
 });
 

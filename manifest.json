@@ -1,0 +1,23 @@
+{
+  "name": "ระบบตรวจสอบข้อมูลแรงงานต่างด้าว",
+  "short_name": "BmViSa",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#ec4899",
+  "description": "ระบบติดตามงานแรงงานต่างด้าว รองรับติดตั้งบนมือถือและเดสก์ท็อป",
+  "icons": [
+    {
+      "src": "bmvisa-logo.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "bmvisa-logo.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

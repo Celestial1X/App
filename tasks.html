@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#ec4899" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="manifest" href="manifest.json" />
+    <title>งานที่ต้องทำ - ระบบตรวจสอบข้อมูลแรงงานต่างด้าว</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css?v=20260211" />
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero__content">
+        <div class="hero__top"></div>
+        <h1>ระบบตรวจสอบข้อมูลแรงงานต่างด้าว</h1>
+      </div>
+    </header>
+
+    <main class="container">
+      <nav class="page-tabs">
+        <a class="tab-btn is-active" href="tasks.html">งานที่ต้องทำ</a>
+        <a class="tab-btn" href="receivedocs.html">รับเอกสาร</a>
+        <a class="tab-btn" href="index.html">ค้นหาข้อมูล</a>
+        <a class="tab-btn" href="records.html">ข้อมูลบันทึก</a>
+        <a class="tab-btn" href="form.html">กรอกแบบฟอร์ม</a>
+        <a class="tab-btn" href="report90.html">รายงานตัว 90 วัน</a>
+        <a class="tab-btn" href="visarun.html">Visa run</a>
+        <a class="tab-btn" href="nextform.html">MOU ลาว</a>
+        <a class="tab-btn" href="returndocs.html">ส่งคืนเอกสาร</a>
+      </nav>
+
+      <section class="panel">
+        <h2>งานที่ต้องทำ</h2>
+        <div id="taskEntryNotice" class="task-entry-notice is-hidden" aria-live="polite"></div>
+        <section class="today-task-spotlight" id="todayTaskSpotlight" aria-live="polite">
+          <div class="today-task-spotlight__head">
+            <p class="today-task-spotlight__tag">งานที่ต้องทำประจำวัน</p>
+            <h3>รายการงานวันนี้และวันถัดไป</h3>
+            <p id="todayTaskSubtitle" class="status-text">กำลังตรวจสอบรายการ...</p>
+          </div>
+          <form id="todayTaskQuickAdd" class="today-task-quickadd">
+            <input id="todayTaskQuickTitle" type="text" placeholder="เพิ่มชื่องาน เช่น ต่อใบอนุญาตแรงงาน" />
+            <input id="todayTaskQuickDate" type="date" />
+            <input id="todayTaskQuickNote" type="text" placeholder="หมายเหตุ (ถ้ามี)" />
+            <button id="todayTaskQuickAddButton" type="submit" class="primary">เพิ่มรายการ</button>
+          </form>
+          <p id="todayTaskQuickStatus" class="status-text"></p>
+          <div id="todayTaskBuckets" class="today-task-buckets"></div>
+        </section>
+      </section>
+    </main>
+
+    <div class="modal" id="recordModal" aria-hidden="true">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="recordModalTitle">งานที่ต้องทำ</h3>
+          <button type="button" class="modal-close" id="recordModalClose" aria-label="ปิด">✕</button>
+        </div>
+        <div id="recordModalBody" class="modal-body"></div>
+        <div class="modal-actions">
+          <button type="button" class="secondary" id="recordModalCloseButton">ปิดหน้าต่าง</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="app.js?v=20260211"></script>
+    <script src="datepicker.js?v=20260211"></script>
+  </body>
+</html>

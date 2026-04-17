@@ -33,6 +33,23 @@ const initBrandIdentity = () => {
   top.prepend(brand);
 };
 const RECORDS_API_URL = API_BASE_URL ? `${API_BASE_URL}/api/records` : "/api/records";
+const STREAM_API_URL = API_BASE_URL ? `${API_BASE_URL}/api/stream` : "/api/stream";
+
+const setupRealtimeRefresh = (onRefresh) => {
+  if (typeof window.EventSource === "undefined" || typeof onRefresh !== "function") {
+    return () => {};
+  }
+  try {
+    const source = new EventSource(STREAM_API_URL);
+    const handler = () => onRefresh();
+    source.addEventListener("record-change", handler);
+    source.addEventListener("followup-change", handler);
+    source.onerror = () => {};
+    return () => source.close();
+  } catch (_error) {
+    return () => {};
+  }
+};
 
 const getEditIdFromQuery = () => {
   const params = new URLSearchParams(window.location.search || "");
@@ -773,7 +790,10 @@ const runReport90Page = () => {
 
     filteredRows.forEach((item) => {
       const cycleDays = diffDaysBetween(item.startDate, item.nextDate);
-      const cycleText = cycleDays === null ? "-" : `${fmtDate(item.nextDate)} (${cycleDays} วัน)`;
+      const cycleText =
+        cycleDays === null
+          ? "-"
+          : `${cycleDays} วัน (เริ่ม ${fmtDate(item.startDate)} ถึง ${fmtDate(item.nextDate)})`;
       const cycleTone = getDeadlineToneByRemainingDays(cycleDays);
       const tr = document.createElement("tr");
       tr.innerHTML = `<td><input type="checkbox" data-export-select aria-label="เลือกรายการ" /></td><td>${item.workerName || "-"}</td><td>${item.employerName || "-"}</td><td>${item.recordedBy || "-"}</td><td>${getAggregateBookStats(rows, item, "report90").latestText}</td><td>${fmtDate(item.nextDate)}</td><td><span class="deadline-box ${cycleTone}">${cycleText}</span></td>`;
@@ -829,11 +849,13 @@ const runReport90Page = () => {
       }
     }
   };
+  const closeRealtime = setupRealtimeRefresh(() => {
+    refreshRows().catch(() => {});
+  });
+  window.addEventListener("beforeunload", closeRealtime, { once: true });
 
   const updateReport90NextDate = () => {
-    if (!nextDate.value) {
-      nextDate.value = addDays(startDate.value, 90);
-    }
+    nextDate.value = addDays(startDate.value, 90);
   };
   startDate?.addEventListener("change", updateReport90NextDate);
   startDate?.addEventListener("input", updateReport90NextDate);
@@ -865,6 +887,7 @@ const runReport90Page = () => {
       status.classList.add("error");
       return;
     }
+    values.nextDate = normalizeDateInputValue(values.nextDate) || computeFollowupDateFromStart(values.startDate);
 
     try {
       const submittingEditId = editFormId || requestedEditId || "";
@@ -1047,6 +1070,10 @@ const runVisaPage = () => {
       }
     }
   };
+  const closeRealtime = setupRealtimeRefresh(() => {
+    refreshRows().catch(() => {});
+  });
+  window.addEventListener("beforeunload", closeRealtime, { once: true });
 
   const updateVisaEndDate = () => {
     if (!endDate.value) {
@@ -1187,6 +1214,10 @@ const runMouLaosPage = () => {
       if (target) fillForEdit(target);
     }
   };
+  const closeRealtime = setupRealtimeRefresh(() => {
+    refreshRows().catch(() => {});
+  });
+  window.addEventListener("beforeunload", closeRealtime, { once: true });
 
   const renderRows = () => {
     list.innerHTML = "";

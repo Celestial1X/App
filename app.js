@@ -118,6 +118,7 @@ const todayTaskQuickDate = document.getElementById("todayTaskQuickDate");
 const todayTaskQuickNote = document.getElementById("todayTaskQuickNote");
 const todayTaskQuickAddButton = document.getElementById("todayTaskQuickAddButton");
 const todayTaskQuickStatus = document.getElementById("todayTaskQuickStatus");
+const taskEntryNotice = document.getElementById("taskEntryNotice");
 const verifyRecordButton = document.getElementById("verifyRecord");
 const recordModal = document.getElementById("recordModal");
 const recordModalTitle = document.getElementById("recordModalTitle");
@@ -137,6 +138,7 @@ const RECORD_SEARCH_KEY = "recordSearchQuery";
 const FORM_DRAFT_KEY = "workerFormDraft";
 const API_BASE_KEY = "recordsApiBaseUrl";
 const TODAY_TASK_CUSTOM_KEY = "todayTaskCustomItems";
+const TODAY_TASK_STATE_KEY = "todayTaskItemState";
 const DIRTY_RECORD_IDS_KEY = "dirtyRecordIds";
 const DIRTY_RECORD_TTL_MS = 10 * 60 * 1000;
 
@@ -806,6 +808,46 @@ const translations = {
 let currentLanguage = "th";
 const isNextFormPage = window.location.pathname.endsWith("/nextform.html") || window.location.pathname.endsWith("nextform.html");
 let currentFormStep = isNextFormPage ? 2 : 1;
+let hasShownEntryTaskAlert = false;
+let activePageToastTimer = null;
+let activePageToastRemovalTimer = null;
+
+const showTaskEntryNotice = (message, tone = "info") => {
+  if (!taskEntryNotice) return;
+  taskEntryNotice.textContent = message;
+  taskEntryNotice.classList.remove("is-hidden", "task-entry-notice--info", "task-entry-notice--success");
+  taskEntryNotice.classList.add(tone === "success" ? "task-entry-notice--success" : "task-entry-notice--info");
+};
+
+const showPageToast = (message, { duration = 6000, tone = "info" } = {}) => {
+  const text = String(message || "").trim();
+  if (!text) return;
+
+  let host = document.getElementById("pageToastHost");
+  if (!host) {
+    host = document.createElement("div");
+    host.id = "pageToastHost";
+    host.className = "page-toast-host";
+    document.body.appendChild(host);
+  }
+
+  const toast = document.createElement("div");
+  toast.className = `page-toast ${tone === "success" ? "page-toast--success" : "page-toast--info"}`;
+  toast.innerHTML = `<p>${text}</p><span class="page-toast__timer"></span>`;
+  host.appendChild(toast);
+
+  const timerBar = toast.querySelector(".page-toast__timer");
+  if (timerBar) {
+    timerBar.style.animationDuration = `${duration}ms`;
+  }
+
+  if (activePageToastTimer) window.clearTimeout(activePageToastTimer);
+  if (activePageToastRemovalTimer) window.clearTimeout(activePageToastRemovalTimer);
+  activePageToastTimer = window.setTimeout(() => {
+    toast.classList.add("is-leaving");
+    activePageToastRemovalTimer = window.setTimeout(() => toast.remove(), 220);
+  }, duration);
+};
 
 const setStatus = (element, message, type = "") => {
   if (!element) return;
@@ -1295,6 +1337,26 @@ const startServerSyncPolling = () => {
   });
 };
 
+const startRealtimeServerEvents = () => {
+  if (!canUseServerSync() || typeof window.EventSource === "undefined") {
+    return;
+  }
+  const streamUrl = API_BASE_URL ? `${API_BASE_URL}/api/stream` : "/api/stream";
+  try {
+    const source = new EventSource(streamUrl);
+    const refresh = () => {
+      syncRecordsFromServer();
+    };
+    source.addEventListener("record-change", refresh);
+    source.addEventListener("followup-change", refresh);
+    source.onerror = () => {
+      // EventSource auto-reconnects; keep silent to avoid noisy console for temporary network blips
+    };
+  } catch (_error) {
+    // fallback remains polling-based
+  }
+};
+
 
 const buildFormId = () => {
   const records = loadRecords();
@@ -1389,6 +1451,15 @@ const getDaysBetweenDateValues = (startValue, endValue) => {
   return days;
 };
 
+const safeParseJSON = (text, fallback) => {
+  try {
+    const parsed = JSON.parse(String(text ?? ""));
+    return parsed ?? fallback;
+  } catch (_error) {
+    return fallback;
+  }
+};
+
 const getDeadlineToneClass = (days) => {
   if (days === null) return "deadline-box--none";
   if (days < 30) return "deadline-box--danger";
@@ -1457,6 +1528,7 @@ const renderRecordsSummary = (records) => {
 
 const renderLatestRecordCard = () => {
   if (!latestRecordTitle || !latestRecordMeta) {
+    renderHomeFollowupSummaries();
     return;
   }
   const records = loadRecords();
@@ -1511,8 +1583,9 @@ const renderFollowupSummaryList = (target, records, typeLabel, dateField) => {
 };
 
 const renderHomeFollowupSummaries = () => {
-  if (!indexReport90Summary && !indexVisaSummary && !indexMouSummary) return;
   const all = loadRecords();
+  renderTodayTaskSpotlight(all);
+  if (!indexReport90Summary && !indexVisaSummary && !indexMouSummary) return;
   const r90 = all.filter((item) => item?.formType === "report90");
   const visa = all.filter((item) => item?.formType === "visarun");
   const mou = all.filter((item) => item?.formType === "mouLaos");
@@ -1535,7 +1608,6 @@ const renderHomeFollowupSummaries = () => {
       indexExpiryAlert.classList.add("is-hidden");
     }
   }
-  renderTodayTaskSpotlight(all);
 };
 
 const buildHomeTaskItems = (records) => {
@@ -1555,6 +1627,26 @@ const buildHomeTaskItems = (records) => {
     const followup = record?.data?.followup || {};
     const caseStatus = record?.data?.caseStatus || {};
     const assignee = info.fullName || info.employerName || record?.displayName || "-";
+    if (record?.formType === "todaytask") {
+      const dateValue = followup?.nextDate || record?.data?.startDate || "";
+      const days = getDaysUntil(dateValue);
+      if (days !== null && days >= 0 && days <= 90) {
+        const taskTitle = followup?.taskTitle || info.fullName || record?.displayName || "งานที่เพิ่มเอง";
+        tasks.push({
+          days,
+          dateValue,
+          formId: record?.formId || "-",
+          recordId: record?.formId || "-",
+          formType: "todaytask",
+          assignee: taskTitle,
+          label: taskTitle,
+          note: followup?.note || "",
+          done: Boolean(followup?.taskDone),
+          owner: "-",
+        });
+      }
+      return;
+    }
 
     taskDefs.forEach(({ key, label, source }) => {
       const sourceData = source === "followup" ? followup : source === "caseStatus" ? caseStatus : info;
@@ -1565,31 +1657,58 @@ const buildHomeTaskItems = (records) => {
         days,
         dateValue,
         formId: record?.formId || "-",
+        recordId: record?.formId || "-",
+        formType: record?.formType || "",
         assignee,
         label,
+        owner: record?.data?.recordedBy || "-",
       });
     });
   });
 
+  const taskState = loadTodayTaskStateMap();
+
   const grouped = new Map();
   tasks.forEach((task) => {
+    const taskKey = buildTodayTaskKey(task);
+    const state = taskState[taskKey] && typeof taskState[taskKey] === "object" ? taskState[taskKey] : {};
+    if (state.deleted) return;
     const key = String(task.days);
     if (!grouped.has(key)) grouped.set(key, []);
-    grouped.get(key).push(task);
+    grouped.get(key).push({
+      ...task,
+      taskKey,
+      done: task.formType === "todaytask" ? Boolean(task.done) : Boolean(state.done),
+      targetUrl: getTaskTargetUrl(task),
+    });
   });
 
   loadCustomTodayTasks().forEach((task) => {
     const days = getDaysUntil(task.dateValue);
     if (days === null || days < 0 || days > 90) return;
-    const key = String(days);
-    if (!grouped.has(key)) grouped.set(key, []);
-    grouped.get(key).push({
+    const taskItem = {
       days,
       dateValue: task.dateValue,
       formId: "เพิ่มเอง",
-      assignee: task.title,
-      label: "งานเพิ่มเอง",
       note: task.note || "",
+      isCustom: true,
+      customTaskId: task.id,
+      formType: "custom",
+      recordId: task.id,
+      assignee: "-",
+      label: task.title || "งานที่เพิ่มเอง",
+      owner: "-",
+    };
+    const taskKey = buildTodayTaskKey(taskItem);
+    const state = taskState[taskKey] && typeof taskState[taskKey] === "object" ? taskState[taskKey] : {};
+    if (state.deleted) return;
+    const key = String(days);
+    if (!grouped.has(key)) grouped.set(key, []);
+    grouped.get(key).push({
+      ...taskItem,
+      taskKey,
+      done: Boolean(task.done || state.done),
+      targetUrl: "",
     });
   });
 
@@ -1600,7 +1719,16 @@ const buildHomeTaskItems = (records) => {
 };
 
 const loadCustomTodayTasks = () => {
-  const parsed = safeParseJSON(localStorage.getItem(TODAY_TASK_CUSTOM_KEY), []);
+  if (canUseServerSync()) {
+    return [];
+  }
+  let raw = "[]";
+  try {
+    raw = localStorage.getItem(TODAY_TASK_CUSTOM_KEY) || "[]";
+  } catch (_error) {
+    raw = "[]";
+  }
+  const parsed = safeParseJSON(raw, []);
   if (!Array.isArray(parsed)) return [];
   return parsed
     .map((item) => ({
@@ -1608,12 +1736,87 @@ const loadCustomTodayTasks = () => {
       title: String(item?.title || "").trim(),
       dateValue: normalizeDisplayDateValue(item?.dateValue || ""),
       note: String(item?.note || "").trim(),
+      done: Boolean(item?.done),
     }))
     .filter((item) => item.title && item.dateValue);
 };
 
 const saveCustomTodayTasks = (items) => {
-  localStorage.setItem(TODAY_TASK_CUSTOM_KEY, JSON.stringify(items || []));
+  try {
+    localStorage.setItem(TODAY_TASK_CUSTOM_KEY, JSON.stringify(items || []));
+    return true;
+  } catch (_error) {
+    return false;
+  }
+};
+
+const updateCustomTodayTask = (taskId, updater) => {
+  const id = String(taskId || "").trim();
+  if (!id) return false;
+  const items = loadCustomTodayTasks();
+  const index = items.findIndex((item) => item.id === id);
+  if (index < 0) return false;
+  const nextItems = [...items];
+  nextItems[index] = updater({ ...nextItems[index] });
+  return saveCustomTodayTasks(nextItems.slice(0, 120));
+};
+
+const deleteCustomTodayTask = (taskId) => {
+  const id = String(taskId || "").trim();
+  if (!id) return false;
+  const items = loadCustomTodayTasks();
+  const nextItems = items.filter((item) => item.id !== id);
+  if (nextItems.length === items.length) return false;
+  return saveCustomTodayTasks(nextItems.slice(0, 120));
+};
+
+const loadTodayTaskStateMap = () => {
+  let raw = "{}";
+  try {
+    raw = localStorage.getItem(TODAY_TASK_STATE_KEY) || "{}";
+  } catch (_error) {
+    raw = "{}";
+  }
+  const parsed = safeParseJSON(raw, {});
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+  return parsed;
+};
+
+const saveTodayTaskStateMap = (stateMap) => {
+  try {
+    localStorage.setItem(TODAY_TASK_STATE_KEY, JSON.stringify(stateMap || {}));
+    return true;
+  } catch (_error) {
+    return false;
+  }
+};
+
+const updateTodayTaskState = (taskKey, patch) => {
+  const key = String(taskKey || "").trim();
+  if (!key) return false;
+  const stateMap = loadTodayTaskStateMap();
+  const current = stateMap[key] && typeof stateMap[key] === "object" ? stateMap[key] : {};
+  stateMap[key] = { ...current, ...patch };
+  return saveTodayTaskStateMap(stateMap);
+};
+
+const buildTodayTaskKey = (task) => {
+  const formId = String(task?.recordId || task?.customTaskId || task?.formId || "-").trim();
+  const label = String(task?.label || "-").trim();
+  const dateValue = normalizeDisplayDateValue(task?.dateValue || "");
+  const assignee = String(task?.assignee || "-").trim();
+  return [formId, label, dateValue, assignee].join("|");
+};
+
+const getTaskTargetUrl = (item) => {
+  const editId = encodeURIComponent(String(item?.recordId || item?.formId || "").trim());
+  const formType = String(item?.formType || "").trim();
+  if (!editId || item?.formId === "เพิ่มเอง") return "";
+  if (formType === "todaytask") return "";
+  if (formType === "report90") return `report90.html?editId=${editId}`;
+  if (formType === "visarun") return `visarun.html?editId=${editId}`;
+  if (formType === "mouLaos") return `nextform.html?editId=${editId}`;
+  return `form.html?editId=${editId}`;
 };
 
 const openTaskBucketModal = (bucket) => {
@@ -1626,51 +1829,210 @@ const openTaskBucketModal = (bucket) => {
   bucket.items.forEach((item) => {
     const li = document.createElement("li");
     li.className = "timeline-item";
+    if (item.done) li.classList.add("timeline-item--done");
     const note = item.note ? `<p>${item.note}</p>` : "";
-    li.innerHTML = `<span class="timeline-tag">${item.label}</span><h3>${item.formId} • ${item.assignee}</h3><p>${formatDateOnlyDMY(item.dateValue)} • ${dayText}</p>${note}`;
+    const doneLabel = item.done ? "↺ ยกเลิกเสร็จแล้ว" : "✓ เสร็จแล้ว";
+    const openButton = item.targetUrl
+      ? `<button type="button" class="secondary" data-task-open="${item.targetUrl}">เปิดรายการ</button>`
+      : "";
+    const encodedTaskKey = encodeURIComponent(item.taskKey || "");
+    const taskActions = `<div class="table-actions">
+        <button type="button" class="secondary" data-task-done="${encodedTaskKey}" data-task-done-value="${item.done ? "0" : "1"}" data-task-done-form-type="${item.formType || ""}" data-task-done-record-id="${item.recordId || ""}">${doneLabel}</button>
+        <button type="button" class="danger" data-task-delete="${encodedTaskKey}" data-task-custom-id="${item.customTaskId || ""}" data-task-form-type="${item.formType || ""}" data-task-record-id="${item.recordId || ""}">ลบ</button>
+        ${openButton}
+      </div>`;
+    li.innerHTML = `<span class="timeline-tag">${item.label}</span><h3>${item.formId} • ${item.assignee}</h3><p>${formatDateOnlyDMY(item.dateValue)} • ${dayText}</p>${note}${taskActions}`;
     list.appendChild(li);
   });
   recordModalBody.appendChild(list);
+  list.querySelectorAll("[data-task-done]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const taskKey = decodeURIComponent(button.getAttribute("data-task-done") || "");
+      const doneValue = button.getAttribute("data-task-done-value") === "1";
+      const formType = String(button.getAttribute("data-task-done-form-type") || "").trim();
+      const recordId = String(button.getAttribute("data-task-done-record-id") || "").trim();
+      let updated = false;
+
+      if (formType === "todaytask" && recordId) {
+        const records = loadRecords();
+        const index = records.findIndex((record) => String(record?.formId || "") === recordId);
+        if (index >= 0) {
+          const prevRecord = records[index];
+          const nextRecord = {
+            ...prevRecord,
+            updatedAt: new Date().toISOString(),
+            data: {
+              ...(prevRecord.data || {}),
+              followup: {
+                ...((prevRecord.data || {}).followup || {}),
+                taskDone: doneValue,
+              },
+            },
+          };
+          records[index] = nextRecord;
+          saveRecords(records);
+          markRecordDirty(recordId);
+          const synced = await upsertRecordToServer(nextRecord);
+          if (synced) {
+            const latest = loadRecords();
+            const latestIndex = latest.findIndex((record) => String(record?.formId || "") === recordId);
+            if (latestIndex >= 0) {
+              latest[latestIndex] = synced;
+              saveRecords(latest);
+            }
+            clearRecordDirty(recordId);
+          }
+          updated = true;
+        }
+      } else {
+        updated = updateTodayTaskState(taskKey, { done: doneValue, deleted: false });
+      }
+      if (!updated) return;
+      recordModal.classList.remove("is-open");
+      recordModal.setAttribute("aria-hidden", "true");
+      renderLatestRecordCard();
+    });
+  });
+  list.querySelectorAll("[data-task-delete]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const taskKey = decodeURIComponent(button.getAttribute("data-task-delete") || "");
+      const customId = button.getAttribute("data-task-custom-id") || "";
+      const formType = String(button.getAttribute("data-task-form-type") || "").trim();
+      const recordId = String(button.getAttribute("data-task-record-id") || "").trim();
+      let removed = true;
+
+      if (formType === "todaytask" && recordId) {
+        const before = loadRecords();
+        const next = before.filter((record) => String(record?.formId || "") !== recordId);
+        if (next.length === before.length) {
+          removed = false;
+        } else {
+          saveRecords(next);
+          clearRecordDirty(recordId);
+          if (canUseServerSync()) {
+            const deletedOnServer = await deleteRecordFromServer(recordId);
+            if (!deletedOnServer) {
+              saveRecords(before);
+              removed = false;
+            }
+          }
+        }
+      } else {
+        removed = updateTodayTaskState(taskKey, { deleted: true });
+        if (customId) {
+          removed = deleteCustomTodayTask(customId) && removed;
+        }
+      }
+      if (!removed) {
+        if (todayTaskQuickStatus) {
+          todayTaskQuickStatus.textContent = "ลบงานไม่สำเร็จ กรุณาลองใหม่อีกครั้ง";
+          todayTaskQuickStatus.classList.add("error");
+        }
+        return;
+      }
+      recordModal.classList.remove("is-open");
+      recordModal.setAttribute("aria-hidden", "true");
+      renderLatestRecordCard();
+    });
+  });
+  list.querySelectorAll("[data-task-open]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const target = String(button.getAttribute("data-task-open") || "").trim();
+      if (!target) return;
+      window.location.href = target;
+    });
+  });
   recordModal.classList.add("is-open");
   recordModal.setAttribute("aria-hidden", "false");
 };
 
 const initTodayTaskQuickAdd = () => {
   if (!todayTaskQuickAdd || !todayTaskQuickTitle || !todayTaskQuickDate) return;
-  const submitTask = () => {
+  const submitTask = async () => {
     const title = String(todayTaskQuickTitle.value || "").trim();
-    const dateValue = normalizeDisplayDateValue(todayTaskQuickDate.value);
+    const fallbackToday = formatDateOnlyDMY(new Date());
+    const dateValue = normalizeDisplayDateValue(todayTaskQuickDate.value) || fallbackToday;
     const note = String(todayTaskQuickNote?.value || "").trim();
-    if (!title || !dateValue) {
+    if (!title) {
       if (todayTaskQuickStatus) {
-        todayTaskQuickStatus.textContent = "กรุณากรอกชื่องานและวันที่ให้ครบ";
+        todayTaskQuickStatus.textContent = "กรุณากรอกชื่องาน";
         todayTaskQuickStatus.classList.add("error");
       }
       return;
     }
-    const items = loadCustomTodayTasks();
-    items.unshift({
-      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      title,
-      dateValue,
-      note,
-    });
-    saveCustomTodayTasks(items.slice(0, 120));
-    todayTaskQuickAdd.reset();
-    renderLatestRecordCard();
-    if (todayTaskQuickStatus) {
-      todayTaskQuickStatus.textContent = "เพิ่มงานใหม่เรียบร้อย";
-      todayTaskQuickStatus.classList.remove("error");
+    try {
+      const records = loadRecords();
+      const formId = nextLocalFormId(records);
+      const now = new Date().toISOString();
+      const taskRecord = {
+        formId,
+        formType: "todaytask",
+        formTypeLabel: "งานที่ต้องทำ",
+        displayName: `งานที่ต้องทำ - ${title}`,
+        status: "final",
+        updatedAt: now,
+        data: {
+          recordedBy: "",
+          startDate: dateValue,
+          personalInfo: {
+            fullName: title,
+            employerName: "",
+          },
+          followup: {
+            taskTitle: title,
+            taskOwner: "",
+            taskDone: false,
+            nextDate: dateValue,
+            note,
+          },
+        },
+      };
+
+      records.unshift(taskRecord);
+      saveRecords(records);
+      markRecordDirty(formId);
+      const synced = await upsertRecordToServer(taskRecord);
+      if (synced && synced.formId) {
+        const latest = loadRecords();
+        const index = latest.findIndex((item) => String(item.formId || "") === formId);
+        if (index >= 0) {
+          latest[index] = synced;
+          saveRecords(latest);
+        }
+        clearRecordDirty(formId);
+      }
+
+      todayTaskQuickAdd.reset();
+      renderLatestRecordCard();
+      if (todayTaskQuickStatus) {
+        todayTaskQuickStatus.textContent = `เพิ่มงานใหม่เรียบร้อย (${formatDateOnlyDMY(dateValue)})`;
+        todayTaskQuickStatus.classList.remove("error");
+      }
+    } catch (_error) {
+      if (todayTaskQuickStatus) {
+        todayTaskQuickStatus.textContent = "ไม่สามารถเพิ่มงานได้ กรุณาลองใหม่อีกครั้ง";
+        todayTaskQuickStatus.classList.add("error");
+      }
     }
   };
 
   todayTaskQuickAdd.addEventListener("submit", (event) => {
     event.preventDefault();
-    submitTask();
+    submitTask().catch(() => {
+      if (todayTaskQuickStatus) {
+        todayTaskQuickStatus.textContent = "ไม่สามารถเพิ่มงานได้ กรุณาลองใหม่อีกครั้ง";
+        todayTaskQuickStatus.classList.add("error");
+      }
+    });
   });
   todayTaskQuickAddButton?.addEventListener("click", (event) => {
     event.preventDefault();
-    submitTask();
+    submitTask().catch(() => {
+      if (todayTaskQuickStatus) {
+        todayTaskQuickStatus.textContent = "ไม่สามารถเพิ่มงานได้ กรุณาลองใหม่อีกครั้ง";
+        todayTaskQuickStatus.classList.add("error");
+      }
+    });
   });
 };
 
@@ -1680,10 +2042,17 @@ const renderTodayTaskSpotlight = (records) => {
   if (!homeTaskBuckets.length) {
     todayTaskSubtitle.textContent = "ยังไม่มีงานที่ต้องติดตามใน 90 วันข้างหน้า";
     todayTaskBuckets.innerHTML = '<p class="status-text">ไม่มีงานค้างกำหนด</p>';
+    if (!hasShownEntryTaskAlert) {
+      hasShownEntryTaskAlert = true;
+      showTaskEntryNotice("วันนี้ยังไม่มีงานค้างกำหนด", "success");
+    }
     return;
   }
 
   const totalTasks = homeTaskBuckets.reduce((sum, bucket) => sum + bucket.items.length, 0);
+  const todayTasks = homeTaskBuckets
+    .filter((bucket) => bucket.days === 0)
+    .reduce((sum, bucket) => sum + bucket.items.length, 0);
   todayTaskSubtitle.textContent = `พบ ${totalTasks} งานในช่วงวันนี้ถึง 90 วันข้างหน้า • กดที่วันเพื่อดูรายละเอียด`;
   todayTaskBuckets.innerHTML = homeTaskBuckets.map((bucket, index) => {
     const dayLabel = bucket.days === 0 ? "วันนี้" : `อีก ${bucket.days} วัน`;
@@ -1698,6 +2067,23 @@ const renderTodayTaskSpotlight = (records) => {
       if (!bucket) return;
       openTaskBucketModal(bucket);
     });
+  });
+  if (!hasShownEntryTaskAlert) {
+    hasShownEntryTaskAlert = true;
+    if (todayTasks > 0) {
+      showTaskEntryNotice(`แจ้งเตือนวันนี้: มี ${todayTasks} งานที่ต้องทำตอนนี้`, "info");
+      showPageToast(`งานที่ต้องทำวันนี้ ${todayTasks} รายการ`, { duration: 7000, tone: "info" });
+    } else {
+      showTaskEntryNotice("วันนี้ไม่มีงานที่ต้องทำทันที", "success");
+      showPageToast("วันนี้ไม่มีงานค้างกำหนด", { duration: 4500, tone: "success" });
+    }
+  }
+};
+
+const registerServiceWorker = () => {
+  if (!("serviceWorker" in navigator)) return;
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
   });
 };
 
@@ -3481,6 +3867,8 @@ renderRecords();
 renderLatestRecordCard();
 syncRecordsFromServer();
 startServerSyncPolling();
+startRealtimeServerEvents();
+registerServiceWorker();
 document.querySelectorAll("a.tab-btn").forEach((link) => {
   link.addEventListener("click", () => {
     showLoader();

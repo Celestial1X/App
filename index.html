@@ -3,6 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#ec4899" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="manifest" href="manifest.json" />
     <title>ระบบตรวจสอบข้อมูลแรงงานต่างด้าว</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -22,6 +26,7 @@
 
     <main class="container">
       <nav class="page-tabs">
+        <a class="tab-btn" href="tasks.html">งานที่ต้องทำ</a>
         <a class="tab-btn" href="receivedocs.html">รับเอกสาร</a>
         <a class="tab-btn is-active" href="index.html" data-i18n="tabLookup">ค้นหาข้อมูล</a>
         <a class="tab-btn" href="records.html" data-i18n="tabRecords">ข้อมูลบันทึก</a>
@@ -63,21 +68,6 @@
           <p class="summary-card__value" id="latestRecordTitle">-</p>
           <p class="status-text" id="latestRecordMeta">-</p>
         </div>
-        <section class="today-task-spotlight" id="todayTaskSpotlight" aria-live="polite">
-          <div class="today-task-spotlight__head">
-            <p class="today-task-spotlight__tag">งานที่ต้องทำประจำวัน</p>
-            <h3>งานของวันนี้ + วันถัดไป</h3>
-            <p id="todayTaskSubtitle" class="status-text">กำลังตรวจสอบรายการ...</p>
-          </div>
-          <form id="todayTaskQuickAdd" class="today-task-quickadd">
-            <input id="todayTaskQuickTitle" type="text" placeholder="เพิ่มชื่องาน เช่น ต่อใบอนุญาตแรงงาน" />
-            <input id="todayTaskQuickDate" type="date" />
-            <input id="todayTaskQuickNote" type="text" placeholder="หมายเหตุ (ถ้ามี)" />
-            <button id="todayTaskQuickAddButton" type="submit" class="primary">เพิ่มรายการ</button>
-          </form>
-          <p id="todayTaskQuickStatus" class="status-text"></p>
-          <div id="todayTaskBuckets" class="today-task-buckets"></div>
-        </section>
         <div id="indexExpiryAlert" class="warning-banner is-hidden"></div>
         <div class="summary-grid summary-grid--followup" id="followupSummaryGrid">
           <div class="summary-card">

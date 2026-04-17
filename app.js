@@ -1641,6 +1641,7 @@ const buildHomeTaskItems = (records) => {
           assignee: taskTitle,
           label: taskTitle,
           note: followup?.note || "",
+          done: Boolean(followup?.taskDone),
           owner: "-",
         });
       }
@@ -1677,7 +1678,7 @@ const buildHomeTaskItems = (records) => {
     grouped.get(key).push({
       ...task,
       taskKey,
-      done: Boolean(state.done),
+      done: task.formType === "todaytask" ? Boolean(task.done) : Boolean(state.done),
       targetUrl: getTaskTargetUrl(task),
     });
   });
@@ -1836,7 +1837,7 @@ const openTaskBucketModal = (bucket) => {
       : "";
     const encodedTaskKey = encodeURIComponent(item.taskKey || "");
     const taskActions = `<div class="table-actions">
-        <button type="button" class="secondary" data-task-done="${encodedTaskKey}" data-task-done-value="${item.done ? "0" : "1"}">${doneLabel}</button>
+        <button type="button" class="secondary" data-task-done="${encodedTaskKey}" data-task-done-value="${item.done ? "0" : "1"}" data-task-done-form-type="${item.formType || ""}" data-task-done-record-id="${item.recordId || ""}">${doneLabel}</button>
         <button type="button" class="danger" data-task-delete="${encodedTaskKey}" data-task-custom-id="${item.customTaskId || ""}" data-task-form-type="${item.formType || ""}" data-task-record-id="${item.recordId || ""}">ลบ</button>
         ${openButton}
       </div>`;
@@ -1845,10 +1846,47 @@ const openTaskBucketModal = (bucket) => {
   });
   recordModalBody.appendChild(list);
   list.querySelectorAll("[data-task-done]").forEach((button) => {
-    button.addEventListener("click", () => {
+    button.addEventListener("click", async () => {
       const taskKey = decodeURIComponent(button.getAttribute("data-task-done") || "");
       const doneValue = button.getAttribute("data-task-done-value") === "1";
-      const updated = updateTodayTaskState(taskKey, { done: doneValue, deleted: false });
+      const formType = String(button.getAttribute("data-task-done-form-type") || "").trim();
+      const recordId = String(button.getAttribute("data-task-done-record-id") || "").trim();
+      let updated = false;
+
+      if (formType === "todaytask" && recordId) {
+        const records = loadRecords();
+        const index = records.findIndex((record) => String(record?.formId || "") === recordId);
+        if (index >= 0) {
+          const prevRecord = records[index];
+          const nextRecord = {
+            ...prevRecord,
+            updatedAt: new Date().toISOString(),
+            data: {
+              ...(prevRecord.data || {}),
+              followup: {
+                ...((prevRecord.data || {}).followup || {}),
+                taskDone: doneValue,
+              },
+            },
+          };
+          records[index] = nextRecord;
+          saveRecords(records);
+          markRecordDirty(recordId);
+          const synced = await upsertRecordToServer(nextRecord);
+          if (synced) {
+            const latest = loadRecords();
+            const latestIndex = latest.findIndex((record) => String(record?.formId || "") === recordId);
+            if (latestIndex >= 0) {
+              latest[latestIndex] = synced;
+              saveRecords(latest);
+            }
+            clearRecordDirty(recordId);
+          }
+          updated = true;
+        }
+      } else {
+        updated = updateTodayTaskState(taskKey, { done: doneValue, deleted: false });
+      }
       if (!updated) return;
       recordModal.classList.remove("is-open");
       recordModal.setAttribute("aria-hidden", "true");
@@ -1943,6 +1981,7 @@ const initTodayTaskQuickAdd = () => {
           followup: {
             taskTitle: title,
             taskOwner: "",
+            taskDone: false,
             nextDate: dateValue,
             note,
           },

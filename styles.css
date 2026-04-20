@@ -1545,26 +1545,97 @@ button:hover,
 }
 
 .today-documents {
-  margin-top: 12px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px dashed #f9a8d4;
-  background: rgba(255, 255, 255, 0.75);
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid #fbcfe8;
+  background:
+    radial-gradient(circle at top right, rgba(253, 224, 242, 0.55) 0%, transparent 50%),
+    #fff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+.today-documents__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .today-documents__title {
-  margin: 0 0 8px;
-  font-size: 0.9rem;
+  margin: 0;
+  font-size: 1rem;
   font-weight: 700;
-  color: #9d174d;
+  color: #831843;
 }
 
-.today-documents__list {
+.today-documents__count {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #be185d;
+  background: #ffe4f1;
+  border: 1px solid #f9a8d4;
+}
+
+.today-documents__subtitle {
+  margin: 6px 0 10px;
+  color: #6b7280;
+  font-size: 0.86rem;
+}
+
+.today-documents__cards {
   margin: 0;
-  padding-left: 18px;
   display: grid;
-  gap: 6px;
-  color: #334155;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.today-documents__card {
+  border: 1px solid #fbcfe8;
+  border-radius: 12px;
+  padding: 10px;
+  background: #fffafc;
+}
+
+.today-documents__card--receive {
+  background: linear-gradient(180deg, #fff7fb 0%, #ffffff 100%);
+}
+
+.today-documents__card--return {
+  background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+  border-color: #bfdbfe;
+}
+
+.today-documents__badge {
+  margin: 0 0 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #be185d;
+}
+
+.today-documents__card h4 {
+  margin: 0;
+  font-size: 1rem;
+  color: #0f172a;
+}
+
+.today-documents__meta {
+  margin: 4px 0 0;
+  color: #475569;
+  font-size: 0.86rem;
+}
+
+.today-documents__date {
+  margin: 8px 0 0;
+  font-weight: 700;
+  color: #7e22ce;
 }
 
 @media (max-width: 900px) {

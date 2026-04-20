@@ -1752,11 +1752,25 @@ const renderTodayDocumentTasks = (records) => {
     todayDocumentTasks.innerHTML = "";
     return;
   }
+  const totalLabel = `ทั้งหมด ${items.length} รายการ`;
   todayDocumentTasks.innerHTML = `
-    <p class="today-documents__title">งานรับ/คืนเอกสารวันนี้ (แยกจากงานแจ้งเตือนหลัก)</p>
-    <ul class="today-documents__list">
-      ${items.map((item) => `<li><strong>${item.label}</strong> • ${item.formId} • ${item.assignee} • ${formatDateOnlyDMY(item.dateValue)}</li>`).join("")}
-    </ul>
+    <div class="today-documents__head">
+      <p class="today-documents__title">งานรับ/คืนเอกสารวันนี้</p>
+      <span class="today-documents__count">${totalLabel}</span>
+    </div>
+    <p class="today-documents__subtitle">แยกจากงานแจ้งเตือนหลัก เพื่อดูงานเอกสารรายวันให้ชัดเจน</p>
+    <div class="today-documents__cards">
+      ${items.map((item) => {
+        const toneClass = item.label === "รับเอกสาร" ? "today-documents__card--receive" : "today-documents__card--return";
+        const icon = item.label === "รับเอกสาร" ? "📥" : "📤";
+        return `<article class="today-documents__card ${toneClass}">
+          <p class="today-documents__badge">${icon} ${item.label}</p>
+          <h4>${item.formId}</h4>
+          <p class="today-documents__meta">${item.assignee}</p>
+          <p class="today-documents__date">${formatDateOnlyDMY(item.dateValue)}</p>
+        </article>`;
+      }).join("")}
+    </div>
   `;
 };
 

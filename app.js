@@ -118,6 +118,7 @@ const todayTaskQuickDate = document.getElementById("todayTaskQuickDate");
 const todayTaskQuickNote = document.getElementById("todayTaskQuickNote");
 const todayTaskQuickAddButton = document.getElementById("todayTaskQuickAddButton");
 const todayTaskQuickStatus = document.getElementById("todayTaskQuickStatus");
+const todayDocumentTasks = document.getElementById("todayDocumentTasks");
 const taskEntryNotice = document.getElementById("taskEntryNotice");
 const verifyRecordButton = document.getElementById("verifyRecord");
 const recordModal = document.getElementById("recordModal");
@@ -1615,8 +1616,6 @@ const buildHomeTaskItems = (records) => {
     { key: "appointmentDate", label: "นัดหมายดำเนินการ", source: "caseStatus" },
     { key: "nextDate", label: "รายงานตัว 90 วัน", source: "followup" },
     { key: "endDate", label: "ครบกำหนด Visa / MOU", source: "followup" },
-    { key: "documentReceivedDate", label: "วันรับเอกสาร", source: "followup" },
-    { key: "documentReturnDate", label: "วันคืนเอกสาร", source: "followup" },
     { key: "workPermitExpiry", label: "ใบอนุญาตทำงานใกล้หมดอายุ", source: "personalInfo" },
     { key: "passExpiryDate", label: "พาสปอร์ตใกล้หมดอายุ", source: "personalInfo" },
     { key: "personalVisaExpiryDate", label: "Visa ส่วนบุคคลใกล้หมดอายุ", source: "personalInfo" },
@@ -1716,6 +1715,49 @@ const buildHomeTaskItems = (records) => {
     .map(([dayKey, items]) => ({ days: Number.parseInt(dayKey, 10), items: items.sort((a, b) => String(a.formId).localeCompare(String(b.formId), "th")) }))
     .sort((a, b) => a.days - b.days)
     .slice(0, 12);
+};
+
+const buildTodayDocumentItems = (records) => {
+  const docDefs = [
+    { key: "documentReceivedDate", label: "รับเอกสาร" },
+    { key: "documentReturnDate", label: "คืนเอกสาร" },
+  ];
+  const items = [];
+  (records || []).forEach((record) => {
+    if (record?.formType === "todaytask") return;
+    const followup = record?.data?.followup || {};
+    const info = record?.data?.personalInfo || {};
+    const assignee = info.fullName || info.employerName || record?.displayName || "-";
+    docDefs.forEach((doc) => {
+      const dateValue = normalizeDisplayDateValue(followup?.[doc.key] || "");
+      const days = getDaysUntil(dateValue);
+      if (days !== 0) return;
+      items.push({
+        label: doc.label,
+        dateValue,
+        formId: record?.formId || "-",
+        assignee,
+      });
+    });
+  });
+  return items
+    .sort((a, b) => String(a.formId).localeCompare(String(b.formId), "th"))
+    .slice(0, 8);
+};
+
+const renderTodayDocumentTasks = (records) => {
+  if (!todayDocumentTasks) return;
+  const items = buildTodayDocumentItems(records);
+  if (!items.length) {
+    todayDocumentTasks.innerHTML = "";
+    return;
+  }
+  todayDocumentTasks.innerHTML = `
+    <p class="today-documents__title">งานรับ/คืนเอกสารวันนี้ (แยกจากงานแจ้งเตือนหลัก)</p>
+    <ul class="today-documents__list">
+      ${items.map((item) => `<li><strong>${item.label}</strong> • ${item.formId} • ${item.assignee} • ${formatDateOnlyDMY(item.dateValue)}</li>`).join("")}
+    </ul>
+  `;
 };
 
 const loadCustomTodayTasks = () => {
@@ -2046,6 +2088,7 @@ const initTodayTaskQuickAdd = () => {
 const renderTodayTaskSpotlight = (records) => {
   if (!todayTaskSpotlight || !todayTaskBuckets || !todayTaskSubtitle) return;
   homeTaskBuckets = buildHomeTaskItems(records);
+  renderTodayDocumentTasks(records);
   if (!homeTaskBuckets.length) {
     todayTaskSubtitle.textContent = "ยังไม่มีงานที่ต้องติดตามใน 90 วันข้างหน้า";
     todayTaskBuckets.innerHTML = '<p class="status-text">ไม่มีงานค้างกำหนด</p>';

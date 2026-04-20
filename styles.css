@@ -1545,7 +1545,7 @@ button:hover,
 }
 
 .today-documents {
-  margin-top: 14px;
+  margin: 10px 0 12px;
   padding: 14px;
   border-radius: 14px;
   border: 1px solid #fbcfe8;
@@ -1648,17 +1648,25 @@ button:hover,
     border-radius: 14px;
   }
   .page-tabs {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scroll-snap-type: x mandatory;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
     padding: 10px;
+    overflow: visible;
+  }
+  .page-tabs a {
+    width: 100%;
   }
   .page-tabs .tab-btn {
-    white-space: nowrap;
-    scroll-snap-align: start;
+    white-space: normal;
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+    display: flex;
     font-size: 0.92rem;
-    padding: 8px 12px;
+    line-height: 1.25;
+    padding: 8px 10px;
+    min-height: 44px;
   }
   .today-task-quickadd {
     grid-template-columns: 1fr;
@@ -1716,14 +1724,22 @@ button:hover,
     min-height: 90px;
   }
   .page-tabs {
-    gap: 8px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     padding: 8px;
+  }
+  .page-tabs .tab-btn {
+    font-size: 0.86rem;
+    min-height: 42px;
+    padding: 7px 8px;
   }
 }
 
 @media (max-width: 390px) {
   .container {
     padding: 0 10px;
+  }
+  .page-tabs {
+    grid-template-columns: 1fr;
   }
   .today-task-spotlight {
     padding: 12px;

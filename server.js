@@ -44,7 +44,7 @@ app.use((req, res, next) => {
   res.header("X-Content-Type-Options", "nosniff");
   res.header("X-Frame-Options", "DENY");
   res.header("Referrer-Policy", "strict-origin-when-cross-origin");
-  res.header("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
+  res.header("Permissions-Policy", "geolocation=(), microphone=(self), camera=()");
   if (req.method === "OPTIONS") {
     res.sendStatus(204);
     return;

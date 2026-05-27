@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ระบบออกใบวางบิล / ใบเสร็จ - B&M VISA CENTER</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --pink:#ec4899;--pink-dark:#db2777;--pink-light:#fce7f3;
+  --purple:#7c3aed;--purple-light:#ede9fe;
+  --gray-50:#f9fafb;--gray-100:#f3f4f6;--gray-200:#e5e7eb;
+  --gray-300:#d1d5db;--gray-400:#9ca3af;--gray-500:#6b7280;
+  --gray-600:#4b5563;--gray-700:#374151;--gray-800:#1f2937;
+  --green:#10b981;--red:#ef4444;
+}
+body{font-family:'Sarabun',sans-serif;background:#f1f5f9;color:var(--gray-800);min-height:100vh}
+
+/* ===== APP SHELL ===== */
+.app{display:grid;grid-template-columns:340px 1fr;min-height:100vh;gap:0}
+
+/* ===== LEFT PANEL (FORM) ===== */
+.form-panel{
+  background:white;border-right:1px solid var(--gray-200);
+  padding:20px;overflow-y:auto;max-height:100vh;
+  position:sticky;top:0;
+}
+.form-panel h2{font-size:15px;font-weight:700;color:var(--gray-800);margin-bottom:16px;
+  display:flex;align-items:center;gap:8px;padding-bottom:10px;border-bottom:2px solid var(--pink-light)}
+.form-panel h2::before{content:'';display:block;width:4px;height:16px;background:var(--pink);border-radius:2px}
+
+.form-section{margin-bottom:16px}
+.form-section h3{font-size:12px;font-weight:700;color:var(--gray-500);text-transform:uppercase;
+  letter-spacing:0.05em;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--gray-100)}
+.form-row{margin-bottom:8px}
+.form-row label{display:block;font-size:12px;font-weight:600;color:var(--gray-600);margin-bottom:3px}
+.form-row input,.form-row select,.form-row textarea{
+  width:100%;padding:7px 9px;border:1.5px solid var(--gray-200);border-radius:7px;
+  font-family:'Sarabun',sans-serif;font-size:13px;color:var(--gray-800);background:white;outline:none;
+  transition:border-color 0.15s}
+.form-row input:focus,.form-row select:focus,.form-row textarea:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(236,72,153,0.08)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+/* doc type toggle */
+.doc-type-row{display:flex;gap:6px;margin-bottom:14px}
+.doc-type-btn{
+  flex:1;padding:8px 4px;border-radius:8px;border:2px solid var(--gray-200);
+  font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;
+  background:white;color:var(--gray-500);transition:all 0.15s;text-align:center}
+.doc-type-btn.active-invoice{border-color:var(--pink);background:var(--pink-light);color:var(--pink-dark)}
+.doc-type-btn.active-receipt{border-color:var(--purple);background:var(--purple-light);color:var(--purple)}
+
+/* service rows */
+.service-list{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
+.service-row{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:8px;padding:8px;position:relative}
+.service-row .grid-3i{display:grid;grid-template-columns:1fr 64px 64px 24px;gap:6px;align-items:center}
+.service-row input{padding:5px 7px;font-size:12px}
+.service-row .sub-names{margin-top:6px}
+.service-row .sub-names textarea{font-size:12px;rows:2;padding:5px 7px;min-height:50px}
+.btn-remove{background:none;border:none;color:var(--gray-400);cursor:pointer;font-size:14px;
+  display:flex;align-items:center;justify-content:center;border-radius:4px;transition:color 0.1s}
+.btn-remove:hover{color:var(--red)}
+.btn-add-row{width:100%;padding:7px;border:1.5px dashed var(--pink);border-radius:8px;
+  background:var(--pink-light);color:var(--pink-dark);font-family:'Sarabun',sans-serif;
+  font-size:12px;font-weight:700;cursor:pointer;transition:all 0.15s}
+.btn-add-row:hover{background:var(--pink);color:white}
+
+/* payment status */
+.pay-status-row{display:flex;gap:6px;flex-wrap:wrap}
+.pay-opt input{display:none}
+.pay-opt label{
+  padding:6px 12px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;
+  border:2px solid var(--gray-200);color:var(--gray-500);transition:all 0.15s;user-select:none;display:block}
+.pay-opt input[value="unpaid"]:checked+label{background:#fee2e2;border-color:var(--red);color:var(--red)}
+.pay-opt input[value="partial"]:checked+label{background:#fef3c7;border-color:#f59e0b;color:#92400e}
+.pay-opt input[value="paid"]:checked+label{background:#d1fae5;border-color:var(--green);color:var(--green)}
+
+.btn-print{
+  width:100%;padding:11px;background:var(--pink);color:white;border:none;border-radius:9px;
+  font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-top:12px;
+  transition:background 0.15s;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-print:hover{background:var(--pink-dark)}
+.btn-save{
+  width:100%;padding:9px;background:var(--gray-700);color:white;border:none;border-radius:9px;
+  font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;margin-top:6px;
+  transition:background 0.15s}
+.btn-save:hover{background:var(--gray-800)}
+
+/* ===== RIGHT PANEL (PREVIEW) ===== */
+.preview-panel{padding:24px;overflow-y:auto;display:flex;flex-direction:column;align-items:center;gap:16px}
+.preview-panel h2{align-self:flex-start;font-size:13px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.06em}
+
+/* ===== DOCUMENT SHEET ===== */
+.doc-sheet{
+  width:210mm;background:white;
+  box-shadow:0 4px 24px rgba(0,0,0,0.12);
+  border-radius:4px;
+  font-family:'Sarabun',sans-serif;
+  position:relative;overflow:hidden;
+}
+
+/* corner accent */
+.doc-sheet::before{
+  content:'';position:absolute;top:0;right:0;
+  width:60px;height:60px;
+  background:var(--accent-color,#ec4899);
+  clip-path:polygon(100% 0,0 0,100% 100%);
+  z-index:1;
+}
+.doc-sheet.type-invoice{--accent-color:#7c3aed}
+.doc-sheet.type-receipt{--accent-color:#ec4899}
+
+.corner-num{
+  position:absolute;top:8px;right:10px;z-index:2;
+  color:white;font-size:14px;font-weight:700;
+}
+
+.doc-inner{padding:28px 32px}
+
+/* header */
+.doc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
+.doc-brand{display:flex;align-items:flex-start;gap:12px}
+.doc-brand img{width:60px;height:60px;object-fit:contain}
+.doc-brand-info{font-size:11px;line-height:1.6;color:var(--gray-700)}
+.doc-brand-info strong{font-size:12px;color:var(--gray-800)}
+.doc-title-block{text-align:right}
+.doc-title{font-size:28px;font-weight:700;line-height:1.1}
+.doc-title.invoice{color:var(--purple)}
+.doc-title.receipt{color:var(--pink)}
+.doc-title-sub{font-size:11px;color:var(--gray-500);margin-top:2px;margin-bottom:10px}
+.doc-meta{font-size:12px;line-height:1.8}
+.doc-meta td:first-child{color:var(--gray-500);padding-right:12px;white-space:nowrap}
+.doc-meta td:last-child{font-weight:600;color:var(--gray-800)}
+
+/* divider */
+.doc-divider{border:none;border-top:1px solid var(--gray-200);margin:12px 0}
+
+/* client */
+.doc-client-label{font-size:11px;color:var(--pink);font-weight:700;margin-bottom:4px}
+.doc-client-name{font-size:13px;font-weight:700;color:var(--gray-800)}
+.doc-client-info{font-size:11px;color:var(--gray-600);line-height:1.6}
+
+/* table */
+.doc-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:12px}
+.doc-table thead tr{background:var(--gray-800);color:white}
+.doc-table thead th{padding:8px 10px;text-align:left;font-weight:600;font-size:11px}
+.doc-table thead th:last-child,.doc-table thead th:nth-last-child(2),.doc-table thead th:nth-last-child(3){text-align:right}
+.doc-table tbody tr{border-bottom:1px solid var(--gray-100)}
+.doc-table tbody tr:nth-child(even){background:var(--gray-50)}
+.doc-table tbody td{padding:9px 10px;vertical-align:top;line-height:1.5}
+.doc-table tbody td:last-child,.doc-table tbody td:nth-last-child(2),.doc-table tbody td:nth-last-child(3){text-align:right}
+.doc-table .sub-detail{font-size:11px;color:var(--gray-500);margin-top:3px;line-height:1.5}
+
+/* totals */
+.doc-totals{display:flex;flex-direction:column;align-items:flex-end;margin-bottom:12px}
+.doc-total-row{display:flex;gap:32px;font-size:12px;margin-bottom:4px}
+.doc-total-row .lbl{color:var(--gray-500);min-width:100px;text-align:right}
+.doc-total-row .val{font-weight:600;min-width:110px;text-align:right}
+.doc-total-final .lbl{font-weight:700;color:var(--gray-800);font-size:13px}
+.doc-total-final .val{font-weight:700;font-size:13px;color:var(--gray-800)}
+
+.doc-baht-text{font-size:11px;color:var(--gray-500);margin-bottom:10px;padding-left:2px}
+
+/* note */
+.doc-note-section{margin-top:8px}
+.doc-note-label{font-size:11px;color:var(--pink);font-weight:700;margin-bottom:3px}
+.doc-note-text{font-size:11px;color:var(--gray-600);line-height:1.6}
+
+/* payment method (receipt only) */
+.doc-pay-method{
+  border:1px solid var(--gray-200);border-radius:6px;padding:10px 14px;margin:12px 0;
+  font-size:11px;color:var(--gray-600);line-height:1.8}
+.doc-pay-method .check-row{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:4px}
+.doc-check{display:flex;align-items:center;gap:5px}
+.doc-check-box{width:13px;height:13px;border:1.5px solid var(--gray-400);border-radius:2px;
+  display:flex;align-items:center;justify-content:center;font-size:9px}
+.doc-check-box.checked{background:var(--gray-800);color:white;border-color:var(--gray-800)}
+
+/* signatures */
+.doc-sigs{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px}
+.doc-sig{text-align:center}
+.doc-sig-line{border-top:1px solid var(--gray-300);padding-top:6px;font-size:11px;color:var(--gray-600)}
+.doc-sig-name{font-size:12px;font-weight:700;color:var(--gray-800);margin-bottom:2px}
+.doc-sig-role{font-size:10px;color:var(--gray-400)}
+.doc-sig-space{height:48px}
+
+/* status watermark */
+.doc-watermark{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);
+  font-size:72px;font-weight:900;opacity:0.04;pointer-events:none;white-space:nowrap;
+  color:var(--gray-800);z-index:0;user-select:none}
+
+/* ===== PRINT ===== */
+@media print{
+  body{background:white}
+  .form-panel{display:none}
+  .preview-panel{padding:0;align-items:stretch}
+  .preview-panel>h2{display:none}
+  .doc-sheet{box-shadow:none;width:100%;border-radius:0}
+  @page{size:A4;margin:10mm}
+}
+@media(max-width:900px){
+  .app{grid-template-columns:1fr}
+  .form-panel{max-height:none;position:relative}
+  .doc-sheet{width:100%;max-width:210mm}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ===== FORM PANEL ===== -->
+<div class="form-panel">
+  <h2>ตั้งค่าเอกสาร</h2>
+
+  <!-- doc type -->
+  <div class="doc-type-row">
+    <button class="doc-type-btn active-invoice" id="btnInvoice" onclick="setDocType('invoice')">📋 ใบวางบิล</button>
+    <button class="doc-type-btn" id="btnReceipt" onclick="setDocType('receipt')">🧾 ใบเสร็จรับเงิน</button>
+  </div>
+
+  <!-- doc info -->
+  <div class="form-section">
+    <h3>ข้อมูลเอกสาร</h3>
+    <div class="grid-2">
+      <div class="form-row">
+        <label>เลขที่เอกสาร</label>
+        <input id="docNumber" type="text" value="BL202604200001" oninput="render()" />
+      </div>
+      <div class="form-row">
+        <label>วันที่</label>
+        <input id="docDate" type="date" oninput="render()" />
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="form-row">
+        <label>ครบกำหนด / อ้างอิง</label>
+        <input id="docRef" type="text" placeholder="วันที่ / เลขอ้างอิง" oninput="render()" />
+      </div>
+      <div class="form-row">
+        <label>ผู้ขาย / ผู้รับ</label>
+        <input id="docSeller" type="text" value="Parichad Suso" oninput="render()" />
+      </div>
+    </div>
+  </div>
+
+  <!-- client -->
+  <div class="form-section">
+    <h3>ข้อมูลลูกค้า</h3>
+    <div class="form-row">
+      <label>ชื่อลูกค้า / บริษัท</label>
+      <input id="clientName" type="text" placeholder="บริษัท / ชื่อนายจ้าง" oninput="render()" />
+    </div>
+    <div class="form-row">
+      <label>ที่อยู่</label>
+      <textarea id="clientAddr" rows="2" placeholder="ที่อยู่ลูกค้า" oninput="render()"></textarea>
+    </div>
+    <div class="form-row">
+      <label>เลขประจำตัวผู้เสียภาษี</label>
+      <input id="clientTax" type="text" placeholder="เลขประจำตัวผู้เสียภาษี" oninput="render()" />
+    </div>
+  </div>
+
+  <!-- services -->
+  <div class="form-section">
+    <h3>รายการบริการ</h3>
+    <div class="service-list" id="serviceList"></div>
+    <button class="btn-add-row" onclick="addRow()">+ เพิ่มรายการ</button>
+  </div>
+
+  <!-- note -->
+  <div class="form-section">
+    <h3>หมายเหตุ</h3>
+    <div class="form-row">
+      <textarea id="docNote" rows="2" placeholder="เช่น เลขบัญชีธนาคาร" oninput="render()">เลขบัญชี 800-4-62561-2 ธนาคารกรุงศรี
+นางสาวสุจินดา ร่มพฤกษ์</textarea>
+    </div>
+  </div>
+
+  <!-- payment (receipt only) -->
+  <div class="form-section" id="paySection">
+    <h3>การชำระเงิน</h3>
+    <div class="form-row">
+      <label>วิธีชำระ</label>
+      <select id="payMethod" onchange="render()">
+        <option value="online">โอนเงิน</option>
+        <option value="cash">เงินสด</option>
+        <option value="check">เช็ค</option>
+        <option value="card">บัตรเครดิต</option>
+      </select>
+    </div>
+    <div class="grid-2">
+      <div class="form-row">
+        <label>ธนาคาร</label>
+        <input id="payBank" type="text" value="กรุงไทย" oninput="render()" />
+      </div>
+      <div class="form-row">
+        <label>วันที่ชำระ</label>
+        <input id="payDate" type="date" oninput="render()" />
+      </div>
+    </div>
+  </div>
+
+  <!-- status -->
+  <div class="form-section">
+    <h3>สถานะการชำระ</h3>
+    <div class="pay-status-row">
+      <div class="pay-opt"><input type="radio" name="ps" id="ps1" value="unpaid" checked onchange="render()" /><label for="ps1">⏳ ยังไม่จ่าย</label></div>
+      <div class="pay-opt"><input type="radio" name="ps" id="ps2" value="partial" onchange="render()" /><label for="ps2">💳 บางส่วน</label></div>
+      <div class="pay-opt"><input type="radio" name="ps" id="ps3" value="paid" onchange="render()" /><label for="ps3">✅ จ่ายแล้ว</label></div>
+    </div>
+  </div>
+
+  <button class="btn-print" onclick="window.print()">🖨️ พิมพ์ / บันทึก PDF</button>
+  <button class="btn-save" onclick="saveToList()">💾 บันทึกลงระบบ</button>
+  <div id="saveMsg" style="font-size:12px;color:var(--green);margin-top:6px;text-align:center"></div>
+</div>
+
+<!-- ===== PREVIEW PANEL ===== -->
+<div class="preview-panel">
+  <h2>ตัวอย่างเอกสาร</h2>
+  <div class="doc-sheet type-invoice" id="docSheet">
+    <div class="corner-num">1</div>
+    <div class="doc-watermark" id="docWatermark"></div>
+    <div class="doc-inner" id="docInner"></div>
+  </div>
+
+  <!-- saved list -->
+  <div id="savedSection" style="width:210mm;display:none">
+    <h2 style="margin-bottom:10px">เอกสารที่บันทึกไว้</h2>
+    <div id="savedList" style="display:flex;flex-direction:column;gap:8px"></div>
+  </div>
+</div>
+
+</div>
+
+<script>
+let docType = 'invoice';
+let rows = [];
+let savedDocs = JSON.parse(localStorage.getItem('bmvisa_bills') || '[]');
+
+// init
+document.addEventListener('DOMContentLoaded', () => {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('docDate').value = today;
+  document.getElementById('payDate').value = today;
+  document.getElementById('docRef').value = today;
+  addRow('รายงานตัว 90 วัน', 5, 200);
+  addRow('เปลี่ยนนายจ้าง', 3, 1500, 'MR. MYAT MIN SOE\nMR. NAN KO KO NAUNG\nMR. KYAW THET AUNG');
+  render();
+  renderSaved();
+});
+
+function setDocType(type) {
+  docType = type;
+  document.getElementById('btnInvoice').className = 'doc-type-btn' + (type==='invoice'?' active-invoice':'');
+  document.getElementById('btnReceipt').className = 'doc-type-btn' + (type==='receipt'?' active-receipt':'');
+  document.getElementById('paySection').style.display = type==='receipt'?'block':'none';
+
+  // update doc number prefix
+  const numEl = document.getElementById('docNumber');
+  const today = new Date();
+  const yy = today.getFullYear();
+  const mm = String(today.getMonth()+1).padStart(2,'0');
+  const dd = String(today.getDate()).padStart(2,'0');
+  const seq = numEl.value.slice(-4) || '0001';
+  numEl.value = (type==='invoice'?'INV':'BL') + yy + mm + dd + seq.slice(-4);
+  render();
+}
+
+function addRow(name='',qty='',price='',sub='') {
+  const id = Date.now() + Math.random();
+  rows.push({id,name,qty,price,sub});
+  rebuildServiceList();
+  render();
+}
+
+function rebuildServiceList() {
+  const list = document.getElementById('serviceList');
+  list.innerHTML = '';
+  rows.forEach((r,i) => {
+    const div = document.createElement('div');
+    div.className = 'service-row';
+    div.innerHTML = `
+      <div class="grid-3i">
+        <input type="text" placeholder="รายการบริการ" value="${r.name}" oninput="rows[${i}].name=this.value;render()" />
+        <input type="number" placeholder="จำนวน" value="${r.qty}" min="0" oninput="rows[${i}].qty=this.value;render()" />
+        <input type="number" placeholder="ราคา/หน่วย" value="${r.price}" min="0" oninput="rows[${i}].price=this.value;render()" />
+        <button class="btn-remove" onclick="removeRow(${i})" title="ลบ">✕</button>
+      </div>
+      <div class="sub-names">
+        <textarea placeholder="รายชื่อ / รายละเอียดเพิ่มเติม (ถ้ามี)" oninput="rows[${i}].sub=this.value;render()">${r.sub||''}</textarea>
+      </div>`;
+    list.appendChild(div);
+  });
+}
+
+function removeRow(i) {
+  rows.splice(i,1);
+  rebuildServiceList();
+  render();
+}
+
+function bahtText(n) {
+  if (!n) return 'ศูนย์บาทถ้วน';
+  const ones = ['','หนึ่ง','สอง','สาม','สี่','ห้า','หก','เจ็ด','แปด','เก้า'];
+  const tens = ['','สิบ','ยี่สิบ','สามสิบ','สี่สิบ','ห้าสิบ','หกสิบ','เจ็ดสิบ','แปดสิบ','เก้าสิบ'];
+  const places = ['','สิบ','ร้อย','พัน','หมื่น','แสน','ล้าน'];
+  const digits = String(Math.round(n)).split('').reverse();
+  let result = '';
+  digits.forEach((d,i) => {
+    const di = parseInt(d);
+    if (!di) return;
+    if (i===1 && di===1) result = 'สิบ' + result;
+    else if (i===1 && di===2) result = 'ยี่สิบ' + result;
+    else result = ones[di] + places[i] + result;
+  });
+  return result + 'บาทถ้วน';
+}
+
+function fmt(n) { return Number(n||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+function render() {
+  const type = docType;
+  const sheet = document.getElementById('docSheet');
+  sheet.className = 'doc-sheet type-' + (type==='invoice'?'invoice':'receipt');
+
+  const watermark = document.getElementById('docWatermark');
+  const ps = document.querySelector('input[name="ps"]:checked')?.value || 'unpaid';
+  watermark.textContent = ps==='paid'?'ชำระแล้ว':ps==='partial'?'ชำระบางส่วน':'';
+
+  const docNumber = document.getElementById('docNumber').value;
+  const docDate = document.getElementById('docDate').value;
+  const docRef = document.getElementById('docRef').value;
+  const docSeller = document.getElementById('docSeller').value;
+  const clientName = document.getElementById('clientName').value || '—';
+  const clientAddr = document.getElementById('clientAddr').value;
+  const clientTax = document.getElementById('clientTax').value;
+  const docNote = document.getElementById('docNote').value;
+
+  // totals
+  let subtotal = 0;
+  rows.forEach(r => { subtotal += (parseFloat(r.qty)||0)*(parseFloat(r.price)||0); });
+  const total = subtotal;
+
+  // payment method (receipt)
+  const payMethod = document.getElementById('payMethod').value;
+  const payBank = document.getElementById('payBank').value;
+  const payDate = document.getElementById('payDate').value;
+  const methodLabels = {cash:'เงินสด',check:'เช็ค',online:'โอนเงิน',card:'บัตรเครดิต'};
+
+  const isBill = type==='invoice';
+  const titleTh = isBill ? 'ใบวางบิล' : 'ใบเสร็จรับเงิน';
+  const titleClass = isBill ? 'invoice' : 'receipt';
+  const refLabel = isBill ? 'ครบกำหนด' : 'อ้างอิง';
+
+  // service rows html
+  const rowsHtml = rows.map((r,i) => {
+    const lineTotal = (parseFloat(r.qty)||0)*(parseFloat(r.price)||0);
+    const subHtml = r.sub ? `<div class="sub-detail">${r.sub.replace(/\n/g,'<br/>')}</div>` : '';
+    const unit = r.qty ? `${r.qty} คน` : '';
+    return `<tr>
+      <td style="color:var(--gray-500)">${i+1}</td>
+      <td>${r.name||''}${subHtml}</td>
+      <td>${unit}</td>
+      <td>${r.price?fmt(r.price):''}</td>
+      <td>${lineTotal?fmt(lineTotal):''}</td>
+    </tr>`;
+  }).join('');
+
+  // payment section (receipt only)
+  const payHtml = !isBill ? `
+    <div class="doc-pay-method">
+      <div class="check-row">
+        ${['cash','check','online','card'].map(m=>`
+          <div class="doc-check">
+            <div class="doc-check-box ${payMethod===m?'checked':''}">${payMethod===m?'✓':''}</div>
+            <span>${methodLabels[m]}</span>
+          </div>`).join('')}
+      </div>
+      <div>ธนาคาร <strong>${payBank||'—'}</strong>&nbsp;&nbsp;&nbsp;เลขที่ <span style="min-width:80px;display:inline-block;border-bottom:1px solid var(--gray-300)">&nbsp;</span>&nbsp;&nbsp;&nbsp;วันที่ <strong>${payDate||'—'}</strong>&nbsp;&nbsp;&nbsp;จำนวนเงิน <strong>${fmt(total)} บาท</strong></div>
+    </div>` : '';
+
+  const sigLeft = isBill ? 'ผู้รับวางบิล' : 'ผู้จ่ายเงิน';
+  const sigRight = isBill ? 'ผู้วางบิล' : 'ผู้รับเงิน';
+
+  document.getElementById('docInner').innerHTML = `
+    <div class="doc-header">
+      <div class="doc-brand">
+        <div class="doc-brand-info">
+          <strong>B&M VISA CENTER by สุจินดา ร่มพฤกษ์</strong><br/>
+          174/3 หมู่ที่5 ต.มะขามเตี้ย อ.เมือง จ.สุราษฎร์ธานี<br/>
+          เลขประจำตัวผู้เสียภาษี 1820400001447<br/>
+          โทร. 0825344442 &nbsp;0922792951 &nbsp;0824192953
+        </div>
+      </div>
+      <div class="doc-title-block">
+        <div class="doc-title ${titleClass}">${titleTh}</div>
+        <div class="doc-title-sub">ต้นฉบับ</div>
+        <table class="doc-meta">
+          <tr><td>เลขที่</td><td>${docNumber||'—'}</td></tr>
+          <tr><td>วันที่</td><td>${docDate||'—'}</td></tr>
+          <tr><td>${refLabel}</td><td>${docRef||'—'}</td></tr>
+          <tr><td>${isBill?'ผู้ขาย':'ผู้รับ'}</td><td>${docSeller||'—'}</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <hr class="doc-divider"/>
+
+    <div class="doc-client-label">ลูกค้า</div>
+    <div class="doc-client-name">${clientName}</div>
+    ${clientAddr?`<div class="doc-client-info">${clientAddr.replace(/\n/g,'<br/>')}</div>`:''}
+    ${clientTax?`<div class="doc-client-info">เลขประจำตัวผู้เสียภาษี ${clientTax}</div>`:''}
+
+    <table class="doc-table">
+      <thead>
+        <tr>
+          <th style="width:28px">#</th>
+          <th>รายละเอียด</th>
+          <th style="width:72px;text-align:right">จำนวน</th>
+          <th style="width:90px;text-align:right">ราคาต่อหน่วย</th>
+          <th style="width:90px;text-align:right">ยอดรวม</th>
+        </tr>
+      </thead>
+      <tbody>${rowsHtml}</tbody>
+    </table>
+
+    <div class="doc-totals">
+      <div class="doc-total-row">
+        <span class="lbl">รวมเป็นเงิน</span>
+        <span class="val">${fmt(subtotal)} บาท</span>
+      </div>
+      <div class="doc-total-row doc-total-final">
+        <span class="lbl">จำนวนเงินรวมทั้งสิ้น</span>
+        <span class="val">${fmt(total)} บาท</span>
+      </div>
+    </div>
+
+    <div class="doc-baht-text">(${bahtText(total)})</div>
+
+    ${payHtml}
+
+    ${docNote?`<div class="doc-note-section">
+      <div class="doc-note-label">หมายเหตุ</div>
+      <div class="doc-note-text">${docNote.replace(/\n/g,'<br/>')}</div>
+    </div>`:''}
+
+    <div class="doc-sigs">
+      <div class="doc-sig">
+        <div class="doc-sig-space"></div>
+        <div class="doc-sig-line">
+          <div class="doc-sig-name">ในนาม ${clientName}</div>
+          <div class="doc-sig-role">${sigLeft} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; วันที่ ___________</div>
+        </div>
+      </div>
+      <div class="doc-sig">
+        <div class="doc-sig-space" style="display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px">
+          <div style="text-align:center">
+            <div style="font-size:28px;font-family:cursive;color:var(--gray-600);line-height:1">Bm.</div>
+            <div style="font-size:12px;margin-top:2px;color:var(--gray-700)">ปาริชัตต์ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${docDate||''}</div>
+          </div>
+        </div>
+        <div class="doc-sig-line">
+          <div class="doc-sig-name">ในนาม B&M VISA CENTER by สุจินดา ร่มพฤกษ์</div>
+          <div class="doc-sig-role">${sigRight} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; วันที่ ___________</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function saveToList() {
+  const docNumber = document.getElementById('docNumber').value;
+  const clientName = document.getElementById('clientName').value || '—';
+  const docDate = document.getElementById('docDate').value;
+  const ps = document.querySelector('input[name="ps"]:checked')?.value || 'unpaid';
+  let total = 0;
+  rows.forEach(r => { total += (parseFloat(r.qty)||0)*(parseFloat(r.price)||0); });
+
+  const doc = { id: Date.now(), docType, docNumber, clientName, docDate, total, payStatus: ps };
+  savedDocs.unshift(doc);
+  localStorage.setItem('bmvisa_bills', JSON.stringify(savedDocs));
+
+  const msg = document.getElementById('saveMsg');
+  msg.textContent = '✅ บันทึกเรียบร้อย';
+  setTimeout(() => msg.textContent = '', 2500);
+  renderSaved();
+}
+
+function renderSaved() {
+  const sec = document.getElementById('savedSection');
+  const list = document.getElementById('savedList');
+  if (!savedDocs.length) { sec.style.display = 'none'; return; }
+  sec.style.display = 'block';
+  const statusLabel = {paid:'✅ จ่ายแล้ว', unpaid:'⏳ ยังไม่จ่าย', partial:'💳 บางส่วน'};
+  list.innerHTML = savedDocs.slice(0,10).map(d => `
+    <div style="background:white;border-radius:8px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 1px 4px rgba(0,0,0,0.08);font-size:13px">
+      <div>
+        <strong>${d.docNumber}</strong> &nbsp;
+        <span style="color:var(--gray-500)">${d.docDate}</span><br/>
+        <span>${d.clientName}</span>
+      </div>
+      <div style="text-align:right">
+        <div style="font-weight:700;color:var(--pink-dark)">฿${Number(d.total).toLocaleString()}</div>
+        <div style="font-size:11px">${statusLabel[d.payStatus]||''}</div>
+      </div>
+    </div>`).join('');
+}
+
+// init paySection visibility
+document.getElementById('paySection').style.display = 'none';
+</script>
+</body>
+</html>

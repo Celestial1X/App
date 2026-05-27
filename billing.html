@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#ec4899" />
+  <title>วางบิล - ระบบตรวจสอบข้อมูลแรงงานต่างด้าว</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --pink: #ec4899;
+      --pink-dark: #db2777;
+      --pink-light: #fce7f3;
+      --pink-soft: #fdf2f8;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --green: #10b981;
+      --green-light: #d1fae5;
+      --red: #ef4444;
+      --red-light: #fee2e2;
+      --yellow: #f59e0b;
+      --yellow-light: #fef3c7;
+      --radius: 10px;
+      --shadow: 0 2px 8px rgba(0,0,0,0.08);
+      --shadow-md: 0 4px 16px rgba(0,0,0,0.12);
+    }
+
+    body {
+      font-family: 'Sarabun', sans-serif;
+      background: var(--gray-50);
+      color: var(--gray-800);
+      min-height: 100vh;
+    }
+
+    /* HEADER */
+    .hero {
+      background: linear-gradient(135deg, var(--pink) 0%, var(--pink-dark) 100%);
+      color: white;
+      padding: 0;
+    }
+    .hero__content { padding: 16px 20px 12px; }
+    .hero__top { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+    .brand-mark { display: flex; align-items: center; gap: 8px; }
+    .brand-mark__text strong { font-size: 15px; display: block; }
+    .brand-mark__text span { font-size: 11px; opacity: 0.85; }
+    .hero h1 { font-size: 17px; font-weight: 700; opacity: 0.95; }
+
+    /* NAV TABS */
+    .page-tabs {
+      display: flex;
+      overflow-x: auto;
+      gap: 4px;
+      padding: 10px 16px;
+      background: white;
+      border-bottom: 1px solid var(--gray-200);
+      scrollbar-width: none;
+    }
+    .page-tabs::-webkit-scrollbar { display: none; }
+    .tab-btn {
+      white-space: nowrap;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-family: 'Sarabun', sans-serif;
+      font-weight: 500;
+      color: var(--gray-600);
+      text-decoration: none;
+      background: var(--gray-100);
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .tab-btn:hover { background: var(--pink-light); color: var(--pink-dark); }
+    .tab-btn.is-active { background: var(--pink); color: white; }
+
+    /* CONTAINER */
+    .container { max-width: 900px; margin: 0 auto; padding: 16px; }
+
+    /* PANEL */
+    .panel {
+      background: white;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .panel h2 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--gray-800);
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--pink-light);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .panel h2::before { content: ''; display: block; width: 4px; height: 18px; background: var(--pink); border-radius: 2px; }
+
+    /* SUMMARY CARDS */
+    .summary-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .summary-card {
+      background: var(--gray-50);
+      border-radius: var(--radius);
+      padding: 14px;
+      text-align: center;
+      border: 1px solid var(--gray-200);
+    }
+    .summary-card.paid { background: var(--green-light); border-color: #6ee7b7; }
+    .summary-card.unpaid { background: var(--red-light); border-color: #fca5a5; }
+    .summary-card.total { background: var(--pink-light); border-color: #f9a8d4; }
+    .summary-card__num { font-size: 22px; font-weight: 700; color: var(--gray-800); }
+    .summary-card.paid .summary-card__num { color: var(--green); }
+    .summary-card.unpaid .summary-card__num { color: var(--red); }
+    .summary-card.total .summary-card__num { color: var(--pink-dark); }
+    .summary-card__label { font-size: 11px; color: var(--gray-500); margin-top: 2px; }
+
+    /* FORM */
+    .form-grid { display: grid; gap: 12px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .form-row { display: flex; flex-direction: column; gap: 4px; }
+    .form-row label { font-size: 13px; font-weight: 600; color: var(--gray-700); }
+    .form-row input,
+    .form-row select,
+    .form-row textarea {
+      padding: 8px 10px;
+      border: 1.5px solid var(--gray-200);
+      border-radius: 8px;
+      font-family: 'Sarabun', sans-serif;
+      font-size: 14px;
+      color: var(--gray-800);
+      background: white;
+      transition: border-color 0.15s;
+      outline: none;
+    }
+    .form-row input:focus,
+    .form-row select:focus,
+    .form-row textarea:focus { border-color: var(--pink); box-shadow: 0 0 0 3px rgba(236,72,153,0.1); }
+
+    /* SERVICE ITEMS */
+    .service-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+    .service-item {
+      display: grid;
+      grid-template-columns: 1fr auto auto auto;
+      gap: 8px;
+      align-items: center;
+      background: var(--gray-50);
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--gray-200);
+    }
+    .service-item input {
+      padding: 6px 8px;
+      border: 1.5px solid var(--gray-200);
+      border-radius: 6px;
+      font-family: 'Sarabun', sans-serif;
+      font-size: 13px;
+      background: white;
+      outline: none;
+    }
+    .service-item input:focus { border-color: var(--pink); }
+    .service-item input.price-input { width: 100px; text-align: right; }
+    .service-total { font-size: 13px; font-weight: 600; color: var(--pink-dark); min-width: 80px; text-align: right; }
+    .btn-remove-service {
+      background: var(--red-light);
+      color: var(--red);
+      border: none;
+      border-radius: 6px;
+      width: 28px; height: 28px;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .btn-add-service {
+      background: var(--pink-light);
+      color: var(--pink-dark);
+      border: 1.5px dashed var(--pink);
+      border-radius: 8px;
+      padding: 8px;
+      font-family: 'Sarabun', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      transition: background 0.15s;
+    }
+    .btn-add-service:hover { background: var(--pink); color: white; }
+
+    /* TOTAL BOX */
+    .total-box {
+      background: var(--gray-800);
+      color: white;
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 4px;
+    }
+    .total-box__label { font-size: 14px; opacity: 0.8; }
+    .total-box__amount { font-size: 22px; font-weight: 700; color: #fbbf24; }
+
+    /* FILE UPLOAD */
+    .upload-area {
+      border: 2px dashed var(--gray-300);
+      border-radius: var(--radius);
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      background: var(--gray-50);
+    }
+    .upload-area:hover { border-color: var(--pink); background: var(--pink-soft); }
+    .upload-area.dragover { border-color: var(--pink); background: var(--pink-light); }
+    .upload-area input { display: none; }
+    .upload-icon { font-size: 28px; margin-bottom: 6px; }
+    .upload-area p { font-size: 13px; color: var(--gray-500); }
+    .upload-area strong { color: var(--pink-dark); }
+    .preview-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .preview-item {
+      position: relative;
+      width: 72px; height: 72px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 2px solid var(--gray-200);
+    }
+    .preview-item img { width: 100%; height: 100%; object-fit: cover; }
+    .preview-item .preview-remove {
+      position: absolute;
+      top: 2px; right: 2px;
+      background: rgba(0,0,0,0.6);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 18px; height: 18px;
+      font-size: 10px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .preview-item.pdf-preview {
+      display: flex; align-items: center; justify-content: center;
+      background: var(--red-light);
+      font-size: 22px;
+    }
+
+    /* STATUS BADGE */
+    .status-select-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .status-option input { display: none; }
+    .status-option label {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 2px solid var(--gray-200);
+      color: var(--gray-500);
+      transition: all 0.15s;
+      user-select: none;
+    }
+    .status-option input[value="unpaid"]:checked + label { background: var(--red-light); border-color: var(--red); color: var(--red); }
+    .status-option input[value="paid"]:checked + label { background: var(--green-light); border-color: var(--green); color: var(--green); }
+    .status-option input[value="partial"]:checked + label { background: var(--yellow-light); border-color: var(--yellow); color: #92400e; }
+
+    /* BUTTONS */
+    .form-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .btn-primary {
+      background: var(--pink);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 20px;
+      font-family: 'Sarabun', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-primary:hover { background: var(--pink-dark); }
+    .btn-secondary {
+      background: var(--gray-100);
+      color: var(--gray-700);
+      border: 1.5px solid var(--gray-200);
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-family: 'Sarabun', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-secondary:hover { background: var(--gray-200); }
+    .save-status { font-size: 13px; color: var(--green); font-weight: 600; }
+
+    /* RECORDS TABLE */
+    .records-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .records-toolbar h3 { font-size: 15px; font-weight: 700; color: var(--gray-800); }
+    .search-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .search-row input, .search-row select {
+      padding: 7px 10px;
+      border: 1.5px solid var(--gray-200);
+      border-radius: 8px;
+      font-family: 'Sarabun', sans-serif;
+      font-size: 13px;
+      outline: none;
+    }
+    .search-row input:focus, .search-row select:focus { border-color: var(--pink); }
+
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead th {
+      background: var(--gray-50);
+      padding: 10px 10px;
+      text-align: left;
+      font-weight: 700;
+      color: var(--gray-600);
+      border-bottom: 2px solid var(--gray-200);
+      white-space: nowrap;
+    }
+    tbody tr { border-bottom: 1px solid var(--gray-100); transition: background 0.1s; }
+    tbody tr:hover { background: var(--pink-soft); }
+    tbody td { padding: 10px 10px; vertical-align: middle; }
+
+    .badge {
+      display: inline-flex; align-items: center;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .badge-paid { background: var(--green-light); color: var(--green); }
+    .badge-unpaid { background: var(--red-light); color: var(--red); }
+    .badge-partial { background: var(--yellow-light); color: #92400e; }
+
+    .action-btn {
+      background: none;
+      border: 1.5px solid var(--gray-200);
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: 'Sarabun', sans-serif;
+      transition: all 0.15s;
+      color: var(--gray-600);
+    }
+    .action-btn:hover { background: var(--pink-light); border-color: var(--pink); color: var(--pink-dark); }
+    .action-btn.danger:hover { background: var(--red-light); border-color: var(--red); color: var(--red); }
+
+    .thumb-row { display: flex; gap: 4px; flex-wrap: wrap; }
+    .thumb {
+      width: 32px; height: 32px;
+      border-radius: 4px;
+      object-fit: cover;
+      border: 1px solid var(--gray-200);
+      cursor: pointer;
+    }
+    .thumb-pdf {
+      width: 32px; height: 32px;
+      border-radius: 4px;
+      background: var(--red-light);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      border: 1px solid #fca5a5;
+    }
+
+    .empty-state { text-align: center; padding: 32px; color: var(--gray-400); }
+    .empty-state .empty-icon { font-size: 36px; margin-bottom: 8px; }
+
+    /* MODAL */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-overlay.is-open { display: flex; }
+    .modal-box {
+      background: white;
+      border-radius: 14px;
+      width: 100%; max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow-md);
+    }
+    .modal-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+    .modal-header h3 { font-size: 16px; font-weight: 700; }
+    .modal-close {
+      background: var(--gray-100); border: none; border-radius: 50%;
+      width: 30px; height: 30px;
+      cursor: pointer; font-size: 14px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .modal-body { padding: 16px 20px; }
+    .modal-body img { max-width: 100%; border-radius: 8px; margin-bottom: 8px; }
+
+    /* LOADER */
+    .page-loader {
+      position: fixed; inset: 0;
+      background: white;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 999;
+      transition: opacity 0.3s;
+    }
+    .page-loader.hidden { opacity: 0; pointer-events: none; }
+    .loader-dots { display: flex; gap: 6px; }
+    .loader-dots span {
+      width: 10px; height: 10px;
+      background: var(--pink);
+      border-radius: 50%;
+      animation: bounce 0.8s infinite alternate;
+    }
+    .loader-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .loader-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce { to { transform: translateY(-8px); opacity: 0.6; } }
+
+    @media (max-width: 600px) {
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .summary-row { grid-template-columns: 1fr 1fr 1fr; }
+      .service-item { grid-template-columns: 1fr auto auto; }
+      .service-item input.price-input { width: 80px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-loader" id="pageLoader">
+  <div class="loader-dots"><span></span><span></span><span></span></div>
+</div>
+
+<header class="hero">
+  <div class="hero__content">
+    <div class="hero__top">
+      <div class="brand-mark">
+        <div class="brand-mark__text">
+          <strong>BmViSa Center</strong>
+          <span>บริการแรงงานต่างด้าวครบวงจร</span>
+        </div>
+      </div>
+    </div>
+    <h1>ระบบตรวจสอบข้อมูลแรงงานต่างด้าว</h1>
+  </div>
+</header>
+
+<nav class="page-tabs">
+  <a class="tab-btn" href="tasks.html">งานที่ต้องทำ</a>
+  <a class="tab-btn" href="receivedocs.html">รับเอกสาร</a>
+  <a class="tab-btn" href="index.html">ค้นหาข้อมูล</a>
+  <a class="tab-btn" href="records.html">ข้อมูลบันทึก</a>
+  <a class="tab-btn" href="form.html">กรอกแบบฟอร์ม</a>
+  <a class="tab-btn" href="report90.html">รายงานตัว 90 วัน</a>
+  <a class="tab-btn" href="visarun.html">Visa run</a>
+  <a class="tab-btn" href="nextform.html">MOU ลาว</a>
+  <a class="tab-btn" href="returndocs.html">ส่งคืนเอกสาร</a>
+  <a class="tab-btn is-active" href="billing.html">วางบิล</a>
+</nav>
+
+<main class="container">
+
+  <!-- SUMMARY -->
+  <div class="summary-row" id="summaryRow">
+    <div class="summary-card total">
+      <div class="summary-card__num" id="sumTotal">0</div>
+      <div class="summary-card__label">บิลทั้งหมด</div>
+    </div>
+    <div class="summary-card paid">
+      <div class="summary-card__num" id="sumPaid">0</div>
+      <div class="summary-card__label">จ่ายแล้ว</div>
+    </div>
+    <div class="summary-card unpaid">
+      <div class="summary-card__num" id="sumUnpaid">0</div>
+      <div class="summary-card__label">ยังไม่จ่าย</div>
+    </div>
+  </div>
+
+  <!-- FORM PANEL -->
+  <div class="panel">
+    <h2 id="formTitle">สร้างบิลใหม่</h2>
+
+    <div class="form-grid">
+      <div class="grid-2">
+        <div class="form-row">
+          <label for="clientName">ชื่อลูกค้า / นายจ้าง <span style="color:var(--red)">*</span></label>
+          <input id="clientName" type="text" placeholder="กรอกชื่อลูกค้า" list="clientSuggestions" />
+          <datalist id="clientSuggestions"></datalist>
+        </div>
+        <div class="form-row">
+          <label for="billDate">วันที่วางบิล</label>
+          <input id="billDate" type="date" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label for="billNote">หมายเหตุ / รายละเอียดเพิ่มเติม</label>
+        <input id="billNote" type="text" placeholder="เช่น ต่อวีซ่า, เปลี่ยนนายจ้าง" />
+      </div>
+
+      <!-- SERVICE ITEMS -->
+      <div class="form-row">
+        <label>รายการบริการ</label>
+        <div class="service-list" id="serviceList"></div>
+        <button type="button" class="btn-add-service" id="addServiceBtn">+ เพิ่มรายการบริการ</button>
+      </div>
+
+      <div class="total-box">
+        <span class="total-box__label">ยอดรวมทั้งหมด</span>
+        <span class="total-box__amount" id="grandTotal">฿0</span>
+      </div>
+
+      <!-- PAYMENT STATUS -->
+      <div class="form-row">
+        <label>สถานะการชำระ</label>
+        <div class="status-select-row">
+          <div class="status-option">
+            <input type="radio" name="payStatus" id="statusUnpaid" value="unpaid" checked />
+            <label for="statusUnpaid">⏳ ยังไม่จ่าย</label>
+          </div>
+          <div class="status-option">
+            <input type="radio" name="payStatus" id="statusPartial" value="partial" />
+            <label for="statusPartial">💳 จ่ายบางส่วน</label>
+          </div>
+          <div class="status-option">
+            <input type="radio" name="payStatus" id="statusPaid" value="paid" />
+            <label for="statusPaid">✅ จ่ายแล้ว</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- FILE UPLOAD -->
+      <div class="form-row">
+        <label>แนบรูป / เอกสาร</label>
+        <div class="upload-area" id="uploadArea">
+          <input type="file" id="fileInput" accept="image/*,.pdf" multiple />
+          <div class="upload-icon">📎</div>
+          <p><strong>คลิกเพื่อเลือกไฟล์</strong> หรือลากวางที่นี่</p>
+          <p>รองรับ JPG, PNG, PDF</p>
+        </div>
+        <div class="preview-grid" id="previewGrid"></div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-primary" id="saveBillBtn">💾 บันทึกบิล</button>
+        <button type="button" class="btn-secondary" id="clearFormBtn">ล้างฟอร์ม</button>
+        <span class="save-status" id="saveStatus"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECORDS PANEL -->
+  <div class="panel">
+    <div class="records-toolbar">
+      <h3>รายการบิลทั้งหมด</h3>
+      <div class="search-row">
+        <input type="search" id="searchInput" placeholder="ค้นหาชื่อลูกค้า..." />
+        <select id="filterStatus">
+          <option value="">ทุกสถานะ</option>
+          <option value="unpaid">ยังไม่จ่าย</option>
+          <option value="partial">จ่ายบางส่วน</option>
+          <option value="paid">จ่ายแล้ว</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>วันที่</th>
+            <th>ลูกค้า</th>
+            <th>รายการ</th>
+            <th>ยอดรวม</th>
+            <th>สถานะ</th>
+            <th>รูป/เอกสาร</th>
+            <th>จัดการ</th>
+          </tr>
+        </thead>
+        <tbody id="billTableBody"></tbody>
+      </table>
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">🧾</div>
+        <p>ยังไม่มีบิล — กรอกแบบฟอร์มด้านบนเพื่อสร้างบิลแรก</p>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- IMAGE PREVIEW MODAL -->
+<div class="modal-overlay" id="imgModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="imgModalTitle">ดูเอกสาร</h3>
+      <button class="modal-close" id="imgModalClose">✕</button>
+    </div>
+    <div class="modal-body" id="imgModalBody"></div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'billingRecords';
+
+// ---- STATE ----
+let bills = [];
+let editId = null;
+let attachedFiles = []; // { name, dataUrl, type }
+
+// ---- INIT ----
+document.addEventListener('DOMContentLoaded', () => {
+  loadBills();
+  setTodayDate();
+  addServiceRow();
+  renderTable();
+  renderSummary();
+  updateClientSuggestions();
+  setTimeout(() => document.getElementById('pageLoader').classList.add('hidden'), 400);
+});
+
+function setTodayDate() {
+  const d = new Date();
+  document.getElementById('billDate').value = d.toISOString().split('T')[0];
+}
+
+// ---- STORAGE ----
+function loadBills() {
+  try { bills = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+  catch { bills = []; }
+}
+function saveBills() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(bills));
+}
+
+// ---- SERVICE ROWS ----
+document.getElementById('addServiceBtn').addEventListener('click', addServiceRow);
+
+function addServiceRow(name = '', price = '') {
+  const list = document.getElementById('serviceList');
+  const row = document.createElement('div');
+  row.className = 'service-item';
+  row.innerHTML = `
+    <input type="text" placeholder="รายการบริการ เช่น ต่อวีซ่า" class="service-name" value="${name}" />
+    <input type="number" placeholder="ราคา" class="price-input service-price" value="${price}" min="0" step="1" />
+    <span class="service-total">฿${price ? Number(price).toLocaleString() : '0'}</span>
+    <button type="button" class="btn-remove-service" title="ลบ">✕</button>
+  `;
+  row.querySelector('.service-price').addEventListener('input', updateTotal);
+  row.querySelector('.btn-remove-service').addEventListener('click', () => { row.remove(); updateTotal(); });
+  list.appendChild(row);
+  updateTotal();
+}
+
+function updateTotal() {
+  let total = 0;
+  document.querySelectorAll('.service-item').forEach(row => {
+    const price = parseFloat(row.querySelector('.service-price').value) || 0;
+    total += price;
+    row.querySelector('.service-total').textContent = '฿' + price.toLocaleString();
+  });
+  document.getElementById('grandTotal').textContent = '฿' + total.toLocaleString();
+}
+
+function getServices() {
+  return Array.from(document.querySelectorAll('.service-item')).map(row => ({
+    name: row.querySelector('.service-name').value.trim(),
+    price: parseFloat(row.querySelector('.service-price').value) || 0
+  })).filter(s => s.name || s.price);
+}
+
+// ---- FILE UPLOAD ----
+const uploadArea = document.getElementById('uploadArea');
+const fileInput = document.getElementById('fileInput');
+
+uploadArea.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', e => handleFiles(e.target.files));
+
+uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+uploadArea.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadArea.classList.remove('dragover');
+  handleFiles(e.dataTransfer.files);
+});
+
+function handleFiles(files) {
+  Array.from(files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      attachedFiles.push({ name: file.name, dataUrl: e.target.result, type: file.type });
+      renderPreview();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderPreview() {
+  const grid = document.getElementById('previewGrid');
+  grid.innerHTML = '';
+  attachedFiles.forEach((f, i) => {
+    const item = document.createElement('div');
+    item.className = 'preview-item' + (f.type === 'application/pdf' ? ' pdf-preview' : '');
+    if (f.type === 'application/pdf') {
+      item.innerHTML = `📄<button class="preview-remove" data-i="${i}">✕</button>`;
+    } else {
+      item.innerHTML = `<img src="${f.dataUrl}" /><button class="preview-remove" data-i="${i}">✕</button>`;
+    }
+    item.querySelector('.preview-remove').addEventListener('click', e => {
+      e.stopPropagation();
+      attachedFiles.splice(Number(e.target.dataset.i), 1);
+      renderPreview();
+    });
+    grid.appendChild(item);
+  });
+}
+
+// ---- SAVE BILL ----
+document.getElementById('saveBillBtn').addEventListener('click', saveBill);
+
+function saveBill() {
+  const clientName = document.getElementById('clientName').value.trim();
+  if (!clientName) { alert('กรุณากรอกชื่อลูกค้า'); return; }
+
+  const services = getServices();
+  const total = services.reduce((s, r) => s + r.price, 0);
+  const payStatus = document.querySelector('input[name="payStatus"]:checked').value;
+  const billDate = document.getElementById('billDate').value;
+  const note = document.getElementById('billNote').value.trim();
+
+  const bill = {
+    id: editId || Date.now().toString(),
+    clientName,
+    services,
+    total,
+    payStatus,
+    billDate,
+    note,
+    attachments: [...attachedFiles],
+    createdAt: editId ? (bills.find(b => b.id === editId)?.createdAt || new Date().toISOString()) : new Date().toISOString()
+  };
+
+  if (editId) {
+    bills = bills.map(b => b.id === editId ? bill : b);
+    editId = null;
+    document.getElementById('formTitle').textContent = 'สร้างบิลใหม่';
+  } else {
+    bills.unshift(bill);
+  }
+
+  saveBills();
+  clearForm();
+  renderTable();
+  renderSummary();
+  updateClientSuggestions();
+
+  const status = document.getElementById('saveStatus');
+  status.textContent = '✅ บันทึกเรียบร้อย';
+  setTimeout(() => status.textContent = '', 2500);
+}
+
+// ---- CLEAR FORM ----
+document.getElementById('clearFormBtn').addEventListener('click', () => { editId = null; clearForm(); document.getElementById('formTitle').textContent = 'สร้างบิลใหม่'; });
+
+function clearForm() {
+  document.getElementById('clientName').value = '';
+  document.getElementById('billNote').value = '';
+  document.getElementById('statusUnpaid').checked = true;
+  document.getElementById('serviceList').innerHTML = '';
+  attachedFiles = [];
+  renderPreview();
+  setTodayDate();
+  addServiceRow();
+  updateTotal();
+  fileInput.value = '';
+}
+
+// ---- RENDER TABLE ----
+function renderTable() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const filter = document.getElementById('filterStatus').value;
+  const filtered = bills.filter(b => {
+    const matchSearch = !search || b.clientName.toLowerCase().includes(search) || (b.note || '').toLowerCase().includes(search);
+    const matchFilter = !filter || b.payStatus === filter;
+    return matchSearch && matchFilter;
+  });
+
+  const tbody = document.getElementById('billTableBody');
+  const empty = document.getElementById('emptyState');
+  tbody.innerHTML = '';
+
+  if (!filtered.length) { empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+
+  filtered.forEach(bill => {
+    const statusMap = { paid: ['badge-paid', '✅ จ่ายแล้ว'], unpaid: ['badge-unpaid', '⏳ ยังไม่จ่าย'], partial: ['badge-partial', '💳 บางส่วน'] };
+    const [badgeClass, badgeText] = statusMap[bill.payStatus] || ['', '-'];
+    const serviceStr = bill.services.map(s => s.name).filter(Boolean).join(', ') || '-';
+    const thumbsHtml = (bill.attachments || []).map((f, i) =>
+      f.type === 'application/pdf'
+        ? `<div class="thumb-pdf" data-id="${bill.id}" data-i="${i}" title="${f.name}" style="cursor:pointer">📄</div>`
+        : `<img class="thumb" src="${f.dataUrl}" data-id="${bill.id}" data-i="${i}" title="${f.name}" />`
+    ).join('');
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${bill.billDate || '-'}</td>
+      <td><strong>${bill.clientName}</strong>${bill.note ? `<br><span style="font-size:11px;color:var(--gray-400)">${bill.note}</span>` : ''}</td>
+      <td style="max-width:160px;font-size:12px">${serviceStr}</td>
+      <td style="font-weight:700;color:var(--pink-dark)">฿${bill.total.toLocaleString()}</td>
+      <td><span class="badge ${badgeClass}">${badgeText}</span></td>
+      <td><div class="thumb-row">${thumbsHtml || '-'}</div></td>
+      <td style="white-space:nowrap">
+        <button class="action-btn" data-action="edit" data-id="${bill.id}">✏️ แก้ไข</button>
+        <button class="action-btn danger" data-action="delete" data-id="${bill.id}">🗑️</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // Thumb click → modal
+  tbody.querySelectorAll('.thumb, .thumb-pdf').forEach(el => {
+    el.addEventListener('click', () => {
+      const bill = bills.find(b => b.id === el.dataset.id);
+      const f = bill?.attachments?.[Number(el.dataset.i)];
+      if (!f) return;
+      document.getElementById('imgModalTitle').textContent = f.name;
+      const body = document.getElementById('imgModalBody');
+      if (f.type === 'application/pdf') {
+        body.innerHTML = `<p>📄 ไฟล์ PDF: ${f.name}</p><a href="${f.dataUrl}" download="${f.name}" class="btn-primary" style="display:inline-block;margin-top:10px;padding:8px 16px;text-decoration:none;border-radius:8px;background:var(--pink);color:white;font-weight:700">⬇️ ดาวน์โหลด</a>`;
+      } else {
+        body.innerHTML = `<img src="${f.dataUrl}" style="width:100%;border-radius:8px" />`;
+      }
+      document.getElementById('imgModal').classList.add('is-open');
+    });
+  });
+
+  // Edit / Delete
+  tbody.querySelectorAll('[data-action]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const { action, id } = btn.dataset;
+      if (action === 'delete') {
+        if (!confirm('ลบบิลนี้?')) return;
+        bills = bills.filter(b => b.id !== id);
+        saveBills();
+        renderTable();
+        renderSummary();
+      } else if (action === 'edit') {
+        const bill = bills.find(b => b.id === id);
+        if (!bill) return;
+        editId = id;
+        document.getElementById('formTitle').textContent = 'แก้ไขบิล';
+        document.getElementById('clientName').value = bill.clientName;
+        document.getElementById('billNote').value = bill.note || '';
+        document.getElementById('billDate').value = bill.billDate || '';
+        document.querySelector(`input[name="payStatus"][value="${bill.payStatus}"]`).checked = true;
+        document.getElementById('serviceList').innerHTML = '';
+        bill.services.forEach(s => addServiceRow(s.name, s.price));
+        attachedFiles = [...(bill.attachments || [])];
+        renderPreview();
+        updateTotal();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    });
+  });
+}
+
+// ---- SUMMARY ----
+function renderSummary() {
+  document.getElementById('sumTotal').textContent = bills.length;
+  document.getElementById('sumPaid').textContent = bills.filter(b => b.payStatus === 'paid').length;
+  document.getElementById('sumUnpaid').textContent = bills.filter(b => b.payStatus === 'unpaid').length;
+}
+
+// ---- SEARCH / FILTER ----
+document.getElementById('searchInput').addEventListener('input', renderTable);
+document.getElementById('filterStatus').addEventListener('change', renderTable);
+
+// ---- SUGGESTIONS ----
+function updateClientSuggestions() {
+  const dl = document.getElementById('clientSuggestions');
+  const names = [...new Set(bills.map(b => b.clientName))];
+  dl.innerHTML = names.map(n => `<option value="${n}">`).join('');
+}
+
+// ---- MODAL ----
+document.getElementById('imgModalClose').addEventListener('click', () => document.getElementById('imgModal').classList.remove('is-open'));
+document.getElementById('imgModal').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.classList.remove('is-open'); });
+</script>
+</body>
+</html>

@@ -2827,15 +2827,20 @@ const renderRecords = () => {
       });
       if (!shouldDelete) return;
       const deleted = await deleteRecordFromServer(record.formId);
-      if (!deleted) {
-        setStatus(recordsStatus, "ไม่สามารถลบข้อมูลจากเซิร์ฟเวอร์ได้", "error");
+      if (!deleted && canUseServerSync()) {
+        // Server is reachable but returned an error — notify user
+        setStatus(recordsStatus, "ไม่สามารถลบข้อมูลจากเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง", "error");
         return;
       }
+      // Always remove from local cache (offline-safe)
       const records = loadRecords();
       const nextRecords = records.filter((item) => item.formId !== record.formId);
       saveRecords(nextRecords);
       renderRecords();
       renderLatestRecordCard();
+      if (!deleted) {
+        setStatus(recordsStatus, "ลบข้อมูลในเครื่องแล้ว (ออฟไลน์)", "warn");
+      }
     });
     actionsWrapper.appendChild(editButton);
     actionsWrapper.appendChild(verifyButton);
@@ -3698,12 +3703,14 @@ const saveRecord = async (status = "draft") => {
   if (workerForm) {
     localStorage.setItem(RECORD_SEARCH_KEY, finalRecord.formId);
     window.location.href = "records.html";
+  } else {
+    hideLoader();
   }
 };
 
 const populateForm = (record) => {
   if (!record) return;
-if (formTypeInputs?.length) {
+  if (formTypeInputs?.length) {
     const selectedTypes = Array.isArray(record.data?.formTypes) && record.data.formTypes.length
       ? record.data.formTypes
       : [record.formType];
@@ -4029,14 +4036,14 @@ if (clearRecordsButton) {
       return;
     }
     const cleared = await clearRecordsFromServer();
-    if (!cleared) {
-      setStatus(recordsStatus, "ไม่สามารถลบข้อมูลจากเซิร์ฟเวอร์ได้", "error");
+    if (!cleared && canUseServerSync()) {
+      setStatus(recordsStatus, "ไม่สามารถลบข้อมูลจากเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง", "error");
       return;
     }
     saveRecords([]);
     renderRecords();
     renderLatestRecordCard();
-    setStatus(formSaveStatus, translations[currentLanguage].recordsStatus);
+    setStatus(recordsStatus || formSaveStatus, translations[currentLanguage].recordsStatus);
   });
 }
 if (exportRecordsButton) {

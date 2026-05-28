@@ -18,7 +18,7 @@
 body{font-family:'Sarabun',sans-serif;background:#f1f5f9;color:var(--gray-800);min-height:100vh}
 
 /* ===== APP SHELL ===== */
-.app{display:grid;grid-template-columns:340px 1fr;min-height:100vh;gap:0}
+.app{display:grid;grid-template-columns:340px 1fr;min-height:calc(100vh - 44px);gap:0}
 
 /* ===== LEFT PANEL (FORM) ===== */
 .form-panel{
@@ -214,8 +214,39 @@ body{font-family:'Sarabun',sans-serif;background:#f1f5f9;color:var(--gray-800);m
   .doc-sheet{width:100%;max-width:210mm}
 }
 </style>
+
+<style>
+.bmvisa-nav{
+  display:flex;gap:6px;flex-wrap:wrap;padding:8px 12px;
+  background:#fff;border-bottom:1px solid #e2e8f0;
+  box-shadow:0 2px 8px rgba(15,23,42,.06);
+  font-family:'Sarabun','Prompt',sans-serif;
+  position:relative;z-index:100;
+}
+.bmvisa-nav a{
+  display:inline-flex;align-items:center;
+  text-decoration:none;
+  border:1px solid #f2c4da;background:#fff6fb;color:#7a2551;
+  padding:5px 11px;border-radius:8px;font-weight:600;font-size:0.82rem;
+  transition:background .15s,box-shadow .15s;white-space:nowrap;
+}
+.bmvisa-nav a:hover{background:#ffe4f1;box-shadow:0 4px 10px rgba(216,52,131,.15);}
+.bmvisa-nav a.active{background:linear-gradient(135deg,#e84393,#d63384);color:#fff;border-color:#d63384;box-shadow:0 6px 14px rgba(216,52,131,.22);}
+</style>
 </head>
 <body>
+<nav class="bmvisa-nav">
+  <a href="tasks.html">📋 งานวันนี้</a>
+  <a href="receivedocs.html">📥 รับเอกสาร</a>
+  <a href="index.html">🔍 ค้นหา</a>
+  <a href="records.html">📂 บันทึก</a>
+  <a href="form.html">✏️ กรอกฟอร์ม</a>
+  <a href="report90.html">📅 90 วัน</a>
+  <a href="visarun.html">✈️ Visa Run</a>
+  <a href="nextform.html">📄 MOU ลาว</a>
+  <a href="returndocs.html">📤 ส่งคืน</a>
+  <a href="billing-doc-8.html" class="active">💳 วางบิล</a>
+</nav>
 <div class="app">
 
 <!-- ===== FORM PANEL ===== -->

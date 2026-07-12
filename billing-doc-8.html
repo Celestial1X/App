@@ -405,13 +405,14 @@ body{font-family:'IBM Plex Sans Thai','Sarabun',sans-serif;background:var(--gray
 
   <!-- saved list in sidebar -->
   <div id="savedSection" style="display:none;margin-top:16px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
       <span style="font-size:12px;font-weight:700;color:var(--gray-700)">เอกสารที่บันทึกไว้</span>
       <div style="display:flex;gap:4px;align-items:center">
         <span id="savedCount" style="font-size:11px;color:var(--gray-400)"></span>
         <button onclick="clearAllDocs()" style="font-size:10px;padding:2px 6px;border-radius:4px;border:1px solid #fca5a5;background:#fee2e2;color:#ef4444;cursor:pointer;font-family:inherit">ล้างทั้งหมด</button>
       </div>
     </div>
+    <div id="syncStatus" style="font-size:10.5px;color:var(--gray-400);margin-bottom:8px"></div>
     <div id="savedList" style="display:flex;flex-direction:column;gap:6px;max-height:320px;overflow-y:auto"></div>
   </div>
 </div>
@@ -451,17 +452,23 @@ const BILLING_API_URL = API_BASE_URL ? `${API_BASE_URL}/api/billing` : '/api/bil
 const canUseServerSync = () => Boolean(API_BASE_URL) || window.location.protocol.startsWith('http');
 
 async function fetchSavedDocsFromServer() {
-  if (!canUseServerSync()) return null;
+  const statusEl = document.getElementById('syncStatus');
+  if (!canUseServerSync()) {
+    if (statusEl) statusEl.textContent = 'โหมดออฟไลน์: เก็บในเครื่องนี้เท่านั้น';
+    return null;
+  }
   try {
     const res = await fetch(BILLING_API_URL, { method: 'GET' });
-    if (!res.ok) return null;
+    if (!res.ok) throw new Error('bad status ' + res.status);
     const docs = await res.json();
-    if (!Array.isArray(docs)) return null;
+    if (!Array.isArray(docs)) throw new Error('unexpected response');
     savedDocs = docs;
     localStorage.setItem('bmvisa_bills', JSON.stringify(savedDocs));
+    if (statusEl) statusEl.textContent = 'เชื่อมต่อเซิร์ฟเวอร์แล้ว · ข้อมูลนี้เห็นตรงกันทุกเครื่อง';
     return docs;
   } catch (e) {
     console.warn('billing: server fetch failed, using local cache', e);
+    if (statusEl) statusEl.textContent = 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ · แสดงเฉพาะข้อมูลในเครื่องนี้';
     return null;
   }
 }
@@ -502,6 +509,18 @@ async function clearDocsOnServer() {
     return false;
   }
 }
+
+const startBillingRealtimeSync = () => {
+  if (!canUseServerSync() || typeof window.EventSource === 'undefined') return;
+  const streamUrl = API_BASE_URL ? `${API_BASE_URL}/api/stream` : '/api/stream';
+  try {
+    const source = new EventSource(streamUrl);
+    source.addEventListener('billing-change', () => {
+      fetchSavedDocsFromServer().then((docs) => { if (docs) renderSaved(); });
+    });
+    source.onerror = () => { /* EventSource auto-reconnects */ };
+  } catch (_e) { /* fallback: manual refresh only */ }
+};
 
 // generate doc number: BL/INV + YYYYMMDD + seq
 function genDocNumber(type) {
@@ -544,6 +563,7 @@ document.addEventListener('DOMContentLoaded', () => {
   render();
   renderSaved();
   fetchSavedDocsFromServer().then((docs) => { if (docs) renderSaved(); });
+  startBillingRealtimeSync();
 });
 
 function setDocType(type) {
@@ -965,9 +985,12 @@ function renderSaved() {
   const sec = document.getElementById('savedSection');
   const list = document.getElementById('savedList');
   const countEl = document.getElementById('savedCount');
-  if (!savedDocs.length) { sec.style.display = 'none'; return; }
   sec.style.display = 'block';
   if (countEl) countEl.textContent = savedDocs.length + ' รายการ';
+  if (!savedDocs.length) {
+    list.innerHTML = '<p style="font-size:11px;color:var(--gray-400);padding:8px 0">ยังไม่มีเอกสารที่บันทึกไว้</p>';
+    return;
+  }
   const statusColor = {paid:'#10b981', unpaid:'#ef4444', partial:'#f59e0b'};
   const statusLabel = {paid:'จ่ายแล้ว', unpaid:'ค้างชำระ', partial:'บางส่วน'};
   list.innerHTML = '';

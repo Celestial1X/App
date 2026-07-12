@@ -67,9 +67,9 @@
   wrap.innerHTML = `
     <div class="date-picker" role="dialog" aria-modal="false" aria-label="เลือกวันที่">
       <div class="date-picker__header">
-        <button type="button" class="date-picker__nav" data-nav="prev" aria-label="เดือนก่อนหน้า">←</button>
+        <button type="button" class="date-picker__nav" data-nav="prev" aria-label="เดือนก่อนหน้า"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5l-5 5 5 5"/></svg></button>
         <button type="button" class="date-picker__title" data-title></button>
-        <button type="button" class="date-picker__nav" data-nav="next" aria-label="เดือนถัดไป">→</button>
+        <button type="button" class="date-picker__nav" data-nav="next" aria-label="เดือนถัดไป"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5l5 5-5 5"/></svg></button>
       </div>
       <p class="date-picker__hint">พิมพ์ได้ เช่น 18/03/2569</p>
       <div class="date-picker__weekdays" data-weekdays></div>

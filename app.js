@@ -1762,9 +1762,8 @@ const renderTodayDocumentTasks = (records) => {
     <div class="today-documents__cards">
       ${items.map((item) => {
         const toneClass = item.label === "รับเอกสาร" ? "today-documents__card--receive" : "today-documents__card--return";
-        const icon = item.label === "รับเอกสาร" ? "📥" : "📤";
         return `<article class="today-documents__card ${toneClass}">
-          <p class="today-documents__badge">${icon} ${item.label}</p>
+          <p class="today-documents__badge">${item.label}</p>
           <h4>${item.formId}</h4>
           <p class="today-documents__meta">${item.assignee}</p>
           <p class="today-documents__date">${formatDateOnlyDMY(item.dateValue)}</p>
@@ -1894,7 +1893,7 @@ const openTaskBucketModal = (bucket) => {
     li.className = "timeline-item";
     if (item.done) li.classList.add("timeline-item--done");
     const note = item.note ? `<p>${item.note}</p>` : "";
-    const doneLabel = item.done ? "↺ ยกเลิกเสร็จแล้ว" : "✓ เสร็จแล้ว";
+    const doneLabel = item.done ? "ยกเลิกเสร็จแล้ว" : "ทำเสร็จแล้ว";
     const openButton = item.targetUrl
       ? `<button type="button" class="secondary" data-task-open="${item.targetUrl}">เปิดรายการ</button>`
       : "";
@@ -2791,7 +2790,7 @@ const renderRecords = () => {
     const editButton = document.createElement("button");
     editButton.type = "button";
     editButton.className = "secondary action-btn action-btn--edit";
-    editButton.innerHTML = `<span aria-hidden="true">✏️</span><span>${translations[currentLanguage].editButton}</span>`;
+    editButton.innerHTML = `<span class="icon-swatch" aria-hidden="true"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13.3 3.8l2.9 2.9-8.9 8.9-3.4.5.5-3.4 8.9-8.9z"/></svg></span><span>${translations[currentLanguage].editButton}</span>`;
     editButton.addEventListener("click", () => {
       const followupPageMap = {
         report90: "report90.html",
@@ -2815,12 +2814,12 @@ const renderRecords = () => {
     const verifyButton = document.createElement("button");
     verifyButton.type = "button";
     verifyButton.className = "secondary action-btn action-btn--verify";
-    verifyButton.innerHTML = `<span aria-hidden="true">🔎</span><span>${translations[currentLanguage].verifyButton}</span>`;
+    verifyButton.innerHTML = `<span class="icon-swatch" aria-hidden="true"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.7" cy="8.7" r="5"/><path d="M16 16l-3.8-3.8"/></svg></span><span>${translations[currentLanguage].verifyButton}</span>`;
     verifyButton.addEventListener("click", () => openRecordModal(record));
     const deleteButton = document.createElement("button");
     deleteButton.type = "button";
     deleteButton.className = "danger action-btn action-btn--delete";
-    deleteButton.innerHTML = `<span aria-hidden="true">🗑️</span><span>${translations[currentLanguage].deleteButton}</span>`;
+    deleteButton.innerHTML = `<span class="icon-swatch" aria-hidden="true"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6h11M8 6V4.6c0-.6.5-1.1 1.1-1.1h1.8c.6 0 1.1.5 1.1 1.1V6M6 6l.6 9.4c0 .6.5 1 1.1 1h4.6c.6 0 1-.4 1.1-1L14 6"/></svg></span><span>${translations[currentLanguage].deleteButton}</span>`;
     deleteButton.addEventListener("click", async () => {
       const shouldDelete = await showConfirmDialog({
         message: translations[currentLanguage].confirmDeleteRecord,
@@ -3095,7 +3094,7 @@ const getAttachmentViewerModal = () => {
     <div class="modal-content attachment-viewer-content">
       <div class="modal-header">
         <h4 id="attachmentViewerTitle">ไฟล์แนบ</h4>
-        <button type="button" class="modal-close" id="attachmentViewerClose" aria-label="ปิด">✕</button>
+        <button type="button" class="modal-close" id="attachmentViewerClose" aria-label="ปิด"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5.5 5.5l9 9M14.5 5.5l-9 9"/></svg></button>
       </div>
       <div id="attachmentViewerBody" class="modal-body attachment-viewer-body"></div>
     </div>

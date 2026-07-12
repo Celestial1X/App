@@ -4,18 +4,18 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>ระบบออกใบวางบิล / ใบเสร็จ - B&M VISA CENTER</title>
-<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --pink:#ec4899;--pink-dark:#db2777;--pink-light:#fce7f3;
-  --purple:#7c3aed;--purple-light:#ede9fe;
-  --gray-50:#f9fafb;--gray-100:#f3f4f6;--gray-200:#e5e7eb;
-  --gray-300:#d1d5db;--gray-400:#9ca3af;--gray-500:#6b7280;
-  --gray-600:#4b5563;--gray-700:#374151;--gray-800:#1f2937;
-  --green:#10b981;--red:#ef4444;
+  --pink:#ab7a2e;--pink-dark:#86601f;--pink-light:#f4ead2;
+  --purple:#1c2b3a;--purple-light:#eef0ea;
+  --gray-50:#f6f7f4;--gray-100:#eef0ea;--gray-200:#d8dcd1;
+  --gray-300:#c2c8ba;--gray-400:#9aa398;--gray-500:#6b7568;
+  --gray-600:#4d564a;--gray-700:#3e4a42;--gray-800:#1c2621;
+  --green:#3f6e52;--red:#a23b2e;
 }
-body{font-family:'Sarabun',sans-serif;background:#f1f5f9;color:var(--gray-800);min-height:100vh}
+body{font-family:'IBM Plex Sans Thai','Sarabun',sans-serif;background:var(--gray-100);color:var(--gray-800);min-height:100vh}
 
 /* ===== APP SHELL ===== */
 .app{display:grid;grid-template-columns:340px 1fr;min-height:calc(100vh - 44px);gap:0}
@@ -104,12 +104,12 @@ body{font-family:'Sarabun',sans-serif;background:#f1f5f9;color:var(--gray-800);m
 .doc-sheet::before{
   content:'';position:absolute;top:0;right:0;
   width:60px;height:60px;
-  background:var(--accent-color,#ec4899);
+  background:var(--accent-color,#ab7a2e);
   clip-path:polygon(100% 0,0 0,100% 100%);
   z-index:1;
 }
-.doc-sheet.type-invoice{--accent-color:#7c3aed}
-.doc-sheet.type-receipt{--accent-color:#ec4899}
+.doc-sheet.type-invoice{--accent-color:#1c2b3a}
+.doc-sheet.type-receipt{--accent-color:#ab7a2e}
 
 .corner-num{
   position:absolute;top:8px;right:10px;z-index:2;
@@ -217,35 +217,36 @@ body{font-family:'Sarabun',sans-serif;background:#f1f5f9;color:var(--gray-800);m
 
 <style>
 .bmvisa-nav{
-  display:flex;gap:6px;flex-wrap:wrap;padding:8px 12px;
-  background:#fff;border-bottom:1px solid #e2e8f0;
-  box-shadow:0 2px 8px rgba(15,23,42,.06);
-  font-family:'Sarabun','Prompt',sans-serif;
+  display:flex;gap:3px;flex-wrap:wrap;padding:10px 12px 0;
+  background:var(--purple);
+  font-family:'IBM Plex Sans Thai',sans-serif;
   position:relative;z-index:100;
 }
 .bmvisa-nav a{
-  display:inline-flex;align-items:center;
+  display:inline-flex;align-items:center;gap:6px;
   text-decoration:none;
-  border:1px solid #f2c4da;background:#fff6fb;color:#7a2551;
-  padding:5px 11px;border-radius:8px;font-weight:600;font-size:0.82rem;
-  transition:background .15s,box-shadow .15s;white-space:nowrap;
+  border:1px solid transparent;background:rgba(255,255,255,.06);color:rgba(251,249,243,.75);
+  padding:8px 13px;border-radius:8px 8px 0 0;font-weight:500;font-size:0.82rem;
+  transition:background .15s,color .15s;white-space:nowrap;
 }
-.bmvisa-nav a:hover{background:#ffe4f1;box-shadow:0 4px 10px rgba(216,52,131,.15);}
-.bmvisa-nav a.active{background:linear-gradient(135deg,#e84393,#d63384);color:#fff;border-color:#d63384;box-shadow:0 6px 14px rgba(216,52,131,.22);}
+.bmvisa-nav a svg{width:14px;height:14px;opacity:.8}
+.bmvisa-nav a:hover{background:rgba(255,255,255,.12);color:#fff;}
+.bmvisa-nav a.active{background:#fff;color:var(--purple);font-weight:700;}
+.bmvisa-nav a.active svg{opacity:1;color:var(--pink-dark)}
 </style>
 </head>
 <body>
 <nav class="bmvisa-nav">
-  <a href="tasks.html">📋 งานวันนี้</a>
-  <a href="receivedocs.html">📥 รับเอกสาร</a>
-  <a href="index.html">🔍 ค้นหา</a>
-  <a href="records.html">📂 บันทึก</a>
-  <a href="form.html">✏️ กรอกฟอร์ม</a>
-  <a href="report90.html">📅 90 วัน</a>
-  <a href="visarun.html">✈️ Visa Run</a>
-  <a href="nextform.html">📄 MOU ลาว</a>
-  <a href="returndocs.html">📤 ส่งคืน</a>
-  <a href="billing-doc-8.html" class="active">💳 วางบิล</a>
+  <a href="tasks.html"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="13" height="13" rx="2"/><path d="M6.5 8h7M6.5 11.3h7M6.5 14.6h4"/></svg><span>งานวันนี้</span></a>
+  <a href="receivedocs.html"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h12v8.5l-2.5 3.5h-7L4 12.5V4z"/><path d="M4 12.5h4l1 2h2l1-2h4"/></svg><span>รับเอกสาร</span></a>
+  <a href="index.html"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.7" cy="8.7" r="5"/><path d="M16 16l-3.8-3.8"/></svg><span>ค้นหา</span></a>
+  <a href="records.html"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.2c0-1 .8-1.7 1.7-1.7h3l1.4 1.7h6.2c.9 0 1.7.8 1.7 1.7v6.4c0 1-.8 1.7-1.7 1.7H4.7C3.8 16 3 15.2 3 14.3V6.2z"/></svg><span>บันทึก</span></a>
+  <a href="form.html"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13.3 3.8l2.9 2.9-8.9 8.9-3.4.5.5-3.4 8.9-8.9z"/></svg><span>กรอกฟอร์ม</span></a>
+  <a href="report90.html"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.3" y="4.2" width="13.4" height="12" rx="1.6"/><path d="M3.3 8h13.4M6.7 3v2.4M13.3 3v2.4"/></svg><span>90 วัน</span></a>
+  <a href="visarun.html"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.5l1.6 5.4 4.9 1.6-4.9 1.6L10 17l-1.6-5.9-4.9-1.6 4.9-1.6L10 2.5z"/></svg><span>Visa Run</span></a>
+  <a href="nextform.html"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3h5l3 3v10.5a1 1 0 01-1 1h-7a1 1 0 01-1-1V4a1 1 0 011-1z"/><path d="M11.3 3v3h3M7.3 10.5h5.4M7.3 13.3h5.4"/></svg><span>MOU ลาว</span></a>
+  <a href="returndocs.html"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h12v8.5l-2.5 3.5h-7L4 12.5V4z"/><path d="M10 5.5v5M7.8 8.3L10 10.5l2.2-2.2"/></svg><span>ส่งคืน</span></a>
+  <a href="billing-doc-8.html" class="active"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3.2h10v13.6l-1.8-1.3-1.7 1.3-1.7-1.3-1.6 1.3-1.7-1.3-1.5 1.3V3.2z"/><path d="M7.3 7h5.4M7.3 9.8h5.4M7.3 12.6h3.2"/></svg><span>วางบิล</span></a>
 </nav>
 <div class="app">
 
@@ -255,8 +256,8 @@ body{font-family:'Sarabun',sans-serif;background:#f1f5f9;color:var(--gray-800);m
 
   <!-- doc type -->
   <div class="doc-type-row">
-    <button class="doc-type-btn active-invoice" id="btnInvoice" onclick="setDocType('invoice')">📋 ใบวางบิล</button>
-    <button class="doc-type-btn" id="btnReceipt" onclick="setDocType('receipt')">🧾 ใบเสร็จรับเงิน</button>
+    <button class="doc-type-btn active-invoice" id="btnInvoice" onclick="setDocType('invoice')">ใบวางบิล</button>
+    <button class="doc-type-btn" id="btnReceipt" onclick="setDocType('receipt')">ใบเสร็จรับเงิน</button>
   </div>
 
     <!-- company info -->
@@ -266,7 +267,7 @@ body{font-family:'Sarabun',sans-serif;background:#f1f5f9;color:var(--gray-800);m
       <label>โลโก้บริษัท</label>
       <div class="logo-upload-area" id="logoUploadArea" onclick="document.getElementById('logoInput').click()">
         <input type="file" id="logoInput" accept="image/*" style="display:none" onchange="handleLogoUpload(this)" />
-        <span id="logoUploadHint">📷 คลิกเพื่ออัปโหลดโลโก้</span>
+        <span id="logoUploadHint">คลิกเพื่ออัปโหลดโลโก้</span>
         <img id="logoPreviewImg" src="" style="display:none;max-width:80px;max-height:80px;border-radius:8px;object-fit:contain" />
         <button type="button" id="logoRemoveBtn" style="display:none;font-size:11px;background:var(--red-light,#fee2e2);color:var(--red);border:none;border-radius:6px;padding:3px 8px;cursor:pointer;margin-top:4px" onclick="event.stopPropagation();removeLogo()">ลบโลโก้</button>
       </div>
@@ -392,20 +393,20 @@ body{font-family:'Sarabun',sans-serif;background:#f1f5f9;color:var(--gray-800);m
   <div class="form-section">
     <h3>สถานะการชำระ</h3>
     <div class="pay-status-row">
-      <div class="pay-opt"><input type="radio" name="ps" id="ps1" value="unpaid" checked onchange="render()" /><label for="ps1">⏳ ยังไม่จ่าย</label></div>
-      <div class="pay-opt"><input type="radio" name="ps" id="ps2" value="partial" onchange="render()" /><label for="ps2">💳 บางส่วน</label></div>
-      <div class="pay-opt"><input type="radio" name="ps" id="ps3" value="paid" onchange="render()" /><label for="ps3">✅ จ่ายแล้ว</label></div>
+      <div class="pay-opt"><input type="radio" name="ps" id="ps1" value="unpaid" checked onchange="render()" /><label for="ps1">ยังไม่จ่าย</label></div>
+      <div class="pay-opt"><input type="radio" name="ps" id="ps2" value="partial" onchange="render()" /><label for="ps2">บางส่วน</label></div>
+      <div class="pay-opt"><input type="radio" name="ps" id="ps3" value="paid" onchange="render()" /><label for="ps3">จ่ายแล้ว</label></div>
     </div>
   </div>
 
-  <button class="btn-print" onclick="window.print()">🖨️ พิมพ์ / บันทึก PDF</button>
-  <button class="btn-save" onclick="saveToList()">💾 บันทึกลงระบบ</button>
+  <button class="btn-print" onclick="window.print()">พิมพ์ / บันทึก PDF</button>
+  <button class="btn-save" onclick="saveToList()">บันทึกลงระบบ</button>
   <div id="saveMsg" style="font-size:12px;color:var(--green);margin-top:6px;text-align:center"></div>
 
   <!-- saved list in sidebar -->
   <div id="savedSection" style="display:none;margin-top:16px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-      <span style="font-size:12px;font-weight:700;color:var(--gray-700)">📂 เอกสารที่บันทึกไว้</span>
+      <span style="font-size:12px;font-weight:700;color:var(--gray-700)">เอกสารที่บันทึกไว้</span>
       <div style="display:flex;gap:4px;align-items:center">
         <span id="savedCount" style="font-size:11px;color:var(--gray-400)"></span>
         <button onclick="clearAllDocs()" style="font-size:10px;padding:2px 6px;border-radius:4px;border:1px solid #fca5a5;background:#fee2e2;color:#ef4444;cursor:pointer;font-family:inherit">ล้างทั้งหมด</button>
@@ -434,6 +435,73 @@ let logoDataUrl = null;
 let rows = [];
 let savedDocs = JSON.parse(localStorage.getItem('bmvisa_bills') || '[]');
 let _initDone = false;
+
+// ── Server sync (falls back to localStorage-only if offline/unreachable) ──
+const normalizeApiBaseUrl = (value) => String(value || '').trim().replace(/\/+$/, '');
+const resolveApiBaseUrl = () => {
+  const params = new URLSearchParams(window.location.search || '');
+  const queryBase = normalizeApiBaseUrl(params.get('apiBase'));
+  if (queryBase) { localStorage.setItem('recordsApiBaseUrl', queryBase); return queryBase; }
+  const storedBase = normalizeApiBaseUrl(localStorage.getItem('recordsApiBaseUrl'));
+  if (storedBase) return storedBase;
+  return normalizeApiBaseUrl(window.RECORDS_API_BASE_URL);
+};
+const API_BASE_URL = resolveApiBaseUrl();
+const BILLING_API_URL = API_BASE_URL ? `${API_BASE_URL}/api/billing` : '/api/billing';
+const canUseServerSync = () => Boolean(API_BASE_URL) || window.location.protocol.startsWith('http');
+
+async function fetchSavedDocsFromServer() {
+  if (!canUseServerSync()) return null;
+  try {
+    const res = await fetch(BILLING_API_URL, { method: 'GET' });
+    if (!res.ok) return null;
+    const docs = await res.json();
+    if (!Array.isArray(docs)) return null;
+    savedDocs = docs;
+    localStorage.setItem('bmvisa_bills', JSON.stringify(savedDocs));
+    return docs;
+  } catch (e) {
+    console.warn('billing: server fetch failed, using local cache', e);
+    return null;
+  }
+}
+
+async function pushDocToServer(doc) {
+  if (!canUseServerSync()) return false;
+  try {
+    const res = await fetch(BILLING_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(doc),
+    });
+    return res.ok;
+  } catch (e) {
+    console.warn('billing: server save failed, kept locally only', e);
+    return false;
+  }
+}
+
+async function deleteDocOnServer(docNumber) {
+  if (!canUseServerSync() || !docNumber) return false;
+  try {
+    const res = await fetch(`${BILLING_API_URL}/${encodeURIComponent(docNumber)}`, { method: 'DELETE' });
+    return res.ok;
+  } catch (e) {
+    console.warn('billing: server delete failed', e);
+    return false;
+  }
+}
+
+async function clearDocsOnServer() {
+  if (!canUseServerSync()) return false;
+  try {
+    const res = await fetch(BILLING_API_URL, { method: 'DELETE' });
+    return res.ok;
+  } catch (e) {
+    console.warn('billing: server clear failed', e);
+    return false;
+  }
+}
 
 // generate doc number: BL/INV + YYYYMMDD + seq
 function genDocNumber(type) {
@@ -475,6 +543,7 @@ document.addEventListener('DOMContentLoaded', () => {
   _initDone = true;
   render();
   renderSaved();
+  fetchSavedDocsFromServer().then((docs) => { if (docs) renderSaved(); });
 });
 
 function setDocType(type) {
@@ -530,7 +599,7 @@ function rebuildServiceList() {
     const removeBtn = document.createElement('button');
     removeBtn.className = 'btn-remove';
     removeBtn.title = 'ลบ';
-    removeBtn.textContent = '✕';
+    removeBtn.textContent = '×';
     removeBtn.addEventListener('click', () => removeRow(i));
 
     // grid row
@@ -665,7 +734,7 @@ function render() {
       <div class="check-row">
         ${['cash','check','online','card'].map(m=>`
           <div class="doc-check">
-            <div class="doc-check-box ${payMethod===m?'checked':''}">${payMethod===m?'✓':''}</div>
+            <div class="doc-check-box ${payMethod===m?'checked':''}">${payMethod===m?'&#10003;':''}</div>
             <span>${methodLabels[m]}</span>
           </div>`).join('')}
       </div>
@@ -877,8 +946,10 @@ function saveToList() {
   localStorage.setItem('bmvisa_bills', JSON.stringify(savedDocs));
 
   const msg = document.getElementById('saveMsg');
-  msg.textContent = '✅ บันทึกเรียบร้อย';
-  setTimeout(() => msg.textContent = '', 2500);
+  pushDocToServer(data).then((synced) => {
+    msg.textContent = synced ? 'บันทึกเรียบร้อย (ซิงก์กับเซิร์ฟเวอร์แล้ว)' : 'บันทึกเรียบร้อย (เก็บไว้ในเครื่องนี้เท่านั้น)';
+    setTimeout(() => msg.textContent = '', 3200);
+  });
   renderSaved();
 }
 
@@ -886,6 +957,7 @@ function clearAllDocs() {
   if (!confirm('ล้างเอกสารทั้งหมด?')) return;
   savedDocs = [];
   localStorage.removeItem('bmvisa_bills');
+  clearDocsOnServer();
   renderSaved();
 }
 
@@ -897,7 +969,7 @@ function renderSaved() {
   sec.style.display = 'block';
   if (countEl) countEl.textContent = savedDocs.length + ' รายการ';
   const statusColor = {paid:'#10b981', unpaid:'#ef4444', partial:'#f59e0b'};
-  const statusLabel = {paid:'✅ จ่ายแล้ว', unpaid:'⏳ ค้างชำระ', partial:'💳 บางส่วน'};
+  const statusLabel = {paid:'จ่ายแล้ว', unpaid:'ค้างชำระ', partial:'บางส่วน'};
   list.innerHTML = '';
   savedDocs.forEach((d, idx) => {
     const card = document.createElement('div');
@@ -912,12 +984,12 @@ function renderSaved() {
       <div style="font-size:10px;color:${statusColor[d.payStatus]||'#9ca3af'}">${statusLabel[d.payStatus]||''}</div>`;
 
     const openBtn = document.createElement('button');
-    openBtn.textContent = '✏️ เปิด';
+    openBtn.textContent = 'เปิด';
     openBtn.style.cssText = 'font-size:11px;padding:4px 8px;border-radius:5px;border:1px solid var(--gray-200);background:var(--pink-light);color:var(--pink-dark);cursor:pointer;font-family:inherit;font-weight:600';
     openBtn.addEventListener('click', () => openDoc(idx));
 
     const delBtn = document.createElement('button');
-    delBtn.textContent = '🗑️ ลบ';
+    delBtn.textContent = 'ลบ';
     delBtn.style.cssText = 'font-size:11px;padding:4px 8px;border-radius:5px;border:1px solid #fca5a5;background:#fee2e2;color:#ef4444;cursor:pointer;font-family:inherit;font-weight:600';
     delBtn.addEventListener('click', () => deleteDoc(idx));
 
@@ -942,9 +1014,11 @@ function openDoc(idx) {
 }
 
 function deleteDoc(idx) {
-  if (!confirm('ลบเอกสาร ' + (savedDocs[idx]?.docNumber||'') + ' ?')) return;
+  const target = savedDocs[idx];
+  if (!confirm('ลบเอกสาร ' + (target?.docNumber||'') + ' ?')) return;
   savedDocs.splice(idx, 1);
   localStorage.setItem('bmvisa_bills', JSON.stringify(savedDocs));
+  if (target?.docNumber) deleteDocOnServer(target.docNumber);
   renderSaved();
 }
 

@@ -150,7 +150,7 @@ const fmtDate = (value) => {
   const year = dt.getFullYear() + 543;
   return `${day}/${month}/${year}`;
 };
-const fmtCheck = (value) => (value ? "✓" : "-");
+const fmtCheck = (value) => (value ? "ใช่" : "-");
 
 const formatRemainingYMD = (targetValue) => {
   const target = toDateOnly(targetValue);

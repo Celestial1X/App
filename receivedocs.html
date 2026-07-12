@@ -3,13 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#ec4899" />
+    <meta name="theme-color" content="#1c2b3a" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link rel="manifest" href="manifest.json" />
     <title>รับเอกสาร - ระบบตรวจสอบข้อมูลแรงงานต่างด้าว</title>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css?v=20260528" />
+    <link rel="stylesheet" href="styles.css?v=20260713" />
   </head>
   <body data-page="receivedocs">
     <header class="hero">
@@ -21,16 +21,16 @@
 
     <main class="container">
             <nav class="page-tabs">
-        <a class="tab-btn" href="tasks.html">📋 งานวันนี้</a>
-        <a class="tab-btn is-active" href="receivedocs.html">📥 รับเอกสาร</a>
-        <a class="tab-btn" href="index.html">🔍 ค้นหา</a>
-        <a class="tab-btn" href="records.html">📂 บันทึก</a>
-        <a class="tab-btn" href="form.html">✏️ กรอกฟอร์ม</a>
-        <a class="tab-btn" href="report90.html">📅 90 วัน</a>
-        <a class="tab-btn" href="visarun.html">✈️ Visa Run</a>
-        <a class="tab-btn" href="nextform.html">📄 MOU ลาว</a>
-        <a class="tab-btn" href="returndocs.html">📤 ส่งคืน</a>
-        <a class="tab-btn" href="billing-doc-8.html">💳 วางบิล</a>
+        <a class="tab-btn" href="tasks.html"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="13" height="13" rx="2"/><path d="M6.5 8h7M6.5 11.3h7M6.5 14.6h4"/></svg><span>งานวันนี้</span></a>
+        <a class="tab-btn is-active" href="receivedocs.html"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h12v8.5l-2.5 3.5h-7L4 12.5V4z"/><path d="M4 12.5h4l1 2h2l1-2h4"/></svg><span>รับเอกสาร</span></a>
+        <a class="tab-btn" href="index.html"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.7" cy="8.7" r="5"/><path d="M16 16l-3.8-3.8"/></svg><span>ค้นหา</span></a>
+        <a class="tab-btn" href="records.html"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.2c0-1 .8-1.7 1.7-1.7h3l1.4 1.7h6.2c.9 0 1.7.8 1.7 1.7v6.4c0 1-.8 1.7-1.7 1.7H4.7C3.8 16 3 15.2 3 14.3V6.2z"/></svg><span>บันทึก</span></a>
+        <a class="tab-btn" href="form.html"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13.3 3.8l2.9 2.9-8.9 8.9-3.4.5.5-3.4 8.9-8.9z"/></svg><span>กรอกฟอร์ม</span></a>
+        <a class="tab-btn" href="report90.html"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.3" y="4.2" width="13.4" height="12" rx="1.6"/><path d="M3.3 8h13.4M6.7 3v2.4M13.3 3v2.4"/></svg><span>90 วัน</span></a>
+        <a class="tab-btn" href="visarun.html"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.5l1.6 5.4 4.9 1.6-4.9 1.6L10 17l-1.6-5.9-4.9-1.6 4.9-1.6L10 2.5z"/></svg><span>Visa Run</span></a>
+        <a class="tab-btn" href="nextform.html"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3h5l3 3v10.5a1 1 0 01-1 1h-7a1 1 0 01-1-1V4a1 1 0 011-1z"/><path d="M11.3 3v3h3M7.3 10.5h5.4M7.3 13.3h5.4"/></svg><span>MOU ลาว</span></a>
+        <a class="tab-btn" href="returndocs.html"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h12v8.5l-2.5 3.5h-7L4 12.5V4z"/><path d="M10 5.5v5M7.8 8.3L10 10.5l2.2-2.2"/></svg><span>ส่งคืน</span></a>
+        <a class="tab-btn" href="billing-doc-8.html"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3.2h10v13.6l-1.8-1.3-1.7 1.3-1.7-1.3-1.6 1.3-1.7-1.3-1.5 1.3V3.2z"/><path d="M7.3 7h5.4M7.3 9.8h5.4M7.3 12.6h3.2"/></svg><span>วางบิล</span></a>
       </nav>
 
       <section class="panel">
@@ -66,7 +66,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h3 id="followupModalTitle">ตรวจสอบข้อมูล</h3>
-          <button type="button" class="modal-close" id="followupModalClose" aria-label="ปิด">✕</button>
+          <button type="button" class="modal-close" id="followupModalClose" aria-label="ปิด"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5.5 5.5l9 9M14.5 5.5l-9 9"/></svg></button>
         </div>
         <div id="followupModalBody" class="modal-body"></div>
         <div class="modal-actions">
@@ -75,7 +75,7 @@
       </div>
     </div>
 
-    <script src="followup.js?v=20260528"></script>
-      <script src="datepicker.js?v=20260528"></script>
+    <script src="followup.js?v=20260713"></script>
+      <script src="datepicker.js?v=20260713"></script>
   </body>
 </html>

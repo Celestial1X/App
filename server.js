@@ -18,6 +18,9 @@ const DATA_FILE = process.env.RECORDS_DATA_FILE
 const FOLLOWUPS_DATA_FILE = process.env.FOLLOWUPS_DATA_FILE
   ? path.resolve(process.env.FOLLOWUPS_DATA_FILE)
   : path.join(STORAGE_ROOT, "followups.json");
+const BILLING_DATA_FILE = process.env.BILLING_DATA_FILE
+  ? path.resolve(process.env.BILLING_DATA_FILE)
+  : path.join(STORAGE_ROOT, "billing.json");
 const SERVER_LOG_FILE = process.env.SERVER_LOG_FILE
   ? path.resolve(process.env.SERVER_LOG_FILE)
   : path.join(MOUNT_PATH || STORAGE_ROOT, "server.log");
@@ -167,6 +170,15 @@ const writeFollowups = async (followups) =>
     visarun: Array.isArray(followups.visarun) ? followups.visarun : [],
   });
 
+// ── Billing docs storage ───────────────────────────────────────
+const readBillingDocs = async () => {
+  const parsed = await readJsonFile(BILLING_DATA_FILE, { docs: [] });
+  return Array.isArray(parsed.docs) ? parsed.docs : [];
+};
+
+const writeBillingDocs = async (docs) =>
+  writeJsonFile(BILLING_DATA_FILE, { docs: Array.isArray(docs) ? docs : [] });
+
 // ── Route wrapper (catches async errors) ──────────────────────
 const wrap = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
@@ -263,6 +275,46 @@ app.post("/api/followups/:type", wrap(async (req, res) => {
   await writeFollowups(followups);
   broadcastRealtimeEvent("followup-change", { action: "create", type, id: nextId });
   res.json(created);
+}));
+
+// ── Billing docs API ──────────────────────────────────────────
+app.get("/api/billing", wrap(async (_req, res) => {
+  res.json(await readBillingDocs());
+}));
+
+app.post("/api/billing", wrap(async (req, res) => {
+  const payload = req.body || {};
+  const docs = await readBillingDocs();
+  const incomingNumber = String(payload.docNumber || "").trim();
+  const idx = incomingNumber ? docs.findIndex((d) => d.docNumber === incomingNumber) : -1;
+  const now = new Date().toISOString();
+  if (idx >= 0) {
+    const updated = { ...docs[idx], ...payload, docNumber: incomingNumber, updatedAt: now };
+    docs[idx] = updated;
+    await writeBillingDocs(docs);
+    broadcastRealtimeEvent("billing-change", { action: "update", docNumber: incomingNumber });
+    res.json(updated);
+    return;
+  }
+  const created = { ...payload, id: payload.id || Date.now(), createdAt: now, updatedAt: now };
+  docs.unshift(created);
+  await writeBillingDocs(docs);
+  broadcastRealtimeEvent("billing-change", { action: "create", docNumber: created.docNumber });
+  res.json(created);
+}));
+
+app.delete("/api/billing", wrap(async (_req, res) => {
+  await writeBillingDocs([]);
+  broadcastRealtimeEvent("billing-change", { action: "clear" });
+  res.json({ status: "ok" });
+}));
+
+app.delete("/api/billing/:docNumber", wrap(async (req, res) => {
+  const docNumber = String(req.params.docNumber || "").trim();
+  const docs = (await readBillingDocs()).filter((d) => d.docNumber !== docNumber);
+  await writeBillingDocs(docs);
+  broadcastRealtimeEvent("billing-change", { action: "delete", docNumber });
+  res.json({ status: "ok" });
 }));
 
 // ── Health check ──────────────────────────────────────────────

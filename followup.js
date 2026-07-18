@@ -18,20 +18,9 @@ const API_BASE_URL = resolveApiBaseUrl();
 
 const BMVISA_LOGO_HTML = '<img src="bmvisa-logo.svg" alt="BmViSa Center" loading="eager" />';
 
-const initBrandIdentity = () => {
-  const top = document.querySelector('.hero__top');
-  if (!top || top.querySelector('.brand-mark')) return;
-  const brand = document.createElement('div');
-  brand.className = 'brand-mark';
-  const logoWrap = document.createElement('div');
-  logoWrap.className = 'brand-mark__logo';
-  logoWrap.innerHTML = BMVISA_LOGO_HTML;
-  const text = document.createElement('div');
-  text.className = 'brand-mark__text';
-  text.innerHTML = '<strong>BmViSa Center</strong><span>บริการแรงงานต่างด้าวครบวงจร</span>';
-  brand.append(logoWrap, text);
-  top.prepend(brand);
-};
+// Brand mark now lives as static markup in the sidebar (see .app-sidebar__brand);
+// kept as a no-op so existing call sites stay valid.
+const initBrandIdentity = () => {};
 const RECORDS_API_URL = API_BASE_URL ? `${API_BASE_URL}/api/records` : "/api/records";
 const STREAM_API_URL = API_BASE_URL ? `${API_BASE_URL}/api/stream` : "/api/stream";
 
@@ -865,8 +854,14 @@ const runReport90Page = () => {
   });
   searchInput?.addEventListener("input", renderRows);
 
+  let isSavingReport90 = false;
   form?.addEventListener("submit", async (event) => {
     event.preventDefault();
+    if (isSavingReport90) return;
+    isSavingReport90 = true;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) submitBtn.disabled = true;
+    try {
     const values = {
       workerName: document.getElementById("r90WorkerName").value.trim(),
       gender: document.getElementById("r90Gender").value,
@@ -903,6 +898,10 @@ const runReport90Page = () => {
     } catch {
       status.textContent = "ไม่สามารถบันทึกข้อมูลได้ กรุณาตรวจสอบเซิร์ฟเวอร์";
       status.classList.add("error");
+    }
+    } finally {
+      isSavingReport90 = false;
+      if (submitBtn) submitBtn.disabled = false;
     }
   });
 
@@ -1088,8 +1087,14 @@ const runVisaPage = () => {
   });
   searchInput?.addEventListener("input", renderRows);
 
+  let isSavingVisaRun = false;
   form?.addEventListener("submit", async (event) => {
     event.preventDefault();
+    if (isSavingVisaRun) return;
+    isSavingVisaRun = true;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) submitBtn.disabled = true;
+    try {
     const values = {
       workerName: document.getElementById("visaWorkerName").value.trim(),
       gender: document.getElementById("visaGender").value,
@@ -1127,6 +1132,10 @@ const runVisaPage = () => {
     } catch {
       status.textContent = "ไม่สามารถบันทึกข้อมูลได้ กรุณาตรวจสอบเซิร์ฟเวอร์";
       status.classList.add("error");
+    }
+    } finally {
+      isSavingVisaRun = false;
+      if (submitBtn) submitBtn.disabled = false;
     }
   });
 
@@ -1307,8 +1316,14 @@ const runMouLaosPage = () => {
   });
   searchInput?.addEventListener("input", renderRows);
 
+  let isSavingMou = false;
   form?.addEventListener("submit", async (event) => {
     event.preventDefault();
+    if (isSavingMou) return;
+    isSavingMou = true;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) submitBtn.disabled = true;
+    try {
     const values = {
       workerName: document.getElementById("mouWorkerName").value.trim(),
       alienId: document.getElementById("mouAlienId").value.trim(),
@@ -1336,6 +1351,10 @@ const runMouLaosPage = () => {
     } catch {
       status.textContent = "ไม่สามารถบันทึกข้อมูลได้ กรุณาตรวจสอบเซิร์ฟเวอร์";
       status.classList.add("error");
+    }
+    } finally {
+      isSavingMou = false;
+      if (submitBtn) submitBtn.disabled = false;
     }
   });
 
@@ -1466,8 +1485,14 @@ const runReceiveDocsPage = () => {
   });
   searchInput?.addEventListener("input", renderRows);
 
+  let isSavingReceive = false;
   form?.addEventListener("submit", async (event) => {
     event.preventDefault();
+    if (isSavingReceive) return;
+    isSavingReceive = true;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) submitBtn.disabled = true;
+    try {
     const values = {
       workerName: document.getElementById("receiveWorkerName").value.trim(),
       employerName: document.getElementById("receiveEmployerName").value.trim(),
@@ -1491,6 +1516,10 @@ const runReceiveDocsPage = () => {
     } catch {
       status.textContent = "ไม่สามารถบันทึกข้อมูลได้ กรุณาตรวจสอบเซิร์ฟเวอร์";
       status.classList.add("error");
+    }
+    } finally {
+      isSavingReceive = false;
+      if (submitBtn) submitBtn.disabled = false;
     }
   });
 
@@ -1615,8 +1644,14 @@ const runReturnDocsPage = () => {
     exportTableToCsv({ listElement: list, filePrefix: "returndocs-records", statusElement: status });
   });
 
+  let isSavingReturn = false;
   form?.addEventListener("submit", async (event) => {
     event.preventDefault();
+    if (isSavingReturn) return;
+    isSavingReturn = true;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) submitBtn.disabled = true;
+    try {
     const values = {
       workerName: document.getElementById("returnWorkerName").value.trim(),
       employerName: document.getElementById("returnEmployerName").value.trim(),
@@ -1640,6 +1675,10 @@ const runReturnDocsPage = () => {
     } catch {
       status.textContent = "ไม่สามารถบันทึกข้อมูลได้ กรุณาตรวจสอบเซิร์ฟเวอร์";
       status.classList.add("error");
+    }
+    } finally {
+      isSavingReturn = false;
+      if (submitBtn) submitBtn.disabled = false;
     }
   });
 

@@ -165,20 +165,9 @@ const API_BASE_URL = resolveApiBaseUrl();
 
 const BMVISA_LOGO_HTML = '<img src="bmvisa-logo.svg" alt="BmViSa Center" loading="eager" />';
 
-const initBrandIdentity = () => {
-  const top = document.querySelector('.hero__top');
-  if (!top || top.querySelector('.brand-mark')) return;
-  const brand = document.createElement('div');
-  brand.className = 'brand-mark';
-  const logoWrap = document.createElement('div');
-  logoWrap.className = 'brand-mark__logo';
-  logoWrap.innerHTML = BMVISA_LOGO_HTML;
-  const text = document.createElement('div');
-  text.className = 'brand-mark__text';
-  text.innerHTML = '<strong>BmViSa Center</strong><span>บริการแรงงานต่างด้าวครบวงจร</span>';
-  brand.append(logoWrap, text);
-  top.prepend(brand);
-};
+// Brand mark now lives as static markup in the sidebar (see .app-sidebar__brand);
+// kept as a no-op so existing call sites stay valid.
+const initBrandIdentity = () => {};
 const RECORDS_API_URL = API_BASE_URL ? `${API_BASE_URL}/api/records` : "/api/records";
 
 const getEditIdFromQuery = () => {
@@ -2790,6 +2779,7 @@ const renderRecords = () => {
     const editButton = document.createElement("button");
     editButton.type = "button";
     editButton.className = "secondary action-btn action-btn--edit";
+    editButton.title = translations[currentLanguage].editButton;
     editButton.innerHTML = `<span class="icon-swatch" aria-hidden="true"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13.3 3.8l2.9 2.9-8.9 8.9-3.4.5.5-3.4 8.9-8.9z"/></svg></span><span>${translations[currentLanguage].editButton}</span>`;
     editButton.addEventListener("click", () => {
       const followupPageMap = {
@@ -2814,11 +2804,13 @@ const renderRecords = () => {
     const verifyButton = document.createElement("button");
     verifyButton.type = "button";
     verifyButton.className = "secondary action-btn action-btn--verify";
+    verifyButton.title = translations[currentLanguage].verifyButton;
     verifyButton.innerHTML = `<span class="icon-swatch" aria-hidden="true"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.7" cy="8.7" r="5"/><path d="M16 16l-3.8-3.8"/></svg></span><span>${translations[currentLanguage].verifyButton}</span>`;
     verifyButton.addEventListener("click", () => openRecordModal(record));
     const deleteButton = document.createElement("button");
     deleteButton.type = "button";
     deleteButton.className = "danger action-btn action-btn--delete";
+    deleteButton.title = translations[currentLanguage].deleteButton;
     deleteButton.innerHTML = `<span class="icon-swatch" aria-hidden="true"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6h11M8 6V4.6c0-.6.5-1.1 1.1-1.1h1.8c.6 0 1.1.5 1.1 1.1V6M6 6l.6 9.4c0 .6.5 1 1.1 1h4.6c.6 0 1-.4 1.1-1L14 6"/></svg></span><span>${translations[currentLanguage].deleteButton}</span>`;
     deleteButton.addEventListener("click", async () => {
       const shouldDelete = await showConfirmDialog({
@@ -4006,17 +3998,36 @@ const applyTranslations = (lang) => {
 applyTranslations(currentLanguage);
 
 if (workerForm) {
+  let isSavingWorkerForm = false;
   workerForm.addEventListener("submit", async (event) => {
     event.preventDefault();
-    await saveRecord("final");
+    if (isSavingWorkerForm) return;
+    isSavingWorkerForm = true;
+    const submitBtn = workerForm.querySelector('button[type="submit"]');
+    if (submitBtn) submitBtn.disabled = true;
+    try {
+      await saveRecord("final");
+    } finally {
+      isSavingWorkerForm = false;
+      if (submitBtn) submitBtn.disabled = false;
+    }
   });
   workerForm.addEventListener("input", saveFormDraft);
   workerForm.addEventListener("change", saveFormDraft);
 }
 
 if (draftButton) {
+  let isSavingDraft = false;
   draftButton.addEventListener("click", async () => {
-    await saveRecord("draft");
+    if (isSavingDraft) return;
+    isSavingDraft = true;
+    draftButton.disabled = true;
+    try {
+      await saveRecord("draft");
+    } finally {
+      isSavingDraft = false;
+      draftButton.disabled = false;
+    }
   });
 }
 if (clearFormDraftButton) {

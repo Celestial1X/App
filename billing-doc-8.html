@@ -950,7 +950,13 @@ function loadFormData(d) {
   }
 }
 
+let isSavingBillingDoc = false;
 function saveToList() {
+  if (isSavingBillingDoc) return;
+  isSavingBillingDoc = true;
+  const saveBtn = document.querySelector('.btn-save');
+  if (saveBtn) saveBtn.disabled = true;
+
   const data = collectFormData();
   let total = 0;
   rows.forEach(r => { total += (parseFloat(r.qty)||0)*(parseFloat(r.price)||0); });
@@ -969,6 +975,9 @@ function saveToList() {
   pushDocToServer(data).then((synced) => {
     msg.textContent = synced ? 'บันทึกเรียบร้อย (ซิงก์กับเซิร์ฟเวอร์แล้ว)' : 'บันทึกเรียบร้อย (เก็บไว้ในเครื่องนี้เท่านั้น)';
     setTimeout(() => msg.textContent = '', 3200);
+  }).finally(() => {
+    isSavingBillingDoc = false;
+    if (saveBtn) saveBtn.disabled = false;
   });
   renderSaved();
 }

@@ -330,6 +330,18 @@ app.use((err, req, res, _next) => {
 });
 
 // ── Start ─────────────────────────────────────────────────────
+// Guard the whole process: an unexpected error anywhere outside the
+// normal Express request cycle should be logged, not take the server
+// down for every connected user.
+process.on("uncaughtException", (err) => {
+  console.error("[FATAL] uncaughtException:", err);
+  appendServerLog(`FATAL uncaughtException: ${err?.stack || err}`);
+});
+process.on("unhandledRejection", (reason) => {
+  console.error("[FATAL] unhandledRejection:", reason);
+  appendServerLog(`FATAL unhandledRejection: ${reason}`);
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, async () => {
   await migrateLegacyStorageIfNeeded();

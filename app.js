@@ -118,6 +118,7 @@ const todayTaskQuickDate = document.getElementById("todayTaskQuickDate");
 const todayTaskQuickNote = document.getElementById("todayTaskQuickNote");
 const todayTaskQuickAddButton = document.getElementById("todayTaskQuickAddButton");
 const todayTaskQuickStatus = document.getElementById("todayTaskQuickStatus");
+const todayDocumentTasks = document.getElementById("todayDocumentTasks");
 const taskEntryNotice = document.getElementById("taskEntryNotice");
 const verifyRecordButton = document.getElementById("verifyRecord");
 const recordModal = document.getElementById("recordModal");
@@ -164,20 +165,9 @@ const API_BASE_URL = resolveApiBaseUrl();
 
 const BMVISA_LOGO_HTML = '<img src="bmvisa-logo.svg" alt="BmViSa Center" loading="eager" />';
 
-const initBrandIdentity = () => {
-  const top = document.querySelector('.hero__top');
-  if (!top || top.querySelector('.brand-mark')) return;
-  const brand = document.createElement('div');
-  brand.className = 'brand-mark';
-  const logoWrap = document.createElement('div');
-  logoWrap.className = 'brand-mark__logo';
-  logoWrap.innerHTML = BMVISA_LOGO_HTML;
-  const text = document.createElement('div');
-  text.className = 'brand-mark__text';
-  text.innerHTML = '<strong>BmViSa Center</strong><span>บริการแรงงานต่างด้าวครบวงจร</span>';
-  brand.append(logoWrap, text);
-  top.prepend(brand);
-};
+// Brand mark now lives as static markup in the sidebar (see .app-sidebar__brand);
+// kept as a no-op so existing call sites stay valid.
+const initBrandIdentity = () => {};
 const RECORDS_API_URL = API_BASE_URL ? `${API_BASE_URL}/api/records` : "/api/records";
 
 const getEditIdFromQuery = () => {
@@ -1615,8 +1605,6 @@ const buildHomeTaskItems = (records) => {
     { key: "appointmentDate", label: "นัดหมายดำเนินการ", source: "caseStatus" },
     { key: "nextDate", label: "รายงานตัว 90 วัน", source: "followup" },
     { key: "endDate", label: "ครบกำหนด Visa / MOU", source: "followup" },
-    { key: "documentReceivedDate", label: "วันรับเอกสาร", source: "followup" },
-    { key: "documentReturnDate", label: "วันคืนเอกสาร", source: "followup" },
     { key: "workPermitExpiry", label: "ใบอนุญาตทำงานใกล้หมดอายุ", source: "personalInfo" },
     { key: "passExpiryDate", label: "พาสปอร์ตใกล้หมดอายุ", source: "personalInfo" },
     { key: "personalVisaExpiryDate", label: "Visa ส่วนบุคคลใกล้หมดอายุ", source: "personalInfo" },
@@ -1716,6 +1704,62 @@ const buildHomeTaskItems = (records) => {
     .map(([dayKey, items]) => ({ days: Number.parseInt(dayKey, 10), items: items.sort((a, b) => String(a.formId).localeCompare(String(b.formId), "th")) }))
     .sort((a, b) => a.days - b.days)
     .slice(0, 12);
+};
+
+const buildTodayDocumentItems = (records) => {
+  const docDefs = [
+    { key: "documentReceivedDate", label: "รับเอกสาร" },
+    { key: "documentReturnDate", label: "คืนเอกสาร" },
+  ];
+  const items = [];
+  (records || []).forEach((record) => {
+    if (record?.formType === "todaytask") return;
+    const followup = record?.data?.followup || {};
+    const info = record?.data?.personalInfo || {};
+    const assignee = info.fullName || info.employerName || record?.displayName || "-";
+    docDefs.forEach((doc) => {
+      const dateValue = normalizeDisplayDateValue(followup?.[doc.key] || "");
+      const days = getDaysUntil(dateValue);
+      if (days !== 0) return;
+      items.push({
+        label: doc.label,
+        dateValue,
+        formId: record?.formId || "-",
+        assignee,
+      });
+    });
+  });
+  return items
+    .sort((a, b) => String(a.formId).localeCompare(String(b.formId), "th"))
+    .slice(0, 8);
+};
+
+const renderTodayDocumentTasks = (records) => {
+  if (!todayDocumentTasks) return;
+  const items = buildTodayDocumentItems(records);
+  if (!items.length) {
+    todayDocumentTasks.innerHTML = "";
+    return;
+  }
+  const totalLabel = `ทั้งหมด ${items.length} รายการ`;
+  todayDocumentTasks.innerHTML = `
+    <div class="today-documents__head">
+      <p class="today-documents__title">งานรับ/คืนเอกสารวันนี้</p>
+      <span class="today-documents__count">${totalLabel}</span>
+    </div>
+    <p class="today-documents__subtitle">แยกจากงานแจ้งเตือนหลัก เพื่อดูงานเอกสารรายวันให้ชัดเจน</p>
+    <div class="today-documents__cards">
+      ${items.map((item) => {
+        const toneClass = item.label === "รับเอกสาร" ? "today-documents__card--receive" : "today-documents__card--return";
+        return `<article class="today-documents__card ${toneClass}">
+          <p class="today-documents__badge">${item.label}</p>
+          <h4>${item.formId}</h4>
+          <p class="today-documents__meta">${item.assignee}</p>
+          <p class="today-documents__date">${formatDateOnlyDMY(item.dateValue)}</p>
+        </article>`;
+      }).join("")}
+    </div>
+  `;
 };
 
 const loadCustomTodayTasks = () => {
@@ -1819,9 +1863,16 @@ const getTaskTargetUrl = (item) => {
   return `form.html?editId=${editId}`;
 };
 
+const buildTaskDueText = (days, dateValue) => {
+  const dayText = days === 0 ? "วันนี้" : `อีก ${days} วัน`;
+  const normalizedDate = normalizeDisplayDateValue(dateValue || "");
+  if (!normalizedDate) return dayText;
+  return `${formatDateOnlyDMY(normalizedDate)} • ${dayText}`;
+};
+
 const openTaskBucketModal = (bucket) => {
   if (!recordModal || !recordModalTitle || !recordModalBody) return;
-  const dayText = bucket.days === 0 ? "วันนี้" : `อีก ${bucket.days} วัน`;
+  const dayText = buildTaskDueText(bucket.days, bucket.items?.[0]?.dateValue || "");
   recordModalTitle.textContent = `งานที่ต้องทำ: ${dayText}`;
   recordModalBody.innerHTML = "";
   const list = document.createElement("ul");
@@ -1831,7 +1882,7 @@ const openTaskBucketModal = (bucket) => {
     li.className = "timeline-item";
     if (item.done) li.classList.add("timeline-item--done");
     const note = item.note ? `<p>${item.note}</p>` : "";
-    const doneLabel = item.done ? "↺ ยกเลิกเสร็จแล้ว" : "✓ เสร็จแล้ว";
+    const doneLabel = item.done ? "ยกเลิกเสร็จแล้ว" : "ทำเสร็จแล้ว";
     const openButton = item.targetUrl
       ? `<button type="button" class="secondary" data-task-open="${item.targetUrl}">เปิดรายการ</button>`
       : "";
@@ -2039,6 +2090,7 @@ const initTodayTaskQuickAdd = () => {
 const renderTodayTaskSpotlight = (records) => {
   if (!todayTaskSpotlight || !todayTaskBuckets || !todayTaskSubtitle) return;
   homeTaskBuckets = buildHomeTaskItems(records);
+  renderTodayDocumentTasks(records);
   if (!homeTaskBuckets.length) {
     todayTaskSubtitle.textContent = "ยังไม่มีงานที่ต้องติดตามใน 90 วันข้างหน้า";
     todayTaskBuckets.innerHTML = '<p class="status-text">ไม่มีงานค้างกำหนด</p>';
@@ -2055,7 +2107,7 @@ const renderTodayTaskSpotlight = (records) => {
     .reduce((sum, bucket) => sum + bucket.items.length, 0);
   todayTaskSubtitle.textContent = `พบ ${totalTasks} งานในช่วงวันนี้ถึง 90 วันข้างหน้า • กดที่วันเพื่อดูรายละเอียด`;
   todayTaskBuckets.innerHTML = homeTaskBuckets.map((bucket, index) => {
-    const dayLabel = bucket.days === 0 ? "วันนี้" : `อีก ${bucket.days} วัน`;
+    const dayLabel = buildTaskDueText(bucket.days, bucket.items?.[0]?.dateValue || "");
     const firstLabel = bucket.items[0]?.label || "";
     return `<button type="button" class="today-task-bucket" data-task-bucket="${index}"><strong>${dayLabel}</strong><span>${bucket.items.length} งาน</span><small>${firstLabel}</small></button>`;
   }).join("");
@@ -2727,7 +2779,8 @@ const renderRecords = () => {
     const editButton = document.createElement("button");
     editButton.type = "button";
     editButton.className = "secondary action-btn action-btn--edit";
-    editButton.innerHTML = `<span aria-hidden="true">✏️</span><span>${translations[currentLanguage].editButton}</span>`;
+    editButton.title = translations[currentLanguage].editButton;
+    editButton.innerHTML = `<span class="icon-swatch" aria-hidden="true"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13.3 3.8l2.9 2.9-8.9 8.9-3.4.5.5-3.4 8.9-8.9z"/></svg></span><span>${translations[currentLanguage].editButton}</span>`;
     editButton.addEventListener("click", () => {
       const followupPageMap = {
         report90: "report90.html",
@@ -2751,27 +2804,34 @@ const renderRecords = () => {
     const verifyButton = document.createElement("button");
     verifyButton.type = "button";
     verifyButton.className = "secondary action-btn action-btn--verify";
-    verifyButton.innerHTML = `<span aria-hidden="true">🔎</span><span>${translations[currentLanguage].verifyButton}</span>`;
+    verifyButton.title = translations[currentLanguage].verifyButton;
+    verifyButton.innerHTML = `<span class="icon-swatch" aria-hidden="true"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.7" cy="8.7" r="5"/><path d="M16 16l-3.8-3.8"/></svg></span><span>${translations[currentLanguage].verifyButton}</span>`;
     verifyButton.addEventListener("click", () => openRecordModal(record));
     const deleteButton = document.createElement("button");
     deleteButton.type = "button";
     deleteButton.className = "danger action-btn action-btn--delete";
-    deleteButton.innerHTML = `<span aria-hidden="true">🗑️</span><span>${translations[currentLanguage].deleteButton}</span>`;
+    deleteButton.title = translations[currentLanguage].deleteButton;
+    deleteButton.innerHTML = `<span class="icon-swatch" aria-hidden="true"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6h11M8 6V4.6c0-.6.5-1.1 1.1-1.1h1.8c.6 0 1.1.5 1.1 1.1V6M6 6l.6 9.4c0 .6.5 1 1.1 1h4.6c.6 0 1-.4 1.1-1L14 6"/></svg></span><span>${translations[currentLanguage].deleteButton}</span>`;
     deleteButton.addEventListener("click", async () => {
       const shouldDelete = await showConfirmDialog({
         message: translations[currentLanguage].confirmDeleteRecord,
       });
       if (!shouldDelete) return;
       const deleted = await deleteRecordFromServer(record.formId);
-      if (!deleted) {
-        setStatus(recordsStatus, "ไม่สามารถลบข้อมูลจากเซิร์ฟเวอร์ได้", "error");
+      if (!deleted && canUseServerSync()) {
+        // Server is reachable but returned an error — notify user
+        setStatus(recordsStatus, "ไม่สามารถลบข้อมูลจากเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง", "error");
         return;
       }
+      // Always remove from local cache (offline-safe)
       const records = loadRecords();
       const nextRecords = records.filter((item) => item.formId !== record.formId);
       saveRecords(nextRecords);
       renderRecords();
       renderLatestRecordCard();
+      if (!deleted) {
+        setStatus(recordsStatus, "ลบข้อมูลในเครื่องแล้ว (ออฟไลน์)", "warn");
+      }
     });
     actionsWrapper.appendChild(editButton);
     actionsWrapper.appendChild(verifyButton);
@@ -3026,7 +3086,7 @@ const getAttachmentViewerModal = () => {
     <div class="modal-content attachment-viewer-content">
       <div class="modal-header">
         <h4 id="attachmentViewerTitle">ไฟล์แนบ</h4>
-        <button type="button" class="modal-close" id="attachmentViewerClose" aria-label="ปิด">✕</button>
+        <button type="button" class="modal-close" id="attachmentViewerClose" aria-label="ปิด"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5.5 5.5l9 9M14.5 5.5l-9 9"/></svg></button>
       </div>
       <div id="attachmentViewerBody" class="modal-body attachment-viewer-body"></div>
     </div>
@@ -3634,12 +3694,14 @@ const saveRecord = async (status = "draft") => {
   if (workerForm) {
     localStorage.setItem(RECORD_SEARCH_KEY, finalRecord.formId);
     window.location.href = "records.html";
+  } else {
+    hideLoader();
   }
 };
 
 const populateForm = (record) => {
   if (!record) return;
-if (formTypeInputs?.length) {
+  if (formTypeInputs?.length) {
     const selectedTypes = Array.isArray(record.data?.formTypes) && record.data.formTypes.length
       ? record.data.formTypes
       : [record.formType];
@@ -3936,17 +3998,36 @@ const applyTranslations = (lang) => {
 applyTranslations(currentLanguage);
 
 if (workerForm) {
+  let isSavingWorkerForm = false;
   workerForm.addEventListener("submit", async (event) => {
     event.preventDefault();
-    await saveRecord("final");
+    if (isSavingWorkerForm) return;
+    isSavingWorkerForm = true;
+    const submitBtn = workerForm.querySelector('button[type="submit"]');
+    if (submitBtn) submitBtn.disabled = true;
+    try {
+      await saveRecord("final");
+    } finally {
+      isSavingWorkerForm = false;
+      if (submitBtn) submitBtn.disabled = false;
+    }
   });
   workerForm.addEventListener("input", saveFormDraft);
   workerForm.addEventListener("change", saveFormDraft);
 }
 
 if (draftButton) {
+  let isSavingDraft = false;
   draftButton.addEventListener("click", async () => {
-    await saveRecord("draft");
+    if (isSavingDraft) return;
+    isSavingDraft = true;
+    draftButton.disabled = true;
+    try {
+      await saveRecord("draft");
+    } finally {
+      isSavingDraft = false;
+      draftButton.disabled = false;
+    }
   });
 }
 if (clearFormDraftButton) {
@@ -3965,14 +4046,14 @@ if (clearRecordsButton) {
       return;
     }
     const cleared = await clearRecordsFromServer();
-    if (!cleared) {
-      setStatus(recordsStatus, "ไม่สามารถลบข้อมูลจากเซิร์ฟเวอร์ได้", "error");
+    if (!cleared && canUseServerSync()) {
+      setStatus(recordsStatus, "ไม่สามารถลบข้อมูลจากเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง", "error");
       return;
     }
     saveRecords([]);
     renderRecords();
     renderLatestRecordCard();
-    setStatus(formSaveStatus, translations[currentLanguage].recordsStatus);
+    setStatus(recordsStatus || formSaveStatus, translations[currentLanguage].recordsStatus);
   });
 }
 if (exportRecordsButton) {

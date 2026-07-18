@@ -1,4 +1,4 @@
-const CACHE_NAME = "bmvisa-static-v1";
+const CACHE_NAME = "bmvisa-static-v2";
 const ASSETS = [
   "/",
   "/index.html",
@@ -10,10 +10,12 @@ const ASSETS = [
   "/visarun.html",
   "/nextform.html",
   "/returndocs.html",
+  "/billing-doc-8.html",
   "/app.js",
   "/followup.js",
   "/styles.css",
   "/datepicker.js",
+  "/sidebar.js",
   "/manifest.json",
   "/bmvisa-logo.svg",
 ];
